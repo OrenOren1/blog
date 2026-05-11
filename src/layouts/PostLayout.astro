@@ -1,0 +1,954 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Giscus from '@components/Giscus.astro';
+import { formatDate } from '@lib/posts';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  minutesRead?: string;
+}
+const { post, minutesRead } = Astro.props;
+const { data } = post;
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description ?? undefined}
+  image={data.image ?? undefined}
+  canonicalPath={`/blog/${post.id}/`}
+  unlisted={data.unlisted}
+>
+  <article>
+    {data.unlisted && (
+      <>
+        <div class='draft-ribbon draft-ribbon-top-right'><span>DRAFT</span></div>
+        <div style='margin:1rem auto;max-width:720px;text-align:center;padding:0.8em 1.1em;background:var(--c-theme-light);border:1px solid #d97706;border-radius:var(--radius,4px);'>
+          This post is <strong>unlisted</strong> — only accessible via direct link. Not yet publicly published.
+        </div>
+      </>
+    )}
+    {(data.series_part && data.series_part > 0 || data.series_recap) && (
+      <div class='series-ribbon series-ribbon-top-right'>
+        <span data-recap={data.series_recap ? 'true' : 'false'}>{data.series_recap ? 'SERIES RECAP' : `PART ${data.series_part}`}</span>
+      </div>
+    )}
+    <header class='post-header wrap-narrow'>
+      <h1>{data.title}</h1>
+      <div class='post-meta'>
+        {data.updated_date ? (
+          <>
+            <time datetime={data.updated_date.toISOString()}><strong>{formatDate(data.updated_date)}</strong></time>
+            <span> ({formatDate(data.date)})</span>
+          </>
+        ) : (
+          <time datetime={data.date.toISOString()}>{formatDate(data.date)}</time>
+        )}
+        <span>by {data.author}</span>
+        {data.source !== 'general' && <span>· {data.source}</span>}
+        {minutesRead && <span>· {minutesRead}</span>}
+        <button class='tts-listen-btn' type='button' data-tts-listen aria-label='Listen to this post'>
+          <svg viewBox='0 0 24 24' aria-hidden='true'><path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/></svg>
+          <span>Listen</span>
+        </button>
+        <button class='glossary-toggle' type='button' data-glossary-toggle aria-label='Toggle glossary annotations' aria-pressed='false'>
+          <svg viewBox='0 0 24 24' aria-hidden='true' width='14' height='14'><path d='M3 3h8v2H3zm0 4h8v2H3zm0 4h8v2H3zm10-8h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2zm4-8h2v2h-2zm0 4h2v2h-2zm0 4h2v2h-2z' fill='currentColor'/></svg>
+          <span>Glossary</span>
+        </button>
+      </div>
+      {data.tags.length > 0 && (
+        <div class='post-tags'>
+          {data.tags.map((t) => (
+            <a href={`/tags/${encodeURIComponent(t)}/`} class='tag'>{t}</a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <div class='post-content wrap-narrow'>
+      <slot />
+    </div>
+
+    <div class='post-edit-link wrap-narrow'>
+      <a
+        href={`https://github.com/hagzag/portfolio/edit/main/src/content/blog/${post.id}.md`}
+        target='_blank'
+        rel='noopener noreferrer'
+      >
+        <svg viewBox='0 0 24 24' aria-hidden='true' width='16' height='16' fill='currentColor'>
+          <path d='M12 1.5c-5.53 0-10 4.52-10 10.1 0 4.46 2.87 8.24 6.84 9.58.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.61-3.37-1.36-3.37-1.36-.45-1.18-1.11-1.5-1.11-1.5-.9-.62.07-.61.07-.61 1 .07 1.53 1.04 1.53 1.04.89 1.54 2.34 1.09 2.91.83.09-.66.35-1.09.64-1.34-2.22-.26-4.55-1.13-4.55-5 0-1.11.39-2.01 1.03-2.72-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.04a9.27 9.27 0 0 1 5 0c1.9-1.31 2.74-1.04 2.74-1.04.56 1.41.21 2.45.1 2.71.64.71 1.03 1.61 1.03 2.72 0 3.88-2.34 4.74-4.57 5 .36.32.69.94.69 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.59.69.49 3.96-1.34 6.83-5.12 6.83-9.58 0-5.58-4.47-10.1-10-10.1Z' />
+        </svg>
+        Edit this page →
+      </a>
+    </div>
+
+    <div class='comments wrap-narrow'>
+      <h2 style='font-size:1.1rem;letter-spacing:0.02em;text-transform:uppercase;color:var(--c-text-light);'>
+        Discussion
+      </h2>
+      <Giscus />
+    </div>
+  </article>
+
+  <div class='tts-bar' data-tts-bar hidden>
+    <div class='tts-bar-inner'>
+      <button class='tts-bar-btn' type='button' data-tts-prev aria-label='Previous paragraph'>
+        <svg viewBox='0 0 24 24'><path d='M6 6h2v12H6zm3.5 6l8.5 6V6z' transform='scale(-1,1) translate(-24,0)'/></svg>
+      </button>
+      <button class='tts-bar-play' type='button' data-tts-button data-state='idle' aria-pressed='false' aria-label='Play or pause'>
+        <svg class='icon-play' viewBox='0 0 24 24'><path d='M8 5v14l11-7z'/></svg>
+        <svg class='icon-pause' viewBox='0 0 24 24'><path d='M6 19h4V5H6v14zm8-14v14h4V5h-4z'/></svg>
+      </button>
+      <button class='tts-bar-btn' type='button' data-tts-next aria-label='Next paragraph'>
+        <svg viewBox='0 0 24 24'><path d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z'/></svg>
+      </button>
+
+      <div class='tts-bar-scrub'>
+        <span class='tts-bar-scrub-value' data-tts-value>0 / 0</span>
+      </div>
+
+      <div class='tts-bar-voice-group'>
+        <button class='tts-bar-btn tts-voice-toggle' type='button' data-tts-voice-toggle aria-label='Change voice'>
+          <svg viewBox='0 0 24 24'><path d='M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.48 2.96 2.94 5.3 5.91 5.75V20c0 .55.45 1 1 1s1-.45 1-1v-2.11c2.96-.44 5.43-2.79 5.91-5.75.1-.6-.39-1.14-1-1.14z'/></svg>
+        </button>
+        <div class='tts-voice-menu' data-tts-voice-menu hidden>
+          <button type='button' data-tts-voice-pick='default'>Default</button>
+          <button type='button' data-tts-voice-pick='google-us'>Google US</button>
+          <button type='button' data-tts-voice-pick='google-uk'>Google UK</button>
+          <button type='button' data-tts-voice-pick='samantha'>Samantha</button>
+          <button type='button' data-tts-voice-pick='daniel'>Daniel</button>
+        </div>
+      </div>
+
+      <button class='tts-bar-btn tts-speed-toggle' type='button' data-tts-speed-toggle aria-label='Playback speed'>
+        <span data-tts-speed-label>1×</span>
+      </button>
+      <div class='tts-speed-menu' data-tts-speed-menu hidden>
+        <button type='button' data-tts-speed-pick='0.5'>0.5×</button>
+        <button type='button' data-tts-speed-pick='0.75'>0.75×</button>
+        <button type='button' data-tts-speed-pick='1'>1×</button>
+        <button type='button' data-tts-speed-pick='1.25'>1.25×</button>
+        <button type='button' data-tts-speed-pick='1.5'>1.5×</button>
+        <button type='button' data-tts-speed-pick='2'>2×</button>
+      </div>
+
+      <button class='tts-bar-btn tts-bar-close' type='button' data-tts-close aria-label='Close player'>
+        <svg viewBox='0 0 24 24'><path d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/></svg>
+      </button>
+    </div>
+  </div>
+
+  <style is:inline>
+    .tts-block-active {
+      background: color-mix(in srgb, var(--c-accent) 6%, transparent);
+      border-left: 3px solid var(--c-accent);
+      border-radius: 0 var(--radius, 4px) var(--radius, 4px) 0;
+      transition: background 0.2s ease;
+    }
+    .tts-block-active li {
+      background: color-mix(in srgb, var(--c-accent) 4%, transparent);
+      border-radius: 0 4px 4px 0;
+    }
+    .tts-word {
+      transition: background 0.12s ease, color 0.12s ease;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .tts-word-active {
+      background: color-mix(in srgb, var(--c-accent) 22%, transparent);
+      color: var(--c-accent);
+    }
+    .draft-ribbon {
+      width: 150px;
+      height: 150px;
+      overflow: hidden;
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .draft-ribbon span {
+      position: absolute;
+      display: block;
+      width: 225px;
+      padding: 10px 0;
+      background-color: #e43;
+      color: #fff;
+      font: 700 14px/1 sans-serif;
+      text-transform: uppercase;
+      text-align: center;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .draft-ribbon::before,
+    .draft-ribbon::after {
+      position: absolute;
+      z-index: -1;
+      content: '';
+      display: block;
+      border: 5px solid #c31;
+    }
+    .draft-ribbon-top-right {
+      top: -10px;
+      right: -10px;
+    }
+    .draft-ribbon-top-right::before,
+    .draft-ribbon-top-right::after {
+      border-top-color: transparent;
+      border-right-color: transparent;
+    }
+    .draft-ribbon-top-right::before { top: 0; left: 0; }
+    .draft-ribbon-top-right::after { bottom: 0; right: 0; }
+    .draft-ribbon-top-right span {
+      left: -25px;
+      top: 30px;
+      transform: rotate(45deg);
+    }
+    .series-ribbon {
+      width: 150px;
+      height: 150px;
+      overflow: hidden;
+      position: fixed;
+      z-index: 9998;
+      pointer-events: none;
+    }
+    .series-ribbon span {
+      position: absolute;
+      display: block;
+      width: 225px;
+      padding: 10px 0;
+      background-color: #2563eb;
+      color: #fff;
+      font: 700 14px/1 sans-serif;
+      text-transform: uppercase;
+      text-align: center;
+      letter-spacing: 2px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .series-ribbon span[data-recap="true"] {
+      background-color: #fef08a;
+      color: #dc2626;
+      font-size: 11px;
+      width: 220px;
+      padding: 18px 22px 14px;
+      line-height: 1.2;
+    }
+    .series-ribbon::before,
+    .series-ribbon::after {
+      position: absolute;
+      z-index: -1;
+      content: '';
+      display: block;
+      border: 5px solid #1d4ed8;
+    }
+    .series-ribbon-top-right {
+      top: -10px;
+      right: -10px;
+    }
+    .series-ribbon-top-right::before,
+    .series-ribbon-top-right::after {
+      border-top-color: transparent;
+      border-right-color: transparent;
+    }
+    .series-ribbon-top-right::before { top: 0; left: 0; }
+    .series-ribbon-top-right::after { bottom: 0; right: 0; }
+    .series-ribbon-top-right span {
+      left: -25px;
+      top: 30px;
+      transform: rotate(45deg);
+    }
+  </style>
+
+  <script is:inline>
+    (() => {
+      const setup = () => {
+        const listenBtn = document.querySelector('[data-tts-listen]');
+        const bar = document.querySelector('[data-tts-bar]');
+        const button = document.querySelector('[data-tts-button]');
+        const content = document.querySelector('.post-content');
+        const prevBtn = document.querySelector('[data-tts-prev]');
+        const nextBtn = document.querySelector('[data-tts-next]');
+        const closeBtn = document.querySelector('[data-tts-close]');
+        const valueEl = document.querySelector('[data-tts-value]');
+        const voiceToggle = document.querySelector('[data-tts-voice-toggle]');
+        const voiceMenu = document.querySelector('[data-tts-voice-menu]');
+        const speedToggle = document.querySelector('[data-tts-speed-toggle]');
+        const speedMenu = document.querySelector('[data-tts-speed-menu]');
+        const speedLabel = document.querySelector('[data-tts-speed-label]');
+
+        if (!listenBtn || !content || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+          if (listenBtn) listenBtn.hidden = true;
+          return;
+        }
+
+        const ABBREVS = {
+          'TL;DR': 'Too long don\'t read',
+          'TLDR': 'Too long don\'t read',
+          'TL;DR:': 'Too long don\'t read',
+          'TLDR:': 'Too long don\'t read',
+          'e.g.': 'for example',
+          'i.e.': 'that is',
+          'vs.': 'versus',
+          'etc.': 'et cetera',
+          'npm': 'N P M',
+          'CI/CD': 'C I C D',
+          'devops': 'dev ops',
+          'DevOps': 'dev ops',
+          'SRE': 'S R E',
+          'ISV': 'I S V',
+          '3PAO': '3 P A O',
+          'FedRAMP': 'fed ramp',
+          'SOC 2': 'sock 2',
+          'SOC2': 'sock 2',
+          'CMVP': 'C M V P',
+          'CAVP': 'C A V P',
+          'NIST': 'nist',
+          'FIPS': 'fips',
+          'SSL': 'S S L',
+          'TLS': 'T L S',
+          'AWS': 'A W S',
+          'GKE': 'G K E',
+          'EKS': 'E K S',
+          'AKS': 'A K S',
+          'MD5': 'M D 5',
+          'SHA': 'S H A',
+          'AES': 'A E S',
+          'RSA': 'R S A',
+          'HKDF': 'H K D F',
+          'DRBG': 'D R B G',
+          'ECDSA': 'E C D S A',
+          'ECDH': 'E C D H',
+          'ML-KEM': 'M L K E M',
+          'SP 800-90A': 'special publication 800 90 A',
+          'JCE': 'J C E',
+          'JVM': 'J V M',
+          'ACCP': 'A C C P',
+          'mTLS': 'mutual T L S',
+          'SBOM': 'S B O M',
+          'SAST': 'S A S T',
+          'DORA': 'D O R A',
+          'IPsec': 'I P sec',
+          'LUKS': 'L U K S',
+          'CSS': 'C S S',
+          'HTML': 'H T M L',
+          'API': 'A P I',
+          'SDK': 'S D K',
+          'YAML': 'Y A M L',
+          'JSON': 'J S O N',
+          'TOML': 'T O M L',
+        };
+
+        const expandAbbreviations = (text) => {
+          let out = text;
+          for (const [abbr, spoken] of Object.entries(ABBREVS)) {
+            out = out.split(abbr).join(spoken);
+          }
+          return out;
+        };
+
+        const extractSpeechBlocks = (root) => {
+          const blocks = [];
+          const seen = new Set();
+
+          const stripPunctuation = (text) => text.replace(/[,;:–—\-]/g, ' ').replace(/\s+/g, ' ').trim();
+
+          const addBlock = (el, text, prefix) => {
+            if (seen.has(el)) return;
+            seen.add(el);
+            const clean = stripPunctuation(expandAbbreviations(text.replace(/\s+/g, ' ').trim()));
+            if (clean) blocks.push({ el, text: prefix ? `${prefix} ${clean}` : clean });
+          };
+
+          const addText = (el, prefix) => {
+            // Get text content excluding glossary markers
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('.glossary-ref').forEach(sup => sup.remove());
+            addBlock(el, clone.textContent || '', prefix);
+          };
+
+          const processList = (list) => {
+            const isOrdered = list.tagName === 'OL';
+            const items = Array.from(list.querySelectorAll(':scope > li'));
+            items.forEach((li, i) => {
+              if (seen.has(li)) return;
+              const nested = li.querySelector('ul, ol');
+              // Clone and remove glossary refs for text extraction
+              const liClone = li.cloneNode(true);
+              liClone.querySelectorAll('.glossary-ref').forEach(sup => sup.remove());
+              const rawText = nested
+                ? Array.from(liClone.childNodes)
+                    .filter((n) => n !== nested && (n.textContent || '').trim())
+                    .map((n) => n.textContent.trim())
+                    .join(' ')
+                : (liClone.textContent || '');
+              addBlock(li, rawText, isOrdered ? `Point ${i + 1}.` : undefined);
+              if (nested) processList(nested);
+            });
+          };
+
+          for (const el of root.children) {
+            if (seen.has(el) || el.hasAttribute('data-tts-skip')) continue;
+            const tag = el.tagName;
+            if (tag === 'UL' || tag === 'OL') {
+              processList(el);
+            } else if (tag === 'BLOCKQUOTE') {
+              addText(el);
+            } else if (tag === 'H2' || tag === 'H3' || tag === 'H4') {
+              addText(el);
+            } else if (tag === 'P') {
+              addText(el);
+            } else if (tag === 'DIV') {
+              const innerPs = el.querySelectorAll('p, blockquote, h2, h3, h4, ul, ol');
+              if (innerPs.length) {
+                for (const inner of innerPs) {
+                  if (inner.tagName === 'UL' || inner.tagName === 'OL') processList(inner);
+                  else addText(inner);
+                }
+              } else {
+                addText(el);
+              }
+            }
+          }
+          return blocks;
+        };
+
+        const blocks = extractSpeechBlocks(content);
+
+        if (!blocks.length) {
+          listenBtn.hidden = true;
+          return;
+        }
+
+        let utterance = null;
+        let index = 0;
+        let state = 'idle';
+        let selectedVoice = null;
+        let rate = 1;
+        let barVisible = false;
+        let activeEl = null;
+        let wordSpans = null;
+        let activeWordEl = null;
+
+        const VOICE_PRESETS = {
+          'default': null,
+          'google-us': /Google\s+US\s+English/i,
+          'google-uk': /Google\s+UK\s+English\s+Male/i,
+          'samantha': /Samantha/i,
+          'daniel': /Daniel/i,
+        };
+
+        const DEFAULT_VOICE_KEY = 'google-us';
+
+        const applyVoiceFromPreset = (key) => {
+          const pattern = VOICE_PRESETS[key];
+          if (!pattern) { selectedVoice = null; return; }
+          const voices = window.speechSynthesis.getVoices();
+          selectedVoice = voices.find((v) => pattern.test(v.name)) || null;
+        };
+
+        const initDefaultVoice = () => {
+          try {
+            const saved = localStorage.getItem('tts-voice-preset');
+            if (saved && VOICE_PRESETS[saved] !== undefined) { applyVoiceFromPreset(saved); return; }
+          } catch (_e) {}
+          applyVoiceFromPreset(DEFAULT_VOICE_KEY);
+        };
+
+        const highlightBlock = (idx) => {
+          clearWordHighlight();
+          if (activeEl) activeEl.classList.remove('tts-block-active');
+          const block = blocks[idx];
+          if (!block || !block.el) return;
+          activeEl = block.el;
+          activeEl.classList.add('tts-block-active');
+          wrapWords(activeEl);
+          const rect = activeEl.getBoundingClientRect();
+          const viewH = window.innerHeight;
+          if (rect.top < 80 || rect.bottom > viewH - 80) {
+            activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        };
+
+        const wrapWords = (el) => {
+          wordSpans = [];
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+          const textNodes = [];
+          while (walker.nextNode()) textNodes.push(walker.currentNode);
+          for (const node of textNodes) {
+            const words = node.textContent.split(/(\s+)/);
+            const frag = document.createDocumentFragment();
+            for (const part of words) {
+              if (/^\s+$/.test(part)) {
+                frag.appendChild(document.createTextNode(part));
+              } else if (part.length) {
+                const span = document.createElement('span');
+                span.className = 'tts-word';
+                span.textContent = part;
+                wordSpans.push(span);
+                frag.appendChild(span);
+              }
+            }
+            node.parentNode.replaceChild(frag, node);
+          }
+        };
+
+        const unwrapWords = (el) => {
+          if (!el) return;
+          const spans = el.querySelectorAll('.tts-word');
+          spans.forEach((span) => {
+            const text = document.createTextNode(span.textContent);
+            span.parentNode.replaceChild(text, span);
+          });
+          el.normalize();
+          wordSpans = null;
+        };
+
+        const highlightWordAt = (charIndex, charLength) => {
+          if (!wordSpans || !wordSpans.length) return;
+          if (activeWordEl) activeWordEl.classList.remove('tts-word-active');
+          let offset = 0;
+          for (let i = 0; i < wordSpans.length; i++) {
+            const span = wordSpans[i];
+            const len = span.textContent.length;
+            const spanStart = offset;
+            const spanEnd = offset + len;
+            if (charIndex >= spanStart && charIndex < spanEnd) {
+              activeWordEl = span;
+              span.classList.add('tts-word-active');
+              const r = span.getBoundingClientRect();
+              const vH = window.innerHeight;
+              if (r.top < 60 || r.bottom > vH - 60) {
+                span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+              return;
+            }
+            offset = spanEnd;
+            const nextSibling = span.nextSibling;
+            if (nextSibling && nextSibling.nodeType === 3) {
+              offset += nextSibling.textContent.length;
+            }
+          }
+        };
+
+        const clearWordHighlight = () => {
+          if (activeWordEl) activeWordEl.classList.remove('tts-word-active');
+          activeWordEl = null;
+        };
+
+        const clearHighlight = () => {
+          clearWordHighlight();
+          if (activeEl) {
+            unwrapWords(activeEl);
+            activeEl.classList.remove('tts-block-active');
+          }
+          activeEl = null;
+        };
+
+        const setState = (next) => {
+          state = next;
+          if (button) {
+            button.dataset.state = next;
+            button.setAttribute('aria-pressed', (next === 'playing' || next === 'paused') ? 'true' : 'false');
+          }
+          if (listenBtn && barVisible) {
+            listenBtn.dataset.state = next;
+          }
+          updateScrub();
+        };
+
+        const updateScrub = () => {
+          if (valueEl) valueEl.textContent = `${index + 1} / ${blocks.length}`;
+        };
+
+        const detachUtterance = () => {
+          if (utterance) {
+            utterance.onend = null;
+            utterance.onerror = null;
+            utterance.onboundary = null;
+            utterance = null;
+          }
+        };
+
+        const stopSpeech = () => {
+          detachUtterance();
+          window.speechSynthesis.cancel();
+          clearHighlight();
+          setState('idle');
+        };
+
+        const showBar = () => {
+          barVisible = true;
+          if (bar) bar.hidden = false;
+          if (listenBtn) listenBtn.dataset.state = 'active';
+        };
+
+        const hideBar = () => {
+          barVisible = false;
+          if (bar) bar.hidden = true;
+          if (listenBtn) delete listenBtn.dataset.state;
+          stopSpeech();
+        };
+
+        const applyVoiceSettings = (instance) => {
+          if (!instance) return;
+          if (selectedVoice) instance.voice = selectedVoice;
+          instance.rate = rate;
+        };
+
+        const speakIndex = (nextIndex, autoAdvance = true) => {
+          if (nextIndex < 0 || nextIndex >= blocks.length) return;
+          detachUtterance();
+          window.speechSynthesis.cancel();
+          index = nextIndex;
+          updateScrub();
+          highlightBlock(index);
+          const text = blocks[index].text;
+          utterance = new SpeechSynthesisUtterance(text);
+          applyVoiceSettings(utterance);
+          utterance.pitch = 1;
+          utterance.onboundary = (e) => {
+            if (e.name === 'word') {
+              highlightWordAt(e.charIndex, e.charLength || 0);
+            }
+          };
+          utterance.onend = () => {
+            if (autoAdvance && index < blocks.length - 1) {
+              speakIndex(index + 1, true);
+            } else {
+              clearHighlight();
+              setState('idle');
+            }
+          };
+          utterance.onerror = () => { stopSpeech(); };
+          setState('playing');
+          window.speechSynthesis.speak(utterance);
+        };
+
+        const pauseSpeech = () => {
+          window.speechSynthesis.pause();
+          setState('paused');
+        };
+
+        const resumeSpeech = () => {
+          window.speechSynthesis.resume();
+          setState('playing');
+        };
+
+        listenBtn.addEventListener('click', () => {
+          if (!barVisible) {
+            showBar();
+            speakIndex(0, true);
+          } else {
+            hideBar();
+          }
+        });
+
+        if (button) {
+          button.addEventListener('click', () => {
+            if (state === 'idle') { speakIndex(index, true); return; }
+            if (state === 'playing') { pauseSpeech(); return; }
+            if (state === 'paused') { resumeSpeech(); }
+          });
+        }
+
+        prevBtn?.addEventListener('click', () => {
+          speakIndex(Math.max(0, index - 1), true);
+        });
+
+        nextBtn?.addEventListener('click', () => {
+          speakIndex(Math.min(blocks.length - 1, index + 1), true);
+        });
+
+        closeBtn?.addEventListener('click', hideBar);
+
+        if (voiceToggle && voiceMenu) {
+          voiceToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = !voiceMenu.hidden;
+            voiceMenu.hidden = isOpen;
+            if (speedMenu) speedMenu.hidden = true;
+          });
+
+          voiceMenu.querySelectorAll('[data-tts-voice-pick]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+              const key = e.currentTarget.dataset.ttsVoicePick;
+              applyVoiceFromPreset(key);
+              voiceMenu.hidden = true;
+              try { localStorage.setItem('tts-voice-preset', key); } catch (_e) {}
+              if (state === 'playing' || state === 'paused') {
+                detachUtterance();
+                window.speechSynthesis.cancel();
+                speakIndex(index, true);
+              }
+            });
+          });
+
+          initDefaultVoice();
+
+          window.speechSynthesis.onvoiceschanged = () => { initDefaultVoice(); };
+        }
+
+        if (speedToggle && speedMenu && speedLabel) {
+          speedToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = !speedMenu.hidden;
+            speedMenu.hidden = isOpen;
+            if (voiceMenu) voiceMenu.hidden = true;
+          });
+
+          speedMenu.querySelectorAll('[data-tts-speed-pick]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+              const val = parseFloat(e.currentTarget.dataset.ttsSpeedPick);
+              if (!Number.isNaN(val) && val > 0) rate = val;
+              speedLabel.textContent = `${rate}×`;
+              speedMenu.hidden = true;
+              try { localStorage.setItem('tts-rate', String(rate)); } catch (_e) {}
+              if (state === 'playing' || state === 'paused') {
+                detachUtterance();
+                window.speechSynthesis.cancel();
+                speakIndex(index, true);
+              }
+            });
+          });
+
+          try {
+            const saved = Number(localStorage.getItem('tts-rate'));
+            if (!Number.isNaN(saved) && saved > 0) {
+              rate = saved;
+              speedLabel.textContent = `${rate}×`;
+            }
+          } catch (_e) {}
+        }
+
+        document.addEventListener('click', () => {
+          if (voiceMenu) voiceMenu.hidden = true;
+          if (speedMenu) speedMenu.hidden = true;
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden && state === 'playing') pauseSpeech();
+        });
+
+        window.addEventListener('pagehide', stopSpeech);
+        document.addEventListener('astro:before-swap', stopSpeech);
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setup, { once: true });
+      } else {
+        setup();
+      }
+    })();
+  </script>
+
+  <script is:inline>
+    (() => {
+      const GLOSSARY = {
+        'OPA': { full: 'Open Policy Agent', url: 'https://www.openpolicyagent.org/' },
+        'CSPM': { full: 'Cloud Security Posture Management', url: 'https://en.wikipedia.org/wiki/Cloud_security_posture_management' },
+        'SOC 2': { full: 'System and Organization Controls 2', url: 'https://en.wikipedia.org/wiki/SOC_2' },
+        'SOC2': { full: 'System and Organization Controls 2', url: 'https://en.wikipedia.org/wiki/SOC_2' },
+        'FedRAMP': { full: 'Federal Risk and Authorization Management Program', url: 'https://en.wikipedia.org/wiki/FedRAMP' },
+        'ISV': { full: 'Independent Software Vendor', url: 'https://en.wikipedia.org/wiki/Independent_software_vendor' },
+        'IAM': { full: 'Identity and Access Management', url: 'https://en.wikipedia.org/wiki/Identity_and_access_management' },
+        'CI/CD': { full: 'Continuous Integration / Continuous Delivery', url: 'https://en.wikipedia.org/wiki/CI/CD' },
+        'SRE': { full: 'Site Reliability Engineering', url: 'https://en.wikipedia.org/wiki/Site_reliability_engineering' },
+        'GitOps': { full: 'Git-driven infrastructure management', url: 'https://opengitops.dev/' },
+        'MFA': { full: 'Multi-Factor Authentication', url: 'https://en.wikipedia.org/wiki/Multi-factor_authentication' },
+        'OIDC': { full: 'OpenID Connect', url: 'https://openid.net/connect/' },
+        'SAML': { full: 'Security Assertion Markup Language', url: 'https://en.wikipedia.org/wiki/SAML' },
+        'SCIM': { full: 'System for Cross-domain Identity Management', url: 'https://en.wikipedia.org/wiki/System_for_Cross-domain_Identity_Management' },
+        'IRSA': { full: 'IAM Roles for Service Accounts (AWS)', url: 'https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html' },
+        'CIS': { full: 'Center for Internet Security', url: 'https://www.cisecurity.org/' },
+        'HIPAA': { full: 'Health Insurance Portability and Accountability Act', url: 'https://en.wikipedia.org/wiki/Health_Insurance_Portability_and_Accountability_Act' },
+        'ISO 27001': { full: 'ISO/IEC 27001 Information Security Management', url: 'https://en.wikipedia.org/wiki/ISO/IEC_27001' },
+        'AICPA': { full: 'American Institute of Certified Public Accountants', url: 'https://en.wikipedia.org/wiki/American_Institute_of_Certified_Public_Accountants' },
+        'CAIQ': { full: 'Consensus Assessments Initiative Questionnaire', url: 'https://cloudsecurityalliance.org/star/caiq/' },
+        'GRC': { full: 'Governance, Risk, and Compliance', url: 'https://en.wikipedia.org/wiki/Governance,_risk_management_and_compliance' },
+        'PII': { full: 'Personally Identifiable Information', url: 'https://en.wikipedia.org/wiki/Personal_data' },
+        'PHI': { full: 'Protected Health Information', url: 'https://en.wikipedia.org/wiki/Protected_health_information' },
+        'CPA': { full: 'Certified Public Accountant', url: 'https://en.wikipedia.org/wiki/Certified_Public_Accountant' },
+        'SSO': { full: 'Single Sign-On', url: 'https://en.wikipedia.org/wiki/Single_sign-on' },
+        'SBOM': { full: 'Software Bill of Materials', url: 'https://en.wikipedia.org/wiki/SBOM' },
+        'CRD': { full: 'Custom Resource Definition', url: 'https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/' },
+        'RBAC': { full: 'Role-Based Access Control', url: 'https://kubernetes.io/docs/reference/access-authn-authz/rbac/' },
+        'HPA': { full: 'Horizontal Pod Autoscaler', url: 'https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/' },
+        'VPA': { full: 'Vertical Pod Autoscaler', url: 'https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler' },
+        'ESO': { full: 'External Secrets Operator', url: 'https://external-secrets.io/' },
+        'EFK': { full: 'Elasticsearch, Fluentd, Kibana', url: 'https://docs.fluentd.org/container-deployment/kubernetes' },
+        'APM': { full: 'Application Performance Management', url: 'https://en.wikipedia.org/wiki/Application_performance_management' },
+        'SSL': { full: 'Secure Sockets Layer', url: 'https://en.wikipedia.org/wiki/Transport_Layer_Security' },
+        'FinOps': { full: 'Cloud Financial Management', url: 'https://www.finops.org/' },
+        'DNSSEC': { full: 'Domain Name System Security Extensions', url: 'https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions' },
+        'DNSKEY': { full: 'DNSSEC public key record', url: 'https://www.rfc-editor.org/rfc/rfc4034' },
+        'RRSIG': { full: 'DNSSEC signature record', url: 'https://www.rfc-editor.org/rfc/rfc4034' },
+        'NSEC3': { full: 'Authenticated denial of existence record (hashed)', url: 'https://www.rfc-editor.org/rfc/rfc5155' },
+        'NSEC': { full: 'Authenticated denial of existence record', url: 'https://www.rfc-editor.org/rfc/rfc4034' },
+        'NXDOMAIN': { full: 'DNS response code for non-existent domain name', url: 'https://www.rfc-editor.org/rfc/rfc1035' },
+        'DoH': { full: 'DNS over HTTPS', url: 'https://www.rfc-editor.org/rfc/rfc8484' },
+        'DoT': { full: 'DNS over TLS', url: 'https://www.rfc-editor.org/rfc/rfc7858' },
+        'CAA': { full: 'Certification Authority Authorization record (DNS)', url: 'https://www.rfc-editor.org/rfc/rfc6844' },
+        'TTL': { full: 'Time To Live (DNS cache lifetime)', url: 'https://en.wikipedia.org/wiki/Time_to_live' },
+        'SOA': { full: 'Start of Authority record (DNS)', url: 'https://en.wikipedia.org/wiki/SOA_record' },
+        'NS': { full: 'Name Server record (DNS)', url: 'https://en.wikipedia.org/wiki/List_of_DNS_record_types#NS' },
+        'MX': { full: 'Mail Exchange record (DNS)', url: 'https://en.wikipedia.org/wiki/MX_record' },
+        'TXT': { full: 'Text record (DNS)', url: 'https://en.wikipedia.org/wiki/TXT_record' },
+        'AAAA': { full: 'IPv6 address record (DNS)', url: 'https://en.wikipedia.org/wiki/List_of_DNS_record_types#AAAA' },
+        'PTR': { full: 'Pointer record for reverse DNS lookup', url: 'https://en.wikipedia.org/wiki/List_of_DNS_record_types#PTR' },
+        'BIND': { full: 'Berkeley Internet Name Domain', url: 'https://www.isc.org/bind/' },
+        'CoreDNS': { full: 'Plugin-based DNS server used by Kubernetes', url: 'https://coredns.io/' },
+        'Consul': { full: 'Service networking and discovery platform by HashiCorp', url: 'https://developer.hashicorp.com/consul' },
+        'DNS': { full: 'Domain Name System', url: 'https://en.wikipedia.org/wiki/Domain_Name_System' },
+        'CNAME': { full: 'Canonical Name Record (DNS)', url: 'https://en.wikipedia.org/wiki/CNAME_record' },
+        'SRV': { full: 'Service Record (DNS)', url: 'https://en.wikipedia.org/wiki/SRV_record' },
+      };
+
+      const STORAGE_KEY = 'glossary-enabled';
+      const toggle = document.querySelector('[data-glossary-toggle]');
+      const content = document.querySelector('.post-content');
+      if (!toggle || !content) return;
+
+      let annotated = false;
+      let fnCounter = 0;
+      const seen = new Set();
+      const footnotes = [];
+
+      const annotateGlossary = () => {
+        if (annotated) return;
+        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
+          acceptNode: (node) => {
+            const p = node.parentElement;
+            if (!p) return NodeFilter.FILTER_REJECT;
+            if (p.closest('[data-tts-skip], .glossary-ref, code, pre, a, sup')) return NodeFilter.FILTER_REJECT;
+            if (p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        });
+
+        const textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+        for (const node of textNodes) {
+          const text = node.textContent;
+          let matches = [];
+           for (const [acronym, entry] of Object.entries(GLOSSARY)) {
+             const escaped = acronym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+             const re = new RegExp(`\\b${escaped}\\b`, 'g');
+             let m;
+             while ((m = re.exec(text)) !== null) {
+               matches.push({ idx: m.index, len: acronym.length, acronym, entry });
+             }
+           }
+          if (!matches.length) continue;
+          matches.sort((a, b) => (a.idx - b.idx) || (b.len - a.len));
+
+          const frag = document.createDocumentFragment();
+          let lastIdx = 0;
+          for (const { idx, len, acronym, entry } of matches) {
+            if (idx < lastIdx) continue;
+            if (idx > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
+            frag.appendChild(document.createTextNode(acronym));
+
+            const fnIdx = seen.has(acronym) ? footnotes.findIndex(f => f.acronym === acronym) + 1 : (() => {
+              fnCounter++;
+              seen.add(acronym);
+              footnotes.push({ acronym, ...entry, num: fnCounter });
+              return fnCounter;
+            })();
+
+            const sup = document.createElement('sup');
+            sup.className = 'glossary-ref';
+            sup.dataset.fn = fnIdx;
+            sup.title = entry.full;
+            sup.textContent = fnIdx;
+            frag.appendChild(sup);
+
+            lastIdx = idx + len;
+          }
+          if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+          node.parentNode.replaceChild(frag, node);
+        }
+
+        buildFootnotesSection();
+        annotated = true;
+      };
+
+      const buildFootnotesSection = () => {
+        if (!footnotes.length) return;
+        const existing = content.querySelector('.post-footnotes');
+        if (existing) existing.remove();
+
+        const section = document.createElement('section');
+        section.className = 'post-footnotes';
+        section.setAttribute('data-tts-skip', '');
+        const h = document.createElement('h4');
+        h.textContent = 'Glossary & Footnotes';
+        section.appendChild(h);
+
+        footnotes.forEach(({ acronym, full, url, num }) => {
+          const p = document.createElement('p');
+          p.id = `glossary-footnote-${num}`;
+          const sup = document.createElement('sup');
+          sup.textContent = num;
+          p.appendChild(sup);
+          p.appendChild(document.createTextNode(' '));
+          const strong = document.createElement('strong');
+          strong.textContent = acronym;
+          p.appendChild(strong);
+          p.appendChild(document.createTextNode(` \u2014 ${full}. `));
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.textContent = 'link';
+          p.appendChild(a);
+          const back = document.createElement('a');
+          back.href = '#';
+          back.className = 'glossary-back';
+          back.dataset.fn = num;
+          back.title = 'Back to text';
+          back.textContent = '\u21A9';
+          p.appendChild(back);
+          section.appendChild(p);
+        });
+        content.appendChild(section);
+      };
+
+      const applyState = (on) => {
+        toggle.classList.toggle('active', on);
+        toggle.setAttribute('aria-pressed', String(on));
+        if (on) {
+          annotateGlossary();
+          content.classList.add('glossary-on');
+        } else {
+          content.classList.remove('glossary-on');
+        }
+      };
+
+toggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          const nowOn = !toggle.classList.contains('active');
+          try { localStorage.setItem(STORAGE_KEY, String(nowOn)); } catch (_e) {}
+          applyState(nowOn);
+        });
+
+      content.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.classList.contains('glossary-ref')) {
+          e.preventDefault();
+          const num = target.dataset.fn;
+          const footnote = content.querySelector(`#glossary-footnote-${num}`);
+          if (footnote) footnote.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (target.classList.contains('glossary-back')) {
+          e.preventDefault();
+          const num = target.dataset.fn;
+          const ref = content.querySelector(`.glossary-ref[data-fn="${num}"]`);
+          if (ref) ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+
+      let savedOn = false;
+      try { savedOn = localStorage.getItem(STORAGE_KEY) === 'true'; } catch (_e) {}
+      applyState(savedOn);
+    })();
+  </script>
+</BaseLayout>

@@ -1,0 +1,57 @@
+version: '3'
+
+vars:
+  NODE_VERSION: '20.17.0'
+  PY_ENV: '.python-env'
+
+env:
+  PATH: '.nodeenv/bin:{{.PATH}}'
+
+tasks:
+  setup:
+    desc: Create the isolated Node environment and install dependencies
+    deps:
+      - install
+
+  nodeenv:
+    desc: Build a reusable Node virtual environment via nodeenv
+    status:
+      - test -d .nodeenv
+      - '.nodeenv/bin/node --version | grep {{.NODE_VERSION}}'
+    cmds:
+      - 'test -d {{.PY_ENV}} || python3 -m venv {{.PY_ENV}}'
+      - '{{.PY_ENV}}/bin/pip install --upgrade pip nodeenv'
+      - '{{.PY_ENV}}/bin/nodeenv --node={{.NODE_VERSION}} .nodeenv'
+
+  install:
+    desc: Install npm dependencies inside the Node environment
+    deps:
+      - nodeenv
+    cmds:
+      - npm install
+
+  dev:
+    desc: Run the Astro dev server from the virtual environment
+    deps:
+      - install
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build the Astro site for production using the virtual environment
+    deps:
+      - install
+    cmds:
+      - npm run build
+
+  preview:
+    desc: Preview the production build locally
+    deps:
+      - install
+    cmds:
+      - npm run preview
+
+  clean:
+    desc: Remove the Node environment and installed dependencies
+    cmds:
+      - rm -rf .nodeenv node_modules package-lock.json {{.PY_ENV}}

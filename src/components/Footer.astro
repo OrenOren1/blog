@@ -1,0 +1,12 @@
+---
+import { SITE } from "@lib/site";
+import SocialLinks from "@components/SocialLinks.astro";
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap inner">
+    <div>&copy; {year} {SITE.author}</div>
+    <SocialLinks />
+  </div>
+</footer>

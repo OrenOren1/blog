@@ -1,0 +1,65 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Contact"
+  description="Request a workshop or reading list consultation with Haggai Philip Zagury."
+  canonicalPath="/contact"
+>
+  <section class="contact-hero wrap">
+    <div>
+      <p class="reading-eyebrow">Let’s Collaborate</p>
+      <h1>Request a Workshop</h1>
+      <p class="contact-copy">
+        Fill out the form and I’ll get back to you with availability, a short agenda proposal, and next steps.
+      </p>
+    </div>
+  </section>
+
+  <section class="contact-section wrap">
+    <form
+      class="contact-form"
+      action="mailto:hagzag@hagzag.com"
+      method="post"
+      encType="text/plain"
+    >
+      <div class="form-grid">
+        <label>
+          <span>First name</span>
+          <input type="text" name="first_name" required autocomplete="given-name" />
+        </label>
+        <label>
+          <span>Last name</span>
+          <input type="text" name="last_name" required autocomplete="family-name" />
+        </label>
+        <label>
+          <span>Company</span>
+          <input type="text" name="company" required autocomplete="organization" />
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+      </div>
+
+      <label class="contact-description">
+        <span>How can I help?</span>
+        <textarea
+          name="message"
+          rows="6"
+          maxLength="500"
+          required
+          placeholder="Describe the workshop or reading list you’re interested in (500 characters max)"
+        ></textarea>
+      </label>
+
+      <div class="contact-actions">
+        <button type="submit" class="cta">Send request →</button>
+        <p class="contact-footnote">
+          Submitting opens your default email client with the details pre-filled. You can review the message before sending.
+        </p>
+      </div>
+    </form>
+  </section>
+</BaseLayout>

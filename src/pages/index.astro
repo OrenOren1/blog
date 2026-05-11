@@ -1,0 +1,53 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import PostCard from "@components/PostCard.astro";
+import { getLatestPosts, getFeaturedPosts } from "@lib/posts";
+import { SITE } from "@lib/site";
+
+const latest = await getLatestPosts();
+const featured = await getFeaturedPosts();
+---
+
+<BaseLayout>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>DevOps & Platform Engineer</h1>
+        <p class="lede">
+          Practitioner notes on Kubernetes, GitOps, AI/ML integration, and building
+          enterprise platforms. {SITE.description}
+        </p>
+        <div class="hero-actions">
+          <a href="/blog/" class="cta">Read all posts →</a>
+          <a href="/about/" class="cta secondary">About me →</a>
+        </div>
+      </div>
+      <figure class="hero-media">
+        <img
+          src="/images/oren-hero.png"
+          alt="DevOps platform illustration"
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+    </div>
+  </section>
+
+  {
+    featured.length > 0 && (
+      <section class="section wrap">
+        <h2>Featured</h2>
+        <div class="rail featured">
+          {featured.map((p) => <PostCard post={p} featured />)}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section wrap">
+    <h2>Latest</h2>
+    <div class="rail">
+      {latest.map((p) => <PostCard post={p} />)}
+    </div>
+  </section>
+</BaseLayout>

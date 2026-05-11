@@ -1,0 +1,16 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getAllTags } from "@lib/posts";
+
+const tags = [...(await getAllTags()).entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="Tags" description="Browse posts by tag.">
+  <div class="wrap-narrow">
+    <h1 style="margin-top:3rem;">Tags</h1>
+    <p class="post-meta">{tags.length} tags</p>
+    <div class="tag-cloud">
+      {tags.map(([t, n]) => <a href={`/tags/${encodeURIComponent(t)}/`}>{t} · {n}</a>)}
+    </div>
+  </div>
+</BaseLayout>

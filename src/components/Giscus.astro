@@ -1,0 +1,36 @@
+---
+import { SITE } from "@lib/site";
+const g = SITE.giscus;
+const configured = g.repoId && g.categoryId;
+---
+
+{
+  configured ? (
+    <script
+      is:inline
+      src="https://giscus.app/client.js"
+      data-repo={g.repo}
+      data-repo-id={g.repoId}
+      data-category={g.category}
+      data-category-id={g.categoryId}
+      data-mapping={g.mapping}
+      data-strict="0"
+      data-reactions-enabled={g.reactionsEnabled}
+      data-emit-metadata={g.emitMetadata}
+      data-input-position={g.inputPosition}
+      data-theme={g.theme}
+      data-lang={g.lang}
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    />
+  ) : (
+    <div class="notice notice-note">
+      <strong>Comments not yet configured.</strong>
+      Enable GitHub Discussions on <code>hagzag/portfolio</code>, run
+      <a href="https://giscus.app">giscus.app</a>, and fill
+      <code>giscus.repoId</code> / <code>categoryId</code> in
+      <code>src/lib/site.ts</code>.
+    </div>
+  )
+}

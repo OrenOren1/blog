@@ -1,0 +1,104 @@
+---
+interface Tab {
+  id: string;
+  label: string;
+}
+
+interface Props {
+  tabs: Tab[];
+}
+
+const { tabs } = Astro.props;
+const groupId = `tab-group-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<div class="lang-tabs" data-tab-group={groupId}>
+  <div role="tablist" aria-label="Language tabs" class="lang-tablist">
+    {tabs.map((tab, i) => (
+      <button
+        role="tab"
+        id={`${groupId}-tab-${tab.id}`}
+        aria-controls={`${groupId}-panel-${tab.id}`}
+        aria-selected={i === 0 ? 'true' : 'false'}
+        tabindex={i === 0 ? 0 : -1}
+        data-tab={tab.id}
+        class={i === 0 ? 'lang-tab active' : 'lang-tab'}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+  <div class="lang-tab-panels">
+    <slot />
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const init = () => {
+      document.querySelectorAll('.lang-tabs').forEach((group) => {
+        const tablist = group.querySelector('[role="tablist"]');
+        if (!tablist) return;
+        const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+        const panels = Array.from(group.querySelectorAll('[data-lang-panel]'));
+
+        const activate = (targetId) => {
+          tabs.forEach((t) => {
+            const isActive = t.dataset.tab === targetId;
+            t.classList.toggle('active', isActive);
+            t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            t.setAttribute('tabindex', isActive ? '0' : '-1');
+          });
+          panels.forEach((p) => {
+            const visible = p.dataset.langPanel === targetId;
+            p.hidden = !visible;
+            p.setAttribute('aria-hidden', visible ? 'false' : 'true');
+          });
+          try {
+            const key = `lang-tab-${group.dataset.tabGroup}`;
+            localStorage.setItem(key, targetId);
+          } catch (_) {}
+        };
+
+        tabs.forEach((tab) => {
+          tab.addEventListener('click', () => activate(tab.dataset.tab));
+        });
+
+        tablist.addEventListener('keydown', (e) => {
+          const idx = tabs.indexOf(document.activeElement);
+          if (idx === -1) return;
+          let next = -1;
+          if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length;
+          else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length;
+          else if (e.key === 'Home') next = 0;
+          else if (e.key === 'End') next = tabs.length - 1;
+          if (next !== -1) {
+            e.preventDefault();
+            tabs[next].focus();
+            activate(tabs[next].dataset.tab);
+          }
+        });
+
+        try {
+          const key = `lang-tab-${group.dataset.tabGroup}`;
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            const match = tabs.find((t) => t.dataset.tab === saved);
+            if (match) activate(match.dataset.tab);
+          } else {
+            activate(tabs[0].dataset.tab);
+          }
+        } catch (_) {
+          activate(tabs[0].dataset.tab);
+        }
+      });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init, { once: true });
+    } else {
+      init();
+    }
+    document.addEventListener('astro:after-swap', init);
+  })();
+</script>

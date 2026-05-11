@@ -1,0 +1,295 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import projectsData from "../data/projects.json";
+
+type Engagement = {
+  company: string;
+  start: string;
+  end: string;
+  months: number;
+};
+
+const engagements = projectsData.engagements as Engagement[];
+
+// Group by start year (descending)
+const byYear = new Map<number, Engagement[]>();
+for (const e of engagements) {
+  const y = parseInt(e.start.slice(0, 4), 10);
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(e);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+
+// Stats
+const totalCount = engagements.length;
+const uniqueCompanies = new Set(engagements.map((e) => e.company)).size;
+const totalMonths = engagements.reduce((s, e) => s + e.months, 0);
+const firstYear = Math.min(...engagements.map((e) => parseInt(e.start.slice(0, 4), 10)));
+const lastYear = Math.max(...engagements.map((e) => parseInt(e.end.slice(0, 4), 10)));
+
+// Repeats — companies with >1 engagement
+const repeatCounts = new Map<string, number>();
+for (const e of engagements) {
+  repeatCounts.set(e.company, (repeatCounts.get(e.company) ?? 0) + 1);
+}
+const topRepeats = [...repeatCounts.entries()]
+  .filter(([, n]) => n > 1)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 12);
+
+// Format helpers
+const MONTH_NAMES = [
+  "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec",
+];
+function fmt(d: string) {
+  const [y, m] = d.split("-");
+  return `${MONTH_NAMES[parseInt(m, 10) - 1]} ${y}`;
+}
+function durationLabel(months: number) {
+  if (months < 12) return `${months} mo`;
+  const y = Math.floor(months / 12);
+  const rm = months % 12;
+  return rm ? `${y}y ${rm}mo` : `${y}y`;
+}
+---
+
+<BaseLayout
+  title="Projects"
+  description="Timeline of consulting engagements and client projects — technologies, durations, and work focus over the years."
+>
+  <div class="wrap-narrow projects-page">
+    <h1 style="margin-top:3rem;">Projects</h1>
+    <p>
+      A chronological timeline of consulting engagements and client projects.
+      Each bar represents a single engagement with focus on DevOps, Platform Engineering,
+      Kubernetes, GitOps, and AI/ML integration work.
+    </p>
+
+    <div class="stats">
+      <div class="stat"><span class="num">{totalCount}</span><span class="lbl">engagements</span></div>
+      <div class="stat"><span class="num">{uniqueCompanies}</span><span class="lbl">unique clients</span></div>
+      <div class="stat"><span class="num">{firstYear}–{lastYear}</span><span class="lbl">span</span></div>
+      <div class="stat"><span class="num">{Math.round(totalMonths / 12)}y+</span><span class="lbl">cumulative months</span></div>
+    </div>
+
+    <h2>Most-revisited clients</h2>
+    <ul class="repeats">
+      {topRepeats.map(([c, n]) => (
+        <li><span class="rc-name">{c}</span><span class="rc-num">{n}×</span></li>
+      ))}
+    </ul>
+
+    <h2>Timeline</h2>
+    <div class="legend">
+      <span><i class="dot dot--short"></i> 1 mo</span>
+      <span><i class="dot dot--mid"></i> 2–6 mo</span>
+      <span><i class="dot dot--long"></i> 6+ mo</span>
+    </div>
+
+    {years.map((year) => (
+      <section class="year-block">
+        <h3 class="year-h">{year}</h3>
+        <div class="gantt">
+          <div class="gantt-grid" aria-hidden="true">
+            {MONTH_NAMES.map((m) => (
+              <span class="gantt-month">{m}</span>
+            ))}
+          </div>
+          {byYear.get(year)!
+            .slice()
+            .sort((a, b) => a.start.localeCompare(b.start))
+            .map((e) => {
+              const sm = parseInt(e.start.slice(5, 7), 10);
+              // End: clamp to current year for the bar
+              const sy = parseInt(e.start.slice(0, 4), 10);
+              const ey = parseInt(e.end.slice(0, 4), 10);
+              const em = ey > year ? 12 : parseInt(e.end.slice(5, 7), 10);
+              const startCol = sm; // 1..12
+              const endCol = em;   // 1..12 inclusive
+              const cls =
+                e.months >= 6 ? "bar bar--long" :
+                e.months >= 2 ? "bar bar--mid"  : "bar bar--short";
+              const continues = ey > year;
+              return (
+                <div class="gantt-row" title={`${e.company} · ${fmt(e.start)} → ${fmt(e.end)} · ${durationLabel(e.months)}`}>
+                  <span class="gantt-name">{e.company}</span>
+                  <div class="gantt-track">
+                    <div
+                      class={cls}
+                      style={`grid-column: ${startCol} / ${endCol + 1};`}
+                    >
+                      <span class="bar-label">
+                        {e.company} · {durationLabel(e.months)}{continues ? " ↦" : ""}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      </section>
+    ))}
+
+    <p class="footnote">
+      Data: {totalCount} engagements, {firstYear}–{lastYear}. Generated {projectsData.generated_at}.
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .projects-page h2 { margin-top: 2.5rem; }
+  .projects-page h3.year-h {
+    margin: 2rem 0 0.6rem;
+    font-size: 1.05rem;
+    color: var(--c-text-light);
+    border-bottom: 1px solid var(--c-border);
+    padding-bottom: 0.3rem;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .stat {
+    background: var(--c-theme-light);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius, 8px);
+    padding: 0.8rem 0.6rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .stat .num { font-size: 1.4rem; font-weight: 700; color: var(--c-text-dark); }
+  .stat .lbl { font-size: 0.78rem; color: var(--c-text-light); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .repeats {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.4rem;
+  }
+  .repeats li {
+    display: flex;
+    justify-content: space-between;
+    background: var(--c-theme-light);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius, 8px);
+    padding: 0.45rem 0.7rem;
+    font-size: 0.9rem;
+  }
+  .rc-num { color: var(--c-accent); font-weight: 700; }
+
+  .legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.82rem;
+    color: var(--c-text-light);
+    margin: 0.8rem 0 0.5rem;
+  }
+  .legend .dot {
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 2px;
+    margin-right: 0.3em;
+    vertical-align: middle;
+  }
+  .dot--short { background: #94a3b8; }
+  .dot--mid   { background: var(--c-accent); }
+  .dot--long  { background: #f59e0b; }
+
+  .year-block { margin-bottom: 1.5rem; }
+
+  .gantt {
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius, 8px);
+    padding: 0.5rem 0.5rem 0.6rem;
+    background: var(--c-theme-light);
+    overflow-x: auto;
+  }
+  .gantt-grid {
+    display: grid;
+    grid-template-columns: 140px repeat(12, minmax(36px, 1fr));
+    margin-bottom: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--c-text-light);
+  }
+  .gantt-grid .gantt-month {
+    grid-column: span 1;
+    text-align: center;
+    border-left: 1px dashed var(--c-border);
+    padding: 0.1rem 0;
+  }
+  .gantt-grid .gantt-month:first-of-type { border-left: 0; }
+  .gantt-grid::before { content: ""; }
+
+  .gantt-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: center;
+    margin-bottom: 3px;
+  }
+  .gantt-name {
+    font-size: 0.78rem;
+    color: var(--c-text-dark);
+    padding-right: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gantt-track {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(36px, 1fr));
+    background:
+      repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc((100% / 12) - 1px),
+        var(--c-border) calc((100% / 12) - 1px),
+        var(--c-border) calc(100% / 12)
+      );
+    border-radius: 3px;
+    height: 22px;
+  }
+  .bar {
+    height: 18px;
+    margin: 2px 1px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 0.4rem;
+    color: #fff;
+    font-size: 0.7rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: default;
+  }
+  .bar--short { background: #94a3b8; }
+  .bar--mid   { background: var(--c-accent); }
+  .bar--long  { background: #f59e0b; color: #1c1c1c; }
+  .bar-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+
+  .footnote {
+    margin-top: 2rem;
+    font-size: 0.78rem;
+    color: var(--c-text-light);
+    text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .gantt-grid, .gantt-row { grid-template-columns: 100px repeat(12, minmax(28px, 1fr)); }
+    .gantt-name { font-size: 0.7rem; }
+    .bar-label { display: none; }
+  }
+</style>

@@ -1,0 +1,65 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getPosts, postHref, formatDate } from "@lib/posts";
+
+const posts = await getPosts();
+---
+
+<BaseLayout title="All posts" description="Every post on the site, newest first.">
+  <style>
+    .series-badge {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 3px;
+      background-color: #2563eb;
+      color: #fff;
+    }
+    .series-badge.series-recap {
+      background-color: #fef08a;
+      color: #dc2626;
+    }
+  </style>
+  <div class="wrap-narrow">
+    <h1 style="margin-top:3rem;">All posts</h1>
+    <p class="post-meta">{posts.length} posts</p>
+    <ul class="post-list-with-images">
+      {
+        posts.map((p) => (
+          <li class="post-list-item">
+            {p.data.image && (
+              <div class="post-list-image">
+                <img src={p.data.image} alt={p.data.title} loading="lazy" decoding="async" />
+              </div>
+            )}
+            <div class="post-list-content">
+              {p.data.updated_date ? (
+                <time datetime={p.data.updated_date.toISOString()}>
+                  <strong>{formatDate(p.data.updated_date)}</strong> ({formatDate(p.data.date)})
+                </time>
+              ) : (
+                <time datetime={p.data.date.toISOString()}>
+                  {formatDate(p.data.date)}
+                </time>
+              )}
+              <a href={postHref(p)}>
+                {p.data.title}
+                {p.data.series_part && p.data.series_part > 0 && <span class="series-badge">Part {p.data.series_part}</span>}
+                {p.data.series_recap && <span class="series-badge series-recap">Series Recap</span>}
+              </a>
+              {p.data.description && (
+                <p style="margin:0.3rem 0 0;color:var(--c-text-light);">
+                  {p.data.description}
+                </p>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

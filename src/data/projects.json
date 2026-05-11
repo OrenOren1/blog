@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-05-11",
+  "count": 10,
+  "engagements": [
+    {
+      "company": "LinearB",
+      "start": "2026-02-01",
+      "end": "2026-04-01",
+      "months": 2
+    },
+    {
+      "company": "Truvify.ai",
+      "start": "2025-09-01",
+      "end": "2025-09-01",
+      "months": 1
+    },
+    {
+      "company": "TerraSecurity",
+      "start": "2025-08-01",
+      "end": "2026-02-01",
+      "months": 6
+    },
+    {
+      "company": "ZoomInfo",
+      "start": "2024-11-01",
+      "end": "2025-07-01",
+      "months": 8
+    },
+    {
+      "company": "Beti",
+      "start": "2023-09-01",
+      "end": "2024-07-01",
+      "months": 10
+    },
+    {
+      "company": "Kaltura",
+      "start": "2023-06-01",
+      "end": "2023-07-01",
+      "months": 1
+    },
+    {
+      "company": "MeshSecurity",
+      "start": "2023-02-01",
+      "end": "2023-04-01",
+      "months": 2
+    },
+    {
+      "company": "Capitolis",
+      "start": "2022-06-01",
+      "end": "2022-12-01",
+      "months": 6
+    },
+    {
+      "company": "GigaSpaces",
+      "start": "2021-11-01",
+      "end": "2022-06-01",
+      "months": 7
+    },
+    {
+      "company": "Halo",
+      "start": "2021-09-01",
+      "end": "2021-10-01",
+      "months": 1
+    }
+  ]
+}

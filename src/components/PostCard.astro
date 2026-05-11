@@ -1,0 +1,60 @@
+---
+import type { Post } from "@lib/posts";
+import { postHref, formatDate } from "@lib/posts";
+
+interface Props {
+  post: Post;
+  featured?: boolean;
+}
+const { post, featured = false } = Astro.props;
+const { data } = post;
+---
+
+<style>
+  .series-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
+    background-color: #2563eb;
+    color: #fff;
+    vertical-align: middle;
+  }
+  .series-badge.series-recap {
+    background-color: #fef08a;
+    color: #dc2626;
+  }
+</style>
+
+<article class={`card${featured ? " featured" : ""}`}>
+  <a class="card-link" href={postHref(post)}>
+    {
+      data.image && (
+        <div class="card-img" style={`background-image: url('${data.image}');`} />
+      )
+    }
+    <div class="card-body">
+      <div class="card-meta">
+        {featured && <span class="badge">Featured</span>}
+        <time datetime={data.date.toISOString()}>{formatDate(data.date)}</time>
+        {data.source !== "general" && <span>· {data.source}</span>}
+      </div>
+      <h3 class="card-title">{data.title}
+        {data.series_part && data.series_part > 0 && <span class="series-badge">Part {data.series_part}</span>}
+        {data.series_recap && <span class="series-badge series-recap">Series Recap</span>}
+      </h3>
+      {data.description && <p class="card-desc">{data.description}</p>}
+      {
+        data.tags && data.tags.length > 0 && (
+          <div class="card-tags">
+            {data.tags.slice(0, 4).map((t) => <span class="tag">{t}</span>)}
+          </div>
+        )
+      }
+    </div>
+  </a>
+</article>

@@ -1,0 +1,93 @@
+<button
+  class=theme-toggle-switch
+  type=button
+  aria-label Switch to light theme
+  data-theme-toggle
+  data-state=dark>
+  <span class=switch-track>
+    <span class=switch-thumb>
+      <span class=icon-sun aria-hidden=true>☀️</span>
+      <span class=icon-moon aria-hidden=true>🌙</span>
+    </span>
+  </span>
+</button>
+
+<script is:inline>
+  (() => {
+    const storageKey = "theme";
+    const root = document.documentElement;
+
+    const readStored = () => {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        return stored === "dark" || stored === "light" ? stored : null;
+      } catch (_err) {
+        return null;
+      }
+    };
+
+    const writeStored = (value) => {
+      try {
+        localStorage.setItem(storageKey, value);
+      } catch (_err) {
+        /* ignore */
+      }
+    };
+
+    const apply = (button, state, persist) => {
+      root.dataset.theme = state === "dark" ? "dark" : "light";
+      button.setAttribute("data-state", state);
+      if (state === "dark") {
+        button.setAttribute("aria-label", "Switch to light theme");
+      } else {
+        button.setAttribute("aria-label", "Switch to dark theme");
+      }
+      if (persist) {
+        writeStored(state);
+      }
+    };
+
+    const initButton = (button) => {
+      if (!button) return;
+      const stored = readStored();
+      if (stored) {
+        apply(button, stored, false);
+        return;
+      }
+      const rootTheme = root.dataset.theme;
+      if (rootTheme === "light" || rootTheme === "dark") {
+        apply(button, rootTheme, false);
+        return;
+      }
+      const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+      apply(button, prefersDark ? "dark" : "light", false);
+    };
+
+    // Init on page load
+    initButton(document.querySelector('[data-theme-toggle]'));
+
+    // Use event delegation for ClientRouter navigation
+    document.addEventListener('click', (e) => {
+      const button = e.target.closest('[data-theme-toggle]');
+      if (!button) return;
+      const current = button.getAttribute('data-state') === "dark" ? "dark" : "light";
+      const next = current === "dark" ? "light" : "dark";
+      apply(button, next, true);
+    });
+
+    // Re-init after Astro view transitions
+    document.addEventListener('astro:after-swap', () => {
+      initButton(document.querySelector('[data-theme-toggle]'));
+    });
+
+    // Listen for system preference changes
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    media?.addEventListener("change", (event) => {
+      const stored = readStored();
+      if (stored) return;
+      const next = event.matches ? "dark" : "light";
+      const button = document.querySelector('[data-theme-toggle]');
+      if (button) apply(button, next, false);
+    });
+  })();
+</script>
