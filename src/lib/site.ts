@@ -14,7 +14,7 @@ export const SITE = {
   social: {
     github: "https://github.com/orenoren1",
     gitlab: "https://gitlab.com/placeholder",
-    medium: "https://medium.com/@placeholder",
+    medium: "https://medium.com/@orensito1",
     linkedin: "https://www.linkedin.com/in/oren-sultan-0527bab6/",
     email: "orensu1210@gmail.com",
     rss: "/rss.xml",

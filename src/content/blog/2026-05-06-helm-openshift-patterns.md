@@ -3,7 +3,7 @@ title: "Adapting a Helm Chart Suite for OpenShift: Patterns from a Real Deployme
 meta_title: "Helm Charts for OpenShift: 6 Proven Patterns"
 description: "Six battle-tested patterns for adapting Helm chart suites to OpenShift — platform value layers, restricted-v2 helpers, runtime CA injection, and Kyverno Job policies."
 date: 2026-05-06T00:00:00+00:00
-image: "/images/blog/2026/helm-openshift-patterns/cover.png"
+image: "https://i.ibb.co/prMR0y4t/Gemini-Generated-Image-kh3sz2kh3sz2kh3s.png"
 categories:
   - "Platform Engineering"
   - "DevOps"
@@ -18,6 +18,7 @@ tags:
   - "external-secrets"
   - "security"
 draft: false
+featured: true
 author: "Oren Sultan"
 ---
 
