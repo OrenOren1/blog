@@ -9,10 +9,17 @@ node_modules/
 
 # logs
 npm-debug.log*
+scripts/blog-images-resolve.log
+scripts/blog-images-then-dev.log
+scripts/blog-images-then-dev.pid
+scripts/image-prompt-archive-smoke.md
 
 # env
 .env
 .env.production
+.imgbb-token
+.gemini-api-key
+.googleAI-token
 
 # macOS
 .DS_Store

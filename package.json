@@ -4,12 +4,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
+    "dev": "astro dev --host 127.0.0.1",
+    "start": "astro dev --host 127.0.0.1",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "migrate": "python3 scripts/migrate_hugo.py"
+    "migrate": "python3 scripts/migrate_hugo.py",
+    "blog:images": "node scripts/imgbb-resolve-prompts.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",

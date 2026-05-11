@@ -140,6 +140,54 @@ Default target:
 
 If a draft exceeds target, tighten repetition first before removing core technical substance.
 
+## IMAGE_PROMPT and ImgBB pipeline
+
+Use **machine-readable** markers so **`task blog:images -- path/to/post.md`** (or `task blog:images:draft` for the default path in `Taskfile.yaml`) can replace them with real URLs. Same script: `npm run blog:images -- …` if Task is not used.
+
+### Inline illustration (body)
+
+Single line (preferred; multiline not supported by the resolver):
+
+```markdown
+[IMAGE_PROMPT: Short alt idea — detailed visual description for DALL-E 3, 16:9, style notes]
+```
+
+### Hero / Open Graph cover
+
+Wrap the cover prompt so the tool can set `image:` in front matter when it is still a placeholder (`/images/blog/...` or empty):
+
+```markdown
+<!-- blog:image role="cover" id="post-slug-hero" -->
+[IMAGE_PROMPT: Wide cinematic illustration of ...]
+<!-- /blog:image -->
+```
+
+Optional wrapper without attributes (same as inline, still replaced in the body):
+
+```markdown
+<!-- blog:image -->
+[IMAGE_PROMPT: ...]
+<!-- /blog:image -->
+```
+
+### After the draft exists
+
+From the repo root: **Gemini** ([Nano Banana / Nano Banana Pro](https://ai.google.dev/gemini-api/docs/image-generation) via `generateContent`) when any Gemini key is configured: `GEMINI_API_KEY`, `GEMINI_API_KEYS` (comma-separated), and/or **one key per line** in `.googleAI-token` / `.gemini-api-key` (fallback on 429/401/403). Otherwise **OpenAI** if `OPENAI_API_KEY` is set. ImgBB: `IMGBB_API_KEY` or `.imgbb-token`.
+
+```bash
+task blog:images -- path/to/post.md
+task blog:images:draft
+# equivalent: npm run blog:images -- path/to/post.md
+```
+
+**After a successful run**, each slot becomes **two lines**: (1) a single-line HTML comment `<!-- image_prompt:archive index=N role=cover id=… b64=… -->` that stores the exact prompt (base64url, safe inside comments), then (2) `![alt](https://i.ibb.co/…)` — so the **image stays in place** and the **prompt is recoverable**. Keep those comments for reference; to regenerate, put a new `[IMAGE_PROMPT: …]` where you want art (or decode `b64=` with Node `Buffer.from("…","base64url").toString("utf8")` and paste back as a marker). Set `BLOG_IMAGES_ARCHIVE_PROMPTS=0` when running `blog:images` if you want **no** archive comments on that run (ImgBB markdown only).
+
+Optional: `IMAGE_GEN_PROVIDER=gemini|openai|auto`, `GEMINI_IMAGE_MODEL=gemini-3-pro-image-preview` (default Pro image).
+
+Use `--dry-run` to list detected prompts only. Use `--use-first-as-cover` if the first `[IMAGE_PROMPT:]` should become `image:` in YAML (no `role="cover"` block).
+
+Agents should **not** run this command without the user’s keys and explicit request to burn API quota.
+
 ## Execution Checklist for Any Agent
 
 Before marking done:
@@ -150,3 +198,4 @@ Before marking done:
 - Read length target is respected.
 - Links are real and relevant.
 - Draft status reflects user intent.
+- If the post uses `[IMAGE_PROMPT: ...]`, remind the user to run **`task blog:images -- <path>`** or **`task blog:images:draft`** when they are ready to generate and host images.

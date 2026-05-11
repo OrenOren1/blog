@@ -3,6 +3,12 @@ version: '3'
 vars:
   NODE_VERSION: '20.17.0'
   PY_ENV: '.python-env'
+  # Default for `task dev GENIMAGES=1` (override per run: IMAGES_POST=…)
+  GENIMAGES: '0'
+  DEFAULT_IMAGES_POST: 'src/content/blog/drafts/2026-05-11-strimzi-debezium-cdc-e2e-lessons.md'
+  IMAGES_POST: '{{.DEFAULT_IMAGES_POST}}'
+  # Printed by `task dev` / `task dev GENIMAGES=1|bg` (override if Astro uses another port)
+  DEV_ORIGIN: 'http://127.0.0.1:4321'
 
 env:
   PATH: '.nodeenv/bin:{{.PATH}}'
@@ -31,11 +37,97 @@ tasks:
       - npm install
 
   dev:
-    desc: Run the Astro dev server from the virtual environment
+    desc: |
+      Run Astro dev. Prints local URLs (site + default IMAGES_POST). GENIMAGES=1 — blog:images then dev.
+      GENIMAGES=bg — images then dev in background (see log); URLs printed here too.
     deps:
       - install
     cmds:
-      - npm run dev
+      - |
+        set -e
+        _ORIGIN="{{.DEV_ORIGIN}}"
+        _POST="{{.IMAGES_POST}}"
+        _REL=""
+        case "$_POST" in
+          *src/content/blog/*)
+            _REL="${_POST#*src/content/blog/}"
+            _REL="${_REL%.md}"
+            _REL="${_REL%.mdx}"
+            ;;
+        esac
+        print_dev_links() {
+          echo ""
+          echo "══════════════════════════════════════════════════════════════════"
+          echo "  Local site:     ${_ORIGIN}/"
+          if [ -n "$_REL" ]; then
+            echo "  Default post:   ${_ORIGIN}/blog/${_REL}/"
+            echo "  (from IMAGES_POST / Taskfile IMAGES_POST)"
+          else
+            echo "  (set IMAGES_POST=src/content/blog/.../*.md to show a /blog/.../ link here)"
+          fi
+          echo "══════════════════════════════════════════════════════════════════"
+          echo ""
+        }
+        case "{{.GENIMAGES}}" in
+          1|true|yes|TRUE|Yes|on|ON)
+            print_dev_links
+            echo ">>> Resolving IMAGE_PROMPT → ImgBB: {{.IMAGES_POST}}"
+            npm run blog:images -- "{{.IMAGES_POST}}"
+            print_dev_links
+            npm run dev
+            ;;
+          bg|background|BG)
+            LOG="scripts/blog-images-then-dev.log"
+            rm -f scripts/blog-images-then-dev.pid
+            print_dev_links
+            (
+              set -e
+              echo "=== blog:images $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+              npm run blog:images -- "{{.IMAGES_POST}}"
+              echo "=== npm run dev $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+              exec npm run dev
+            ) >>"$LOG" 2>&1 &
+            echo $! > scripts/blog-images-then-dev.pid
+            echo "Background pipeline (images → dev) started. PID $(cat scripts/blog-images-then-dev.pid)"
+            echo "  tail -f $LOG"
+            print_dev_links
+            ;;
+          *)
+            print_dev_links
+            npm run dev
+            ;;
+        esac
+
+  dev:links:
+    desc: Print DEV_ORIGIN and the /blog/.../ URL for current IMAGES_POST (no server)
+    cmds:
+      - |
+        _ORIGIN="{{.DEV_ORIGIN}}"
+        _POST="{{.IMAGES_POST}}"
+        _REL=""
+        case "$_POST" in
+          *src/content/blog/*)
+            _REL="${_POST#*src/content/blog/}"
+            _REL="${_REL%.md}"
+            _REL="${_REL%.mdx}"
+            ;;
+        esac
+        echo "${_ORIGIN}/"
+        [ -n "$_REL" ] && echo "${_ORIGIN}/blog/${_REL}/"
+
+  dev-genimages:
+    desc: Shorthand — same as `task dev GENIMAGES=1` (resolve IMAGE_PROMPTs on default post, then dev)
+    cmds:
+      - task: dev
+        vars:
+          GENIMAGES: '1'
+
+  dev-genimages-bg:
+    desc: Shorthand — same as `task dev GENIMAGES=bg` (images then dev in background; tail the log)
+    cmds:
+      - task: dev
+        vars:
+          GENIMAGES: 'bg'
 
   build:
     desc: Build the Astro site for production using the virtual environment
@@ -50,6 +142,25 @@ tasks:
       - install
     cmds:
       - npm run preview
+
+  blog:images:
+    desc: |
+      Resolve IMAGE_PROMPT → ImgBB (Gemini + upload). Pass args after --, e.g.
+      task blog:images -- src/content/blog/drafts/post.md
+      task blog:images -- src/content/blog/drafts/post.md --dry-run
+    deps:
+      - install
+    cmds:
+      - npm run blog:images -- {{.CLI_ARGS}}
+
+  blog:images:draft:
+    desc: |
+      Same as blog:images on IMAGES_POST (default Strimzi draft in Taskfile vars).
+      Override: task blog:images:draft IMAGES_POST=src/content/blog/drafts/other.md
+    deps:
+      - install
+    cmds:
+      - npm run blog:images -- "{{.IMAGES_POST}}"
 
   clean:
     desc: Remove the Node environment and installed dependencies
