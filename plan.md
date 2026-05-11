@@ -26,13 +26,13 @@
 - [x] Run build (`npm run build`) - SUCCESS
 
 ## GitHub Pages Deployment
-- [ ] Create GitHub repo `hagzag/orens-portfolio`
-- [ ] Push code
+- [x] Create GitHub repo `OrenOren1/blog`
+- [x] Push code
 - [ ] Enable GitHub Pages (main branch)
 - [ ] Configure CNAME `orens.hagzag.com` in repo settings
 
 ## DNS
-- [ ] User: Configure CNAME record `orens.hagzag.com` → `hagzag.github.io`
+- [ ] User: Configure CNAME record `orens.hagzag.com` → `orenoren1.github.io`
 
 ## Next Steps for Oren
 - [x] Add initial blog posts in `src/content/blog/`
