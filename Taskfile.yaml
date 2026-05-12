@@ -5,7 +5,7 @@ vars:
   PY_ENV: '.python-env'
   # Default for `task dev GENIMAGES=1` (override per run: IMAGES_POST=…)
   GENIMAGES: '0'
-  DEFAULT_IMAGES_POST: 'src/content/blog/drafts/2026-05-11-strimzi-debezium-cdc-e2e-lessons.md'
+  DEFAULT_IMAGES_POST: 'src/content/blog/kubernetes/2026-05-11-strimzi-debezium-cdc-e2e-lessons.md'
   IMAGES_POST: '{{.DEFAULT_IMAGES_POST}}'
   # Printed by `task dev` / `task dev GENIMAGES=1|bg` (override if Astro uses another port)
   DEV_ORIGIN: 'http://127.0.0.1:4321'
@@ -146,8 +146,8 @@ tasks:
   blog:images:
     desc: |
       Resolve IMAGE_PROMPT → ImgBB (Gemini + upload). Pass args after --, e.g.
-      task blog:images -- src/content/blog/drafts/post.md
-      task blog:images -- src/content/blog/drafts/post.md --dry-run
+      task blog:images -- src/content/blog/kubernetes/your-post.md
+      task blog:images -- src/content/blog/kubernetes/your-post.md --dry-run
     deps:
       - install
     cmds:
@@ -155,8 +155,8 @@ tasks:
 
   blog:images:draft:
     desc: |
-      Same as blog:images on IMAGES_POST (default Strimzi draft in Taskfile vars).
-      Override: task blog:images:draft IMAGES_POST=src/content/blog/drafts/other.md
+      Same as blog:images on IMAGES_POST (default post in Taskfile vars).
+      Override: task blog:images:draft IMAGES_POST=src/content/blog/kubernetes/other.md
     deps:
       - install
     cmds:

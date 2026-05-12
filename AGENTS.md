@@ -14,7 +14,7 @@ High-signal guidance for AI agents working in this Astro portfolio repo.
   - `task setup` (create `.nodeenv` + install deps)
   - `task dev`, `task build`, `task preview`
   - `task dev` — prints **local URLs** (site + `/blog/…/` for `IMAGES_POST`), then `astro dev` on **127.0.0.1:4321** (see `DEV_ORIGIN` in `Taskfile.yaml`). Run `task dev:links` anytime to print links without starting the server.
-  - `task dev GENIMAGES=1` — runs `npm run blog:images` on the default draft (see `DEFAULT_IMAGES_POST` in `Taskfile.yaml`), then starts the dev server in the **same** terminal (blocks until images finish). Override path: `task dev GENIMAGES=1 IMAGES_POST=src/content/blog/drafts/other.md`
+  - `task dev GENIMAGES=1` — runs `npm run blog:images` on the default post (see `DEFAULT_IMAGES_POST` in `Taskfile.yaml`), then starts the dev server in the **same** terminal (blocks until images finish). Override path: `task dev GENIMAGES=1 IMAGES_POST=src/content/blog/kubernetes/other.md`
   - `task dev GENIMAGES=bg` — runs **images then dev** in a **background** subshell (task exits right away); combined log: `scripts/blog-images-then-dev.log`, PID in `scripts/blog-images-then-dev.pid`. Follow with `tail -f scripts/blog-images-then-dev.log` until you see the Astro “ready” line.
   - `task dev-genimages` — shorthand for `task dev GENIMAGES=1`
   - `task dev-genimages-bg` — shorthand for `task dev GENIMAGES=bg`
@@ -71,13 +71,13 @@ export OPENAI_API_KEY=sk-...
 
 ```bash
 # Preferred (uses repo Node from Task install deps):
-task blog:images -- src/content/blog/drafts/your-post.md
+task blog:images -- src/content/blog/kubernetes/your-post.md
 task blog:images:draft
 # `blog:images:draft` runs on IMAGES_POST from Taskfile.yaml (defaults to DEFAULT_IMAGES_POST); override per run: IMAGES_POST=…
 
-IMAGE_GEN_PROVIDER=openai task blog:images -- src/content/blog/drafts/your-post.md
+IMAGE_GEN_PROVIDER=openai task blog:images -- src/content/blog/kubernetes/your-post.md
 # optional: first generated image also becomes front matter `image:` (when still a placeholder)
-task blog:images -- src/content/blog/drafts/your-post.md --use-first-as-cover
+task blog:images -- src/content/blog/kubernetes/your-post.md --use-first-as-cover
 ```
 
 Equivalent without Task: `npm run blog:images -- <path> [flags]`.
