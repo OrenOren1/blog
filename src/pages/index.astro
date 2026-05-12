@@ -14,7 +14,10 @@ const featured = await getFeaturedPosts();
       <div class="hero-copy">
         <h1 class="hero-title">{SITE.author}</h1>
         <p class="hero-role">{SITE.role}</p>
-        <p class="lede">{SITE.heroLead}</p>
+        <p class="lede">
+          Practitioner notes on Kubernetes, GitOps, AI/ML integration, and building
+          enterprise platforms. {SITE.description}
+        </p>
         <div class="hero-actions">
           <a href="/blog/" class="cta">Read all posts →</a>
           <a href="/about/" class="cta secondary">About me →</a>

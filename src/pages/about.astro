@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { SITE } from "@lib/site";
 ---
 
 <BaseLayout title="About" description="About Oren Sultan — Senior DevOps Engineer, platform & GitOps">
@@ -75,9 +76,9 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 
     <h2>Contact</h2>
     <p>
-      <a href="mailto:orensu1210@gmail.com">orensu1210@gmail.com</a><br/>
-      <a href="https://www.linkedin.com/in/oren-sultan-0527bab6/">LinkedIn</a><br/>
-      <a href="https://github.com/orensul">GitHub</a>
+      <a href={`mailto:${SITE.social.email}`}>{SITE.social.email}</a><br/>
+      <a href={SITE.social.linkedin}>LinkedIn</a><br/>
+      <a href={SITE.social.github}>GitHub</a>
     </p>
   </div>
 </BaseLayout>
