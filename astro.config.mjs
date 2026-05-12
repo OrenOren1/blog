@@ -53,7 +53,7 @@ export default defineConfig({
       displayIdleDelayMs: 0,
       consent: {
         days: 365,
-        storageKey: "hagzag-consent"
+        storageKey: "oren-blog-consent"
       }
     }),
     mdx(),
@@ -64,7 +64,11 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [remarkReadingTime],
     shikiConfig: {
-      theme: "github-dark-dimmed",
+      themes: {
+        light: "github-light",
+        dark: "github-dark-dimmed",
+      },
+      defaultColor: false,
       wrap: true,
     },
   },

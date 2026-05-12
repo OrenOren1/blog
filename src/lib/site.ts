@@ -4,6 +4,11 @@
 export const SITE = {
   title: "Oren Sultan",
   author: "Oren Sultan",
+  /** Homepage hero line under the name */
+  role: "DevOps & Platform Engineer",
+  /** Homepage hero paragraph (meta description stays separate for SEO snippets) */
+  heroLead:
+    "Practitioner notes on Kubernetes, GitOps, AI/ML integration, and building enterprise platforms.",
   description:
     "DevOps & Platform Engineer | Kubernetes, GitOps, AI/ML Integration — by Oren Sultan.",
   url: "https://orens.hagzag.com",

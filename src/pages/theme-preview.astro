@@ -1,0 +1,165 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import "@/styles/theme-preview.css";
+---
+
+<BaseLayout title="Theme Preview" description="Preview alternative UI themes for the portfolio">
+  <div class="wrap-narrow tp-page">
+    <h1 style="margin-top: 2.5rem; margin-bottom: 1.25rem;">Theme Preview</h1>
+    <p style="margin: 0 0 1.5rem; opacity: 0.85;">
+      Quick visual demos for four theme concepts: Structural Brutalist, Swiss International, Obsidian Layer, and Editorial White-Paper.
+      (Code highlighting in this preview is intentionally simplified.)
+    </p>
+
+    <div class="tp-nav" aria-label="Theme navigation">
+      <button class="tp-nav-btn" id="tp-prev" type="button">Prev</button>
+      <div class="tp-nav-indicator" id="tp-indicator">1 / 4</div>
+      <button class="tp-nav-btn" id="tp-next" type="button">Next</button>
+    </div>
+
+    <div class="tp-grid">
+      <section class="tp-card" id="tp-theme-1" data-theme-index="1">
+        <div class="tp-card__head">
+          <h2 class="tp-card__title">1. Structural Brutalist</h2>
+          <div class="tp-card__hint">Raw Infrastructure</div>
+        </div>
+        <div class="tp-card__body">
+          <div class="tp-demo tp--brutalist">
+            <div class="tp-demo__inner">
+              <h2>Technical Blueprint</h2>
+              <p>
+                Bold borders, rigid structure, and negative space—built to frame complex diagrams and system thinking.
+              </p>
+              <a class="tp-ghost-btn" href="#">Deploy</a>
+              <div class="tp-demo__hr" style="margin: 1rem 0;"></div>
+              <pre><code>$ kubectl describe kafka-connect cluster
+READY=true
+status.conditions=RUNNING
+resourceUsage: peak=high
+</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tp-card" id="tp-theme-2" data-theme-index="2">
+        <div class="tp-card__head">
+          <h2 class="tp-card__title">2. Swiss International</h2>
+          <div class="tp-card__hint">Mathematical Precision</div>
+        </div>
+        <div class="tp-card__body">
+          <div class="tp-demo tp--swiss">
+            <div class="tp-demo__inner">
+              <h2>Content-First Portfolio</h2>
+              <p>
+                A 12-column grid with typographic hierarchy and a single orange accent.
+                Interaction feels “ghost” and deliberate.
+              </p>
+              <a class="tp-ghost-btn" href="#">CTA</a>
+              <pre><code>if (connector.isRunning()) &#123;
+  renderHelmValues();
+  reconcileWithStrimzi();
+&#125;
+</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tp-card" id="tp-theme-3" data-theme-index="3">
+        <div class="tp-card__head">
+          <h2 class="tp-card__title">3. Obsidian Layer</h2>
+          <div class="tp-card__hint">Depth & Sophistication</div>
+        </div>
+        <div class="tp-card__body">
+          <div class="tp-demo tp--obsidian">
+            <div class="tp-demo__inner">
+              <h2>Atmospheric Executive Tech</h2>
+              <p>
+                Frosted depth, neon haze accents, and a premium dark-mode feel built for command-and-control UI.
+              </p>
+              <a class="tp-ghost-btn" href="#">Command Palette</a>
+              <div class="tp-demo__hr" style="margin: 1rem 0;"></div>
+              <pre><code>$ echo "noctis://shiki-highlight" | render
+z-index: frosted
+blur: 14px
+glow: cyan-violet
+</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tp-card" id="tp-theme-4" data-theme-index="4">
+        <div class="tp-card__head">
+          <h2 class="tp-card__title">4. Editorial White-Paper</h2>
+          <div class="tp-card__hint">The Authority</div>
+        </div>
+        <div class="tp-card__body">
+          <div class="tp-demo tp--editorial">
+            <div class="tp-demo__inner">
+              <h2>Engineering Journal</h2>
+              <p>
+                Austere white-paper presentation, hyper-legible text, and inset code cards for long-form insight.
+              </p>
+              <a class="tp-ghost-btn" href="#">Lessons</a>
+              <pre><code>// Lessons learned (pull-quote tone)
+// 1) Observability first
+// 2) GitOps always
+// 3) Security is a workflow
+</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script is:inline>
+    (() => {
+      const cards = Array.from(document.querySelectorAll(".tp-card[data-theme-index]"));
+      if (!cards.length) return;
+
+      const prevBtn = document.getElementById("tp-prev");
+      const nextBtn = document.getElementById("tp-next");
+      const indicator = document.getElementById("tp-indicator");
+
+      const parseFromHash = () => {
+        const m = String(window.location.hash || "").match(/tp-theme-(\d+)/);
+        return m ? Number(m[1]) : null;
+      };
+
+      const setActive = (idx) => {
+        cards.forEach((c) => c.classList.toggle("is-active", Number(c.dataset.themeIndex) === idx));
+        if (indicator) indicator.textContent = `${idx} / ${cards.length}`;
+      };
+
+      const scrollTo = (idx, { smooth = true } = {}) => {
+        const target = cards[idx - 1];
+        if (!target) return;
+        setActive(idx);
+        // keep URL bookmarkable
+        window.location.hash = `tp-theme-${idx}`;
+        target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+      };
+
+      const current = parseFromHash() ?? 1;
+      setActive(current);
+
+      if (parseFromHash() !== null) {
+        scrollTo(current, { smooth: false });
+      } else {
+        cards[0].classList.add("is-active");
+      }
+
+      const curIdx = () => {
+        const m = parseFromHash();
+        return m ?? 1;
+      };
+
+      prevBtn?.addEventListener("click", () => scrollTo(Math.max(1, curIdx() - 1)));
+      nextBtn?.addEventListener("click", () => scrollTo(Math.min(cards.length, curIdx() + 1)));
+    })();
+  </script>
+</BaseLayout>
+

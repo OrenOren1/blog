@@ -4,6 +4,7 @@
  *
  * Usage:
  *   node scripts/imgbb-resolve-prompts.mjs <path-to-post.md> [--dry-run] [--use-first-as-cover] [--background]
+ *   node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out <path-to.png>  # Gemini Nano Banana → local PNG (site header stamp)
  *
  * --background — detach: writes stdout/stderr to scripts/blog-images-resolve.log and exits immediately (tail that file).
  *
@@ -27,6 +28,10 @@
  *   OPENAI_API_KEY — OpenAI when provider is openai or auto fallback
  *   IMGBB_API_KEY  — optional if repo root `.imgbb-token` exists (first line)
  *
+ * Brand stamp (--brand-stamp-out):
+ *   Requires Gemini (IMAGE_GEN_PROVIDER=gemini or auto with a Gemini key). ImgBB is not used.
+ *   Defaults GEMINI_IMAGE_ASPECT_RATIO to 1:1 if unset. Override prompt with BRAND_STAMP_PROMPT.
+ *
  * Gemini keys: `GEMINI_API_KEY`, then `GEMINI_API_KEYS` (comma-separated), then every non-comment line in `.googleAI-token`, then `.gemini-api-key`. Retries the next key on 429/401/403 or 400 with invalid API key. ImgBB: `.imgbb-token` (first line) or `IMGBB_API_KEY`.
  *
  * Markers:
@@ -38,12 +43,68 @@
  */
 
 import { spawn } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, openSync, closeSync, writeSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  openSync,
+  closeSync,
+  writeSync,
+  mkdirSync,
+} from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
+
+/** Optional PNG export (header uses inline SVG). Gemini Nano Banana only (--brand-stamp-out). */
+const DEFAULT_BRAND_STAMP_PROMPT = `Vintage circular rubber stamp seal, single warm sepia / brown-orange ink (#b56b2f to #9a5f2d), heavy grunge: speckles and missing ink inside letterforms, rough bleed edges.
+Thick distressed outer ring + thinner inner ring. Top and bottom inner arcs: small bold sans text "— OFFICIAL —" and "— BLOG —". Two clusters of three small five-pointed stars (one arc above center, one below).
+Center: large bold sans phrase "by Oren Sultan" tilted ~16° (rising to the right), "by" smaller above the name.
+Large graphic on square 1:1 canvas, centered.`;
+
+/** Appended via GEMINI_IMAGE_EXTRA_INSTRUCTION only for --brand-stamp-out (alpha / no matte). */
+const BRAND_STAMP_ALPHA_EXTRA = `Alpha-channel asset for the web: the ONLY opaque pixels must be the sepia / brown-orange stamp ink (rings, curved labels, stars, center name). Everywhere else must be 100% transparent — including the entire interior of the inner circle (no cream, no paper disc, no white square, no checkerboard). No separate drop-shadow layer; ink bleed only. Square 1:1, stamp centered with wide transparent margin.`;
+
+async function runBrandStampOut(outArg) {
+  if (!outArg?.trim()) {
+    console.error("Usage: node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out <path-to.png>");
+    process.exit(1);
+  }
+  const outPath = resolve(process.cwd(), outArg.trim());
+  if (!process.env.GEMINI_IMAGE_ASPECT_RATIO?.trim()) {
+    process.env.GEMINI_IMAGE_ASPECT_RATIO = "1:1";
+  }
+  let provider;
+  try {
+    provider = resolveImageProvider();
+  } catch (e) {
+    console.error(e.message || e);
+    process.exit(1);
+  }
+  if (provider !== "gemini") {
+    console.error(
+      "--brand-stamp-out needs Gemini (Nano Banana). Configure GEMINI_API_KEY or lines in .googleAI-token, or set IMAGE_GEN_PROVIDER=gemini.",
+    );
+    process.exit(1);
+  }
+  const prompt = process.env.BRAND_STAMP_PROMPT?.trim() || DEFAULT_BRAND_STAMP_PROMPT;
+  const priorExtra = process.env.GEMINI_IMAGE_EXTRA_INSTRUCTION;
+  process.env.GEMINI_IMAGE_EXTRA_INSTRUCTION = [priorExtra?.trim(), BRAND_STAMP_ALPHA_EXTRA].filter(Boolean).join("\n\n");
+  console.error("Generating site brand stamp with Gemini Nano Banana (1:1)…");
+  let b64;
+  try {
+    b64 = await generateImageBase64("gemini", prompt);
+  } finally {
+    if (priorExtra === undefined) delete process.env.GEMINI_IMAGE_EXTRA_INSTRUCTION;
+    else process.env.GEMINI_IMAGE_EXTRA_INSTRUCTION = priorExtra;
+  }
+  const buf = Buffer.from(b64, "base64");
+  mkdirSync(dirname(outPath), { recursive: true });
+  writeFileSync(outPath, buf);
+  console.error(`Wrote ${outPath} (${buf.length} bytes). Commit this file and reference it from the header.`);
+}
 
 const WRAPPED_BLOCK =
   /<!--\s*blog:image(?:\s+([^>]*?))?\s*-->\s*\r?\n\[IMAGE_PROMPT:\s*([\s\S]*?)\]\s*\r?\n<!--\s*\/blog:image\s*-->/g;
@@ -551,6 +612,13 @@ function patchFrontMatterImage(markdown, url) {
 
 async function main() {
   const args = process.argv.slice(2);
+  const stampOutIdx = args.indexOf("--brand-stamp-out");
+  if (stampOutIdx !== -1) {
+    const outArg = args[stampOutIdx + 1];
+    await runBrandStampOut(outArg);
+    process.exit(0);
+  }
+
   const runBackground = args.includes("--background");
   const worker = process.env.BLOG_IMAGES_WORKER === "1";
 
@@ -581,7 +649,8 @@ async function main() {
 
   if (!fileArg) {
     console.error(
-      "Usage: node scripts/imgbb-resolve-prompts.mjs <post.md> [--dry-run] [--use-first-as-cover] [--background]",
+      "Usage: node scripts/imgbb-resolve-prompts.mjs <post.md> [--dry-run] [--use-first-as-cover] [--background]\n" +
+        "   or: node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out <path-to.png>",
     );
     process.exit(1);
   }

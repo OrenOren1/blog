@@ -39,7 +39,7 @@ const canonical = new URL(canonicalPath ?? Astro.url.pathname, SITE.url).toStrin
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Oswald:wght@700&display=swap"
     />
 
     <!-- lite-youtube-embed web component (replaces Hugo's youtube-lite) -->
@@ -92,7 +92,7 @@ const canonical = new URL(canonicalPath ?? Astro.url.pathname, SITE.url).toStrin
         const MEASUREMENT_ID = "G-5BR74BPGG5";
         function hasConsentStatus() {
           try {
-            const consent = localStorage.getItem("hagzag-consent");
+            const consent = localStorage.getItem("oren-blog-consent");
             if (!consent) return false;
             if (consent === "accepted") return true;
             const parsed = JSON.parse(consent);
@@ -118,7 +118,7 @@ const canonical = new URL(canonicalPath ?? Astro.url.pathname, SITE.url).toStrin
           loadGA(MEASUREMENT_ID);
         }
         window.addEventListener("storage", (e) => {
-          if (e.key !== "hagzag-consent") return;
+          if (e.key !== "oren-blog-consent") return;
           if (e.newValue === "accepted") {
             loadGA(MEASUREMENT_ID);
             return;
@@ -145,6 +145,10 @@ const canonical = new URL(canonicalPath ?? Astro.url.pathname, SITE.url).toStrin
       <filter id="stamp-distort">
         <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" />
         <feDisplacementMap in="SourceGraphic" scale="1.6" />
+      </filter>
+      <filter id="stamp-distort-heavy" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="1.05" numOctaves="3" seed="11" />
+        <feDisplacementMap in="SourceGraphic" scale="2.2" />
       </filter>
     </svg>
 

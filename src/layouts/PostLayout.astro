@@ -23,7 +23,7 @@ const { data } = post;
     {data.unlisted && (
       <>
         <div class='draft-ribbon draft-ribbon-top-right'><span>DRAFT</span></div>
-        <div style='margin:1rem auto;max-width:720px;text-align:center;padding:0.8em 1.1em;background:var(--c-theme-light);border:1px solid #d97706;border-radius:var(--radius,4px);'>
+        <div style='margin:1rem auto;max-width:720px;text-align:center;padding:0.8em 1.1em;background:var(--c-theme-light);border:1px solid var(--c-accent);border-radius:var(--radius,4px);'>
           This post is <strong>unlisted</strong> — only accessible via direct link. Not yet publicly published.
         </div>
       </>
@@ -216,8 +216,8 @@ const { data } = post;
       display: block;
       width: 225px;
       padding: 10px 0;
-      background-color: #2563eb;
-      color: #fff;
+      background-color: var(--c-accent);
+      color: var(--c-theme-light);
       font: 700 14px/1 sans-serif;
       text-transform: uppercase;
       text-align: center;
@@ -238,7 +238,7 @@ const { data } = post;
       z-index: -1;
       content: '';
       display: block;
-      border: 5px solid #1d4ed8;
+      border: 5px solid var(--c-accent-deep);
     }
     .series-ribbon-top-right {
       top: -10px;

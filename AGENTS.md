@@ -9,6 +9,7 @@ High-signal guidance for AI agents working in this Astro portfolio repo.
   - `npm run dev` (Astro dev server)
   - `npm run build` (production build)
   - `npm run preview` (preview built output)
+  - `npm run site:brand-stamp` (optional: Gemini Nano Banana → PNG via `--brand-stamp-out`; the **site header** stamp is an inline SVG in `Header.astro`, vintage sepia seal style)
 - Task runner equivalents:
   - `task setup` (create `.nodeenv` + install deps)
   - `task dev`, `task build`, `task preview`
@@ -80,6 +81,8 @@ task blog:images -- src/content/blog/drafts/your-post.md --use-first-as-cover
 ```
 
 Equivalent without Task: `npm run blog:images -- <path> [flags]`.
+
+**Optional PNG stamp:** `npm run site:brand-stamp` runs `node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out public/images/by-oren-sultan-stamp.png` with `GEMINI_IMAGE_SIZE=512` (see `package.json`). Requires **Gemini** only. Override art with **`BRAND_STAMP_PROMPT`**. The live header uses **coded SVG** (`Header.astro`) + `#stamp-distort-heavy` in `BaseLayout.astro` for the vintage seal look.
 
 If Gemini returns **429** with `free_tier` and `limit: 0` for image metrics, that API key’s project has no image-generation quota yet — turn on billing for the Gemini API in [Google AI Studio](https://aistudio.google.com/) (or Cloud billing for the same project), or run with `IMAGE_GEN_PROVIDER=openai` and `OPENAI_API_KEY`. See [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits).
 
