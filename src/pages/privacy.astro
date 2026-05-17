@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { SITE } from "@lib/site";
 ---
 <BaseLayout title="Privacy Policy" description="Privacy policy for app.sultano.blog.">
   <div class="wrap-narrow" style="margin-top:3rem;">
@@ -12,6 +13,10 @@ import BaseLayout from "@layouts/BaseLayout.astro";
     <h2>Third-party content</h2>
     <p>YouTube embeds may set cookies if you choose to play a video. We link to external sites (Medium, GitHub, LinkedIn) whose privacy policies govern their own data practices.</p>
     <h2>Contact</h2>
-    <p>Questions? Reach me at <a href="mailto:hagzag@tikalk.com">hagzag@tikalk.com</a> or on <a href="https://linkedin.com/in/hagzag">LinkedIn</a>.</p>
+    <p>
+      Questions? Reach me at <a href={`mailto:${SITE.social.email}`}>{SITE.social.email}</a>,
+      <a href={SITE.social.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>, or
+      <a href="/contact/">the contact page</a>.
+    </p>
   </div>
 </BaseLayout>

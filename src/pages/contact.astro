@@ -1,18 +1,25 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { SITE } from "@lib/site";
 ---
 
 <BaseLayout
   title="Contact"
-  description="Request a workshop or reading list consultation with Haggai Philip Zagury."
+  description={`Contact ${SITE.author} — platform engineering, DevOps, and consulting.`}
   canonicalPath="/contact"
 >
   <section class="contact-hero wrap">
     <div>
-      <p class="reading-eyebrow">Let’s Collaborate</p>
-      <h1>Request a Workshop</h1>
+      <p class="reading-eyebrow">Get in touch</p>
+      <h1>Contact</h1>
       <p class="contact-copy">
-        Fill out the form and I’ll get back to you with availability, a short agenda proposal, and next steps.
+        Reach out for consulting, workshops, or collaboration. You can use the form below or
+        email me directly.
+      </p>
+      <p class="contact-copy">
+        <a href={SITE.social.resume} class="cta secondary" target="_blank" rel="noopener noreferrer">
+          View resume →
+        </a>
       </p>
     </div>
   </section>
@@ -20,7 +27,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
   <section class="contact-section wrap">
     <form
       class="contact-form"
-      action="mailto:hagzag@hagzag.com"
+      action={`mailto:${SITE.social.email}`}
       method="post"
       encType="text/plain"
     >
@@ -35,7 +42,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
         </label>
         <label>
           <span>Company</span>
-          <input type="text" name="company" required autocomplete="organization" />
+          <input type="text" name="company" autocomplete="organization" />
         </label>
         <label>
           <span>Email</span>
@@ -50,14 +57,15 @@ import BaseLayout from "@layouts/BaseLayout.astro";
           rows="6"
           maxLength="500"
           required
-          placeholder="Describe the workshop or reading list you’re interested in (500 characters max)"
+          placeholder="Briefly describe what you’re looking for (500 characters max)"
         ></textarea>
       </label>
 
       <div class="contact-actions">
-        <button type="submit" class="cta">Send request →</button>
+        <button type="submit" class="cta">Send email →</button>
         <p class="contact-footnote">
-          Submitting opens your default email client with the details pre-filled. You can review the message before sending.
+          Submitting opens your mail client with the details pre-filled to{" "}
+          <a href={`mailto:${SITE.social.email}`}>{SITE.social.email}</a>. Review before sending.
         </p>
       </div>
     </form>

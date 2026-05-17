@@ -560,7 +560,7 @@ html[data-theme="dark"] .brand-stamp__svg {
   flex-wrap: wrap;
   gap: 0.9rem;
 }
-.hero .cta {
+.cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -569,22 +569,26 @@ html[data-theme="dark"] .brand-stamp__svg {
   color: var(--c-on-accent);
   border-radius: var(--radius);
   font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--c-accent) 25%, transparent);
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-.hero .cta:hover {
+.cta:hover {
   background: var(--c-accent-hover);
+  color: var(--c-on-accent);
   text-decoration: none;
   transform: translateY(-1px);
   box-shadow: 0 6px 20px color-mix(in srgb, var(--c-accent) 35%, transparent);
 }
-.hero .cta.secondary {
+.cta.secondary {
   background: transparent;
   color: var(--c-text-dark);
-  border: 1px solid var(--c-border);
+  border-color: var(--c-border);
   box-shadow: none;
 }
-.hero .cta.secondary:hover {
+.cta.secondary:hover {
+  background: transparent;
   border-color: var(--c-accent);
   color: var(--c-accent);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--c-accent) 15%, transparent);
@@ -1620,6 +1624,11 @@ lite-youtube {
 .social-links a.medium-icon {
   color: var(--c-text-dark);
 }
+.social-links a.resume-icon:hover {
+  color: var(--c-accent);
+  background: color-mix(in srgb, var(--c-accent) 12%, transparent);
+}
+
 .social-links a.medium-icon:hover {
   border-color: var(--c-accent);
   color: var(--c-accent);
