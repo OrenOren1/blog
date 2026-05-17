@@ -100,6 +100,8 @@ Pod (IRSA role) → assumes IAM role → RDS Proxy → RDS
 
 The management plane: Pulumi creates the per-service PostgreSQL role and `GRANT` statements in `postgresql_provision/provision.py`. ESO delivers the connection metadata (host, port, db name) — but not the password, because there isn't one.
 
+One thing I noted in the ADR but deferred: **EKS Pod Identity** is a cleaner alternative to IRSA for new clusters. Instead of annotating every service account with an IAM role ARN, you create an `EksPodIdentityAssociation` at the cluster layer — the binding lives outside Kubernetes manifests, trust policies don't need per-cluster OIDC conditions, and AWS's tooling handles credential delivery via a DaemonSet. The application code doesn't change; it's a pure infrastructure refactor. If I were building this from scratch on a new cluster, I'd use Pod Identity from day one. For an existing platform, IRSA works and the migration cost isn't worth it until you have dedicated headspace.
+
 ---
 
 ## The Decision I Almost Got Wrong
@@ -166,6 +168,40 @@ MongoDB Atlas supports OIDC Workload Identity Federation: a service pod authenti
 
 The catch is code changes. Every service needs its MongoDB driver upgraded (PyMongo ≥ 4.7, Node.js driver ≥ 6.3) and its connection string updated to use `authMechanism=MONGODB-OIDC`. That's a migration across every MongoDB-consuming service — worthwhile, but not v1 work.
 
+On EKS, the concrete setup looks like this. The pod gets a **projected service account token** mounted at a known path, with the audience set to `mongodb`:
+
+```yaml
+volumes:
+  - name: mongo-token
+    projected:
+      sources:
+        - serviceAccountToken:
+            audience: mongodb      # must match the Atlas IdP audience
+            expirationSeconds: 86400
+            path: token
+containers:
+  - volumeMounts:
+      - name: mongo-token
+        mountPath: /var/run/secrets/mongodb
+```
+
+The application reads that token file and passes it as the OIDC callback — no password, no secret:
+
+```python
+# PyMongo ≥ 4.7
+client = MongoClient(
+    uri,
+    authMechanism="MONGODB-OIDC",
+    authMechanismProperties={
+        "OIDC_CALLBACK": lambda _: {
+            "access_token": open("/var/run/secrets/mongodb/token").read()
+        }
+    }
+)
+```
+
+Atlas validates the token against the configured OIDC identity provider (your EKS cluster's OIDC issuer URL), maps the `sub` claim (`system:serviceaccount:<ns>:<sa>`) to an `AtlasDatabaseUser`, and grants the connection. No password anywhere in the chain.
+
 The upgrade path is non-destructive: services migrate one at a time, the Atlas Operator CRD changes from `passwordSecretRef` to `oidcAuthType`, and the ESO ExternalSecret for that service's MongoDB password gets removed. Full parity with RDS in terms of stored credentials: zero.
 
 ---
@@ -200,13 +236,15 @@ Every service in our platform shared one credential: atlasAdmin on MongoDB, mast
 
 I just finished designing the fix — and the most interesting part wasn't the technology, it was all the things I considered and decided NOT to use.
 
-Three things I learned:
+Four things I learned:
 
 1. Per-service Helm for DB user creation sounds elegant until you trace the dependency chain — it creates a chicken-and-egg problem that forces centralized provisioning anyway.
 
 2. Teleport and HashiCorp Boundary are excellent tools. I chose not to use them because the security properties I needed were achievable with tooling already running in the cluster. Reach for existing tooling before adding new dependencies.
 
 3. The management plane (how credentials are created) and the delivery plane (how they reach pods) are separate problems. MongoDB and RDS use different tools to manage credentials — that's fine. What matters is that the delivery interface to services is identical.
+
+4. IRSA works, but EKS Pod Identity is the cleaner model for new workloads — the role binding lives outside Kubernetes manifests, and trust policies don't need per-cluster OIDC conditions. If you're building from scratch, start there.
 
 Full design — RFC + ADR — is open-sourced: github.com/OrenOren1/db-access-least-privilege
 
