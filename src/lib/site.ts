@@ -1,6 +1,9 @@
 /**
  * Central site metadata. Change once, reflect everywhere.
  */
+/** GitHub repo for blog source + Giscus (owner/repo) */
+const BLOG_GITHUB_REPO = "OrenOren1/blog" as const;
+
 export const SITE = {
   title: "Oren Sultan",
   author: "Oren Sultan",
@@ -22,12 +25,14 @@ export const SITE = {
     rss: "/rss.xml",
   },
   /** `owner/repo` for GitHub “edit this page” links (blog source) */
-  contentGithubRepo: "OrenOren1/blog" as const,
+  contentGithubRepo: BLOG_GITHUB_REPO,
   giscus: {
-    repo: "hagzag/orens-portfolio" as const,
-    repoId: "",
-    category: "Announcements",
-    categoryId: "",
+    repo: BLOG_GITHUB_REPO,
+    /** From https://api.github.com/repos/OrenOren1/blog → node_id (or giscus.app) */
+    repoId: "R_kgDOSaYjKA",
+    /** Discussion category for post comments — enable Discussions on the repo, then set categoryId from giscus.app */
+    category: "General",
+    categoryId: "DIC_kwDOSaYjKM4C9Q8U",
     mapping: "pathname",
     reactionsEnabled: "1",
     emitMetadata: "0",

@@ -1,7 +1,8 @@
 ---
 import { SITE } from "@lib/site";
 const g = SITE.giscus;
-const configured = g.repoId && g.categoryId;
+const configured = Boolean(g.repoId && g.categoryId);
+const giscusInstallUrl = "https://github.com/apps/giscus/installations/new";
 ---
 
 {
@@ -27,10 +28,18 @@ const configured = g.repoId && g.categoryId;
   ) : (
     <div class="notice notice-note">
       <strong>Comments not yet configured.</strong>
-      Enable GitHub Discussions on <code>hagzag/portfolio</code>, run
-      <a href="https://giscus.app">giscus.app</a>, and fill
-      <code>giscus.repoId</code> / <code>categoryId</code> in
-      <code>src/lib/site.ts</code>.
+      <p>
+        Wire Giscus to <code>{g.repo}</code> from the repo root (needs{" "}
+        <code>gh</code> logged in with admin on that repo):
+      </p>
+      <pre><code>task giscus:setup -- --write</code></pre>
+      <p>
+        That enables Discussions (if needed), prints <code>repoId</code> /{" "}
+        <code>categoryId</code>, and can patch <code>src/lib/site.ts</code>. Then
+        <a href={giscusInstallUrl}>Install the giscus GitHub App</a> on account{" "}
+        <code>{g.repo.split("/")[0]}</code>, repository <code>{g.repo}</code>{" "}
+        (required — <code>gh</code> cannot install marketplace apps).
+      </p>
     </div>
   )
 }

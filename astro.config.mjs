@@ -2,6 +2,7 @@ import astroConsent from "astro-consent";
 import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
+import { remarkStripSocialSnippets } from "./remark-strip-social-snippets.mjs";
 import { remarkReadingTime } from "./remark-reading-time.mjs";
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
@@ -62,7 +63,7 @@ export default defineConfig({
     })
   ],
   markdown: {
-    remarkPlugins: [remarkReadingTime],
+    remarkPlugins: [remarkStripSocialSnippets, remarkReadingTime],
     shikiConfig: {
       themes: {
         light: "github-light",

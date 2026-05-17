@@ -11,7 +11,8 @@
     "astro": "astro",
     "migrate": "python3 scripts/migrate_hugo.py",
     "blog:images": "node scripts/imgbb-resolve-prompts.mjs",
-    "site:brand-stamp": "GEMINI_IMAGE_SIZE=512 node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out public/images/by-oren-sultan-stamp.png"
+    "site:brand-stamp": "GEMINI_IMAGE_SIZE=512 node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out public/images/by-oren-sultan-stamp.png",
+    "giscus:setup": "node scripts/giscus-setup.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",
