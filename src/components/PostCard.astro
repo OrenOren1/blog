@@ -8,6 +8,8 @@ interface Props {
 }
 const { post, featured = false } = Astro.props;
 const { data } = post;
+const cardTags = data.tags?.slice(0, 3) ?? [];
+const extraTagCount = Math.max(0, (data.tags?.length ?? 0) - cardTags.length);
 ---
 
 <style>
@@ -47,11 +49,20 @@ const { data } = post;
         {data.series_part && data.series_part > 0 && <span class="series-badge">Part {data.series_part}</span>}
         {data.series_recap && <span class="series-badge series-recap">Series Recap</span>}
       </h3>
-      {data.description && <p class="card-desc">{data.description}</p>}
+      {data.description ? (
+        <p class="card-desc">{data.description}</p>
+      ) : (
+        <p class="card-desc card-desc--placeholder">Read the full post →</p>
+      )}
       {
-        data.tags && data.tags.length > 0 && (
-          <div class="card-tags">
-            {data.tags.slice(0, 4).map((t) => <span class="tag">{t}</span>)}
+        cardTags.length > 0 && (
+          <div class="card-tags" aria-label="Tags">
+            {cardTags.map((t) => (
+              <span class="tag">{t}</span>
+            ))}
+            {extraTagCount > 0 && (
+              <span class="tag tag-more">+{extraTagCount}</span>
+            )}
           </div>
         )
       }

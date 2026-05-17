@@ -1,37 +1,29 @@
 ---
 title: "Templating the Matrix"
-meta_title: "Templating the Matrix"
-description: ""
+meta_title: "Templating the Matrix: Argo CD ApplicationSets & Helm at Scale"
+description: "GitOps at scale with Argo CD ApplicationSets, Helm umbrella charts, and library charts—so platform teams can onboard products and environments without every dev becoming a Helm expert."
 date: 2023-01-08T00:00:00+00:00
 image: "https://miro.medium.com/v2/resize:fit:1400/format:webp/1*PA0Q_2ZKWllIFqVCZ_46VQ.png"
 categories:
   - "Platform Engineering"
-  - "DevOps"
+  - "GitOps"
 tags:
-  - "openshift"
+  - "gitops"
+  - "argo-cd"
   - "helm"
   - "kubernetes"
-  - "kyverno"
-  - "argo-cd"
-  - "platform-engineering"
-  - "gitops"
-  - "external-secrets"
-  - "security"
+source: "gitops"
 draft: false
 author: "Oren Sultan"
 ---
-Templating the Matrix
-=====================
-
-Warming up
-----------
+## Warming up
 
 To Developers, DevOps seems like “black magic” that no one wants to be a part of.
 I generally agree. Who wants to take part in this automatic headache?
 Then a big question arises - as to how much I want to enrich the knowledge of the developers in ops tools — should I give the “keys to the spaceship” ?
 On one hand, it optimizes and directs the DevOps work to architecture and future tasks, but at the same time leaves a large margin for human error and bugs on the dev team. Guess who in the end will still be called to the flag when error occur.
 
-![captionless image](https://miro.medium.com/v2/resize:fit:1276/format:webp/1*gSkwvyHZJ__rsFAsuKVw8g.jpeg)
+![Developer team planning platform requirements](https://miro.medium.com/v2/resize:fit:1276/format:webp/1*gSkwvyHZJ__rsFAsuKVw8g.jpeg)
 
 These are some of the day-to-day requirements of a development team:
 
@@ -45,10 +37,9 @@ When you have a stack of 5–10 services these can be simple tasks that a develo
 We will have to plan a little more in depth for each requirement of the development team in order to both maintain the micro capabilities of each service separately and also to carry out broad changes in the environment.
 That’s why I chose the helm library + helm umbrella stack deployed using ArgoCD Application set.
 
-![captionless image](https://miro.medium.com/v2/resize:fit:892/format:webp/1*ufjWxi0ehFWuobwjsYfmVA.png)
+![GitOps continuous delivery workflow](https://miro.medium.com/v2/resize:fit:892/format:webp/1*ufjWxi0ehFWuobwjsYfmVA.png)
 
-GitOps and ArgoCD
------------------
+## GitOps and Argo CD
 
 GitOps is a software engineering practice that uses a Git repository as its single source of truth. Teams commit declarative configurations into Git, and these configurations are used to create environments needed for the continuous delivery process.
 One of the common tools applying GitOps method is ArgoCD , a Kubernetes-native continuous deployment (CD) tool implemented as kubernetes controller , responsible for continuously running and monitoring applications by comparing the live state to the desired state stored in the target git repository.
@@ -56,10 +47,9 @@ Enables developers to manage application configuration by code in a git reposito
 Provides automatic sync of application state to the current version of declarative configuration.
 Managed by web interface and command-line interface.
 
-Sneak Peak
-----------
+## Sneak peek
 
-![captionless image](https://miro.medium.com/v2/resize:fit:734/format:webp/1*xDgbaWE5TiVtvCJQ6fZhew.jpeg)
+![Multi-environment GitOps repository layout](https://miro.medium.com/v2/resize:fit:734/format:webp/1*xDgbaWE5TiVtvCJQ6fZhew.jpeg)
 
 In the original project, I implemented the solution on several environments. Each branch in the repo represents the state of each ArgoCD in the dedicated cluster. The state is a declarative configuration of both infrastructure and products implemented by Helm charts and ArgoCD applications. For the purpose of this article, I will present the repository structure of one of the environments:
 
@@ -156,7 +146,7 @@ resources:
   requests:
     cpu: 3M
     memory: 3Gi
-## Redis
+# Redis
 redis:
   enabled: false
 redis-ha:
@@ -277,8 +267,7 @@ I have selected this configuration for our system because it separates the code 
 Each environment has its own branch in our version control system, which contains all of the configurations and settings specific to that environment. This allows us to manage and track the differences between our development, staging, and production environments.
 In addition we maintain a separate repository for each chart of our products. This helps us keep track of the chronology of each product which helps us maintain a clear separation of concerns and makes it easier to manage and update our codebase.
 
-ApplicationSet Helm Chart
--------------------------
+## ApplicationSet Helm chart
 
 In our stack, each product is built from several services that are represented in an umbrella chart . To deploy these products with Argo, we use an application manifest for each service. Our application manifests for each service share the same variables and values, in this case we would like to use the Applicationset resource.
 
@@ -536,10 +525,9 @@ spec:
 
 The template section specifies the details of how the products should be deployed, including the source repository and target revision for each product and the values that should be passed to the Helm chart for each product.
 
-Getting there…
---------------
+## Getting there
 
-![captionless image](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*cC36UxXUOKyBN1WtdwdPrA.png)
+![Argo CD and ApplicationSet deployment overview](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*cC36UxXUOKyBN1WtdwdPrA.png)
 
 Thus far, we’ve become familiar with Argo and Applicationset resource, which greatly simplify the process of managing deployments in our cluster. Our ultimate goal, however, is to find a streamlined and automated method for deploying our products. This is where Helm charts come into play. By using Helm charts to define the desired state of our products in the cluster, we can leverage Argo CD to listen for changes in the Git repository containing these charts and automatically deploy those changes to our specified target environment.
 
@@ -556,7 +544,7 @@ Library charts came to our advantage in this project. They make it easier to rol
 Our deployment process holds multiple products, each of which is made up of a group of micro-services called sun-charts. These sun-charts are located in the _/services_ folder, and each product has its own umbrella chart that is composed of dependencies on these sun-charts.
 The umbrella chart also includes a common config-map that is mounted to the file system of all of the sun-charts.
 
-![captionless image](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*2T9AJVDvzNIW0Oe_jZrkxg.png)
+![Helm umbrella chart with library chart dependencies](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*2T9AJVDvzNIW0Oe_jZrkxg.png)
 
 This approach allows you to organize your micro-services into logical groups and manage them as a single unit, while still allowing for flexibility and modularity. By using an umbrella chart to define the dependencies for each product, you can easily add or remove micro-services as needed and ensure that all of the necessary resources are properly configured. Additionally, the common config-map can be used to share configuration data across all of the micro-services within a product, making it easier to maintain and update your applications.
 
@@ -617,10 +605,9 @@ This separation allows the product code to be independent from the deployment co
 
 Additionally, multiple developers can work on the same product simultaneously, allowing for local testing and debugging before deploying to an environment.
 
-Author Extra Thoughts
----------------------
+## Author extra thoughts
 
-![captionless image](https://miro.medium.com/v2/resize:fit:906/format:webp/1*4AdhnUrJPr6SXFWzz-8Slw.png)
+![Platform engineering lessons learned](https://miro.medium.com/v2/resize:fit:906/format:webp/1*4AdhnUrJPr6SXFWzz-8Slw.png)
 
 Such a complex task requires many stages of trial and error. The road to a solution is full of obstacles, edge cases, and the whims of users who may not have the same level of knowledge as the author.
 I am sure that this is not the only way and maybe not even the best way to carry out such a complex task, but in my opinion the key to success is to develop the architecture together with the people who are supposed to use and maintain the system, teach them your way of thinking and understand if it converges with theirs. Put all the study cases in writing and find a solution that is somewhere in the middle between efficient, sophisticated and maintenance-friendly range.

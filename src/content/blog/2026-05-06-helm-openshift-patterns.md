@@ -400,6 +400,6 @@ The investment is upfront. The payoff is a chart suite you can hand to another t
 
 ---
 
-*Originally published at [orensultan.com](https://orensultan.com/posts/helm-charts-openshift-patterns/).*
+*More on platform engineering and GitOps at [app.sultano.blog/blog/](https://app.sultano.blog/blog/). This post: [app.sultano.blog/blog/2026-05-06-helm-openshift-patterns/](https://app.sultano.blog/blog/2026-05-06-helm-openshift-patterns/).*
 
-*Found this useful? Follow me on [LinkedIn](https://www.linkedin.com/in/oren-sultan/) or [Medium](https://medium.com/@orensultan) for more on platform engineering, cloud-native infrastructure, and agentic AI/DevOps.*
+*Useful? Follow on [LinkedIn](https://www.linkedin.com/in/oren-sultan-0527bab6/) or [Medium](https://medium.com/@orensito1).*

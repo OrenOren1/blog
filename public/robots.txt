@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://portfolio.hagzag.com/sitemap-index.xml
+Sitemap: https://app.sultano.blog/sitemap-index.xml

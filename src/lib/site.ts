@@ -11,7 +11,7 @@ export const SITE = {
   role: "DevOps & Platform Engineer",
   description:
     "DevOps & Platform Engineer | Kubernetes, GitOps, AI/ML Integration — by Oren Sultan.",
-  url: "https://orens.hagzag.com",
+  url: "https://app.sultano.blog",
   locale: "en",
   postsPerPage: 10,
   latestCount: 12,

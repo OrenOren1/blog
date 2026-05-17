@@ -7,7 +7,7 @@ import { remarkReadingTime } from "./remark-reading-time.mjs";
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 
-const SITE = "https://orens.hagzag.com";
+const SITE = "https://app.sultano.blog";
 
 function getUnlistedUrls() {
   const blogDir = resolve("src/content/blog");
@@ -43,7 +43,7 @@ export default defineConfig({
   },
   integrations: [
     astroConsent({
-      siteName: "orens.hagzag.com",
+      siteName: "app.sultano.blog",
       headline: "",
       description: "This site uses minimal cookies for YouTube embeds. No tracking or ads.",
       acceptLabel: "Accept",
