@@ -7,65 +7,72 @@ import { SITE } from "@lib/site";
   <div class="wrap-narrow">
     <h1 style="margin-top:3rem;">About</h1>
     <p>
-      I'm <strong>Oren Sultan</strong>, a Senior DevOps Engineer with over 10 years of experience,
-      including a background in elite intelligence units. My expertise spans the entire stack—from
-      network protocols and hardware to multi-cloud infrastructure and GitOps automation.
+      I'm <strong>Oren Sultan</strong>, Senior DevOps &amp; Platform Engineer based in Israel.
+      10+ years in infrastructure — starting from an intelligence unit background, through network
+      engineering at Motorola, and into cloud-native platform work.
     </p>
     <p>
-      I'm thrilled to dive into the unknown, treating every architectural challenge like a complex
-      puzzle I'm driven to solve by turning intricate ideas into something practical, robust, and
-      useful. Whether I'm spearheading CI/CD transitions or securing enterprise data platforms, my
-      focus is on building scalable ecosystems that bridge the gap between developer freedom and
-      operational excellence.
+      I spend most of my time inside Kubernetes clusters, Pulumi/Terraform stacks, and GitOps
+      pipelines — usually embedded within product R&amp;D teams. I care about the gap between
+      "works in staging" and "holds up in production."
     </p>
     <p>
-      Beyond the tech, I am a lifelong learner and a father to Dror and Peleg.
+      Since 2021 I work at <strong>Tikal – Fullstack as a Service</strong>, moving between client
+      engagements and building things that need to actually run. I also run Tikal's DevOps group
+      routine — sessions, tech talks, and knowledge-sharing across the team.
     </p>
-    <p>
-      Currently I work at <strong>Tikal - Fullstack as a Service</strong> (since Aug 2021),
-      focusing on DevOps and platform engineering initiatives across multiple client projects.
-    </p>
+    <p>Father to Dror and Peleg.</p>
 
-    <h2>Experience Timeline</h2>
+    <h2>Experience</h2>
 
-    <h3>Tikal - Fullstack as a Service</h3>
-    <p><em>Aug 2021 - Present | DevOps Engineer</em></p>
-    <p>DevOps and platform engineering across multiple client engagements:</p>
+    <h3>Sentra</h3>
+    <p><em>May 2025 – Present | Senior Platform Engineer</em></p>
+    <p>Data security SaaS. Sole platform engineer — own the full infrastructure stack across AWS (multi-region EKS), Azure, and GCP.</p>
     <ul>
-      <li><strong>DevOps Group Routine Leader</strong> (2026) - Leading the DevOps roadmap circle, managing sessions, tech talks, and knowledge-sharing across the team.</li>
-      <li><strong>Roadmap Circle Manager</strong> (2025-2026) - Selected quarterly hot topics from Tikal's Tech Radar.</li>
-      <li><strong>DevOps Consultant - LinearB</strong> (Feb-Apr 2026) - K8s/OpenShift hardening, GitOps, TLS/PKI, Helm charts, Terraform.</li>
-      <li><strong>DevOps Leader - TerraSecurity</strong> (Aug 2025 - Feb 2026) - AI pentesting platform. Transformed monolithic Pulumi to GitOps with ArgoCD, EKS Operators, Langfuse, Coralogix.</li>
-      <li><strong>Platform Engineer - ZoomInfo</strong> (Nov 2024 - Jul 2025) - Release automation, GitHub Actions, ArgoCD, GCP/BigQuery. Refactored Node.js-based release automation system, OneBranch repositories solution.</li>
-      <li><strong>DevOps - Beti Tech</strong> (Sep 2023 - Jul 2024) - EKS, ArgoCD, Terraform/Terragrunt, Crossplane, Karpenter.</li>
-      <li><strong>DevOps Consultant - Kaltura</strong> (Jun-Jul 2023)</li>
-      <li><strong>DevOps Consultant - MeshSecurity</strong> (Feb-Apr 2023)</li>
-      <li><strong>DevOps Engineer - Capitolis</strong> (Dec 2022 - Jan 2023) - Helm umbrellas, ArgoCD ApplicationSet, EKS, Terraform.</li>
-      <li><strong>DevOps Engineer - GigaSpaces</strong> (Oct 2021 - Jun 2022) - AWS EKS, JCASC Jenkins, Nexus, ArgoCD.</li>
-      <li><strong>DevOps Engineer - Halo Digital</strong> (Sep 2021 - Jun 2022)</li>
+      <li>Migrated monolithic Pulumi codebase to a modular GitOps model with ArgoCD ApplicationSets and ESO for secrets sync</li>
+      <li>Replaced static node groups with Karpenter; cut compute costs ~30%</li>
+      <li>Deployed KEDA for event-driven scaling of data-scan workloads</li>
+      <li>Introduced Twingate for zero-trust internal access, replacing VPN dependencies</li>
+      <li>Led least-privilege DB access initiative — per-service scoped roles for MongoDB Atlas and RDS across 25+ services</li>
+      <li>Observability stack: Datadog APM + Coralogix log aggregation</li>
+    </ul>
+
+    <h3>Tikal – Fullstack as a Service</h3>
+    <p><em>Aug 2021 – Apr 2025 | DevOps Engineer</em></p>
+    <p>Consulting across multiple product R&amp;D teams, plus running the internal DevOps practice:</p>
+    <ul>
+      <li><strong>LinearB</strong> (Mar–Apr 2026) – K8s/OpenShift hardening, GitOps, TLS/PKI, Helm, Terraform</li>
+      <li><strong>TerraSecurity</strong> (Aug 2025–Feb 2026) – AI pentesting platform; replaced monolithic Pulumi with ArgoCD GitOps, EKS Operators, Langfuse, Coralogix</li>
+      <li><strong>ZoomInfo</strong> (Aug 2024–Sep 2025) – Release automation via GitHub Actions and ArgoCD; refactored Node.js automation system; OneBranch repo solution; GCP/BigQuery</li>
+      <li><strong>Beti Tech</strong> (Aug 2023–Sep 2024) – EKS, ArgoCD, Terraform/Terragrunt, Crossplane, Karpenter</li>
+      <li><strong>Capitolis</strong> (Dec 2022–Jan 2023) – Helm umbrella charts, ArgoCD ApplicationSets, EKS, Terraform</li>
+      <li><strong>GigaSpaces</strong> (Oct 2021–Jun 2022) – AWS EKS, Jenkins-as-Code, Nexus, ArgoCD</li>
+      <li><strong>DevOps Group Lead</strong> (2025–2026) – Ran the internal DevOps circle: sessions, tech talks, Tech Radar curation</li>
     </ul>
 
     <h3>Motorola Solutions</h3>
-    <p><em>Dec 2017 - Aug 2021 | Integration Engineer</em></p>
-    <p>Global WiFi NOC at Airport City, Israel. Network monitoring (SolarWinds, LibreNMS), Python automation, TCP/IP systems and protocols.</p>
+    <p><em>Dec 2017 – Aug 2021 | Integration Engineer</em></p>
+    <p>Global WiFi NOC at Airport City. Network monitoring (SolarWinds, LibreNMS), Python automation, TCP/IP troubleshooting across enterprise WAN/WLAN deployments.</p>
 
-    <h2>Key Projects</h2>
+    <h2>Projects</h2>
     <ul>
-      <li><strong>Enterprise Cloud Native Platform (CNE)</strong> - 165+ Helm charts, ArgoCD and Crossplane for multi-cloud (AWS/GCP/Azure).</li>
-      <li><strong>K-agent</strong> - AI-powered GitOps agent (FastAPI, LiteLLM) for automated infrastructure provisioning.</li>
-      <li><strong>Developer Environment Config as Code</strong> - Automated setup of 70+ development tools.</li>
+      <li><strong>Least-Privilege DB Access</strong> – Replaced shared atlasAdmin/master credentials with per-service scoped roles for MongoDB Atlas and RDS across 25+ microservices; Atlas custom roles + ESO + K8s Secrets.</li>
+      <li><strong>Enterprise Cloud Native Platform</strong> – Multi-cloud (AWS/GCP/Azure) platform with ArgoCD ApplicationSets and Crossplane for self-service infrastructure.</li>
+      <li><strong>K-agent</strong> – AI-powered GitOps agent (FastAPI, LiteLLM) for automated infrastructure provisioning.</li>
+      <li><strong>Dev Environment as Code</strong> – Reproducible local setup for a full engineering org; Ansible + dotfiles, covering build tools, CLIs, and IDE config.</li>
     </ul>
 
     <h2>Skills</h2>
     <ul>
-      <li><strong>Cloud Platforms:</strong> AWS (EKS, EC2, Lambda, RDS), GCP (GKE, BigQuery), Azure (AKS)</li>
-      <li><strong>Infrastructure as Code:</strong> Terraform, Terragrunt, Crossplane, Pulumi, ArgoCD</li>
-      <li><strong>Container Orchestration:</strong> Kubernetes, Docker, Helm, Karpenter</li>
-      <li><strong>CI/CD:</strong> GitHub Actions, GitLab CI, Jenkins, ArgoCD ApplicationSets</li>
-      <li><strong>AI/ML Integration:</strong> RAG (ChromaDB), LangFuse, LiteLLM, Agentic SDLC</li>
-      <li><strong>Programming:</strong> Python, Go, Bash, YAML, HCL</li>
-      <li><strong>Networking:</strong> LAN/WAN/VLAN/WLAN, TCP/IP</li>
-      <li><strong>Databases:</strong> MSSQL, MySQL, MongoDB</li>
+      <li><strong>Cloud:</strong> AWS (EKS, EC2, Lambda, RDS, Secrets Manager), GCP (GKE, BigQuery), Azure (AKS)</li>
+      <li><strong>IaC &amp; GitOps:</strong> Pulumi, Terraform, Terragrunt, Crossplane, ArgoCD, Helm</li>
+      <li><strong>Kubernetes:</strong> EKS, GKE, AKS, Karpenter, KEDA, ESO, Helm, Operators</li>
+      <li><strong>CI/CD:</strong> GitHub Actions, GitLab CI, ArgoCD ApplicationSets</li>
+      <li><strong>Observability:</strong> Datadog, Coralogix</li>
+      <li><strong>Security &amp; Networking:</strong> Twingate, TLS/PKI, IAM, Okta</li>
+      <li><strong>AI/ML Tooling:</strong> LangFuse, LiteLLM, RAG (ChromaDB)</li>
+      <li><strong>Languages:</strong> Python, Bash, Go, HCL</li>
+      <li><strong>Databases:</strong> MongoDB Atlas, MySQL, RDS (PostgreSQL)</li>
     </ul>
 
     <h2>Education</h2>
