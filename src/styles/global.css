@@ -1741,6 +1741,31 @@ lite-youtube {
 }
 
 /* ----------------------------------------------------------
+   Post footer (from SITE.url via PostFooter.astro)
+---------------------------------------------------------- */
+.post-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--c-border);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--c-text-light);
+}
+.post-footer p {
+  margin: 0 0 0.85rem;
+}
+.post-footer p:last-child {
+  margin-bottom: 0;
+}
+.post-footer a {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+.post-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
    Post Edit Link
 ---------------------------------------------------------- */
 .post-edit-link {

@@ -1,0 +1,25 @@
+---
+import { SITE } from "@lib/site";
+
+interface Props {
+  postId: string;
+}
+
+const { postId } = Astro.props;
+const host = new URL(SITE.url).host;
+const blogUrl = new URL("/blog/", SITE.url).href;
+const postUrl = new URL(`/blog/${postId}/`, SITE.url).href;
+---
+
+<footer class="post-footer">
+  <p>
+    I write about platform engineering, Kubernetes, GitOps, and agentic DevOps on{" "}
+    <a href={blogUrl}>{host}</a> — this post:{" "}
+    <a href={postUrl}>{host}/blog/{postId}/</a>.
+  </p>
+  <p>
+    Useful? Say so in the <a href="#discussion">comments</a> below, or follow on{" "}
+    <a href={SITE.social.linkedin} rel="noopener noreferrer">LinkedIn</a> and{" "}
+    <a href={SITE.social.medium} rel="noopener noreferrer">Medium</a>.
+  </p>
+</footer>

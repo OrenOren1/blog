@@ -399,7 +399,3 @@ The investment is upfront. The payoff is a chart suite you can hand to another t
 - [Argo CD sync waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
 
 ---
-
-*More on platform engineering and GitOps at [app.sultano.blog/blog/](https://app.sultano.blog/blog/). This post: [app.sultano.blog/blog/2026-05-06-helm-openshift-patterns/](https://app.sultano.blog/blog/2026-05-06-helm-openshift-patterns/).*
-
-*Useful? Follow on [LinkedIn](https://www.linkedin.com/in/oren-sultan-0527bab6/) or [Medium](https://medium.com/@orensito1).*

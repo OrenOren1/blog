@@ -192,10 +192,6 @@ The hardest part isn't the technology. It's convincing your team to treat "the a
 
 ---
 
-*I write about platform engineering, Kubernetes, GitOps, and agentic DevOps on [app.sultano.blog](https://app.sultano.blog/blog/) — this post lives at [app.sultano.blog/blog/2026-05-17-least-privilege-db-access/](https://app.sultano.blog/blog/2026-05-17-least-privilege-db-access/).*
-
-*Useful? Say so in the comments below, or follow on [LinkedIn](https://www.linkedin.com/in/oren-sultan-0527bab6/) and [Medium](https://medium.com/@orensito1).*
-
 <!-- SOCIAL SNIPPETS -->
 
 ### LinkedIn (~1300 chars)
