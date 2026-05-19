@@ -67,6 +67,19 @@ const { data } = post;
       )}
     </header>
 
+    {data.image && (
+      <figure class='post-hero wrap-narrow'>
+        <img
+          src={data.image}
+          alt={data.title}
+          width='1200'
+          height='675'
+          loading='eager'
+          decoding='async'
+        />
+      </figure>
+    )}
+
     <div class='post-content wrap-narrow'>
       <slot />
       <PostFooter postId={post.id} />

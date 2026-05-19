@@ -1082,7 +1082,18 @@ html[data-theme="dark"] .brand-stamp__svg {
 .post-header {
   padding: 3.5rem 0 2rem;
   border-bottom: 1px solid var(--c-border);
-  margin-bottom: 2.5rem;
+  margin-bottom: 0;
+}
+.post-hero {
+  margin: 0 auto 2.5rem;
+}
+.post-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius);
 }
 .post-header h1 { margin: 0; }
 .post-meta {
@@ -1704,6 +1715,9 @@ lite-youtube {
 
   .post-header {
     padding: 3rem 0 1.5rem;
+    margin-bottom: 0;
+  }
+  .post-hero {
     margin-bottom: 2rem;
   }
   .post-header h1 { margin: 0; }
@@ -1734,11 +1748,6 @@ lite-youtube {
 /* ----------------------------------------------------------
    Post Content
 ---------------------------------------------------------- */
-.post-header {
-  padding: 3.5rem 0 2rem;
-  border-bottom: 1px solid var(--c-border);
-  margin-bottom: 2.5rem;
-}
 .post-header h1 { margin: 0; }
 .post-meta {
   margin-top: 0.8rem;

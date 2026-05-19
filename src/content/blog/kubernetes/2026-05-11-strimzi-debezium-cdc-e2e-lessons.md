@@ -30,7 +30,6 @@ CDC pipelines look impressive on paper. They almost always work between any two 
 This is the story of that walk, and what it taught me about deploying Strimzi + Debezium against MongoDB Atlas and Amazon RDS for PostgreSQL on a production-grade EKS cluster.
 
 <!-- image_prompt:archive index=1 role=cover id=strimzi-debezium-cdc-e2e-hero b64=Q2luZW1hdGljIHdpZGUgc2hvdCBvZiBhbiBpbmR1c3RyaWFsIHN0ZWVsIHBpcGVsaW5lIGF0IGdvbGRlbiBob3VyIHdpdGggb25lIG1pc3Npbmcgc2VnbWVudCBpbiB0aGUgbWlkZGxlIOKAlCB0d28gZmxhbmdlZCBwaXBlIGVuZHMgZmFjaW5nIGVhY2ggb3RoZXIgYWNyb3NzIGEgY2xlYXIgdmlzaWJsZSBnYXAuIFBob3RvcmVhbGlzdGljLCBlZGl0b3JpYWwgcGhvdG9ncmFwaHksIG5vIHRleHQuIDE2OjksIHJlYWRhYmxlIGF0IHNtYWxsIGNhcmQgc2l6ZS4 -->
-![Cinematic wide shot of an industrial steel pipeline at golden hour with one missing segment in the middle — two flang...](https://i.ibb.co/73c9pKf/strimzi-debezium-cdc-e2e-hero.jpg)
 
 ## The hook: a "working" pipeline isn't a working pipeline
 
