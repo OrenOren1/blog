@@ -540,12 +540,6 @@ The investment is upfront. The payoff is a chart suite you can hand to another t
 - [Argo CD sync waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
 - [OpenShift SCC documentation](https://docs.openshift.com/container-platform/4.18/authentication/managing-security-context-constraints.html)
 
----
-
-*Originally published at [orensultan.com](https://orensultan.com/posts/helm-charts-openshift-patterns/).*
-
-*Found this useful? Follow me on [LinkedIn](https://www.linkedin.com/in/orensultan/) or [Medium](https://medium.com/@orensultan) for more on platform engineering, cloud-native infrastructure, and agentic AI/DevOps.*
-
 <!-- SOCIAL SNIPPETS -->
 
 ## LinkedIn (~1450 chars)
