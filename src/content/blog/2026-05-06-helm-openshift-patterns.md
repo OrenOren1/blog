@@ -39,7 +39,8 @@ Then a real enterprise customer arrives — running OpenShift 4.18 with a 4.20 r
 
 OpenShift is not just Kubernetes with a different logo. It's Kubernetes with strong opinions — and those opinions are enforced at the API server level, not just at review time.
 
-[IMAGE_PROMPT: Architecture diagram showing an umbrella Helm chart containing 10+ subcharts (scheduler, api, webhook-receiver, jobs-suite, diagnostics, agent-tasks) deployed to OpenShift 4.18 via Argo CD, with Kyverno as an optional subchart enforcing policies at admission time.]
+<!-- image_prompt:archive index=1 b64=QXJjaGl0ZWN0dXJlIGRpYWdyYW0gc2hvd2luZyBhbiB1bWJyZWxsYSBIZWxtIGNoYXJ0IGNvbnRhaW5pbmcgMTArIHN1YmNoYXJ0cyAoc2NoZWR1bGVyLCBhcGksIHdlYmhvb2stcmVjZWl2ZXIsIGpvYnMtc3VpdGUsIGRpYWdub3N0aWNzLCBhZ2VudC10YXNrcykgZGVwbG95ZWQgdG8gT3BlblNoaWZ0IDQuMTggdmlhIEFyZ28gQ0QsIHdpdGggS3l2ZXJubyBhcyBhbiBvcHRpb25hbCBzdWJjaGFydCBlbmZvcmNpbmcgcG9saWNpZXMgYXQgYWRtaXNzaW9uIHRpbWUu -->
+![Architecture diagram showing an umbrella Helm chart containing 10+ subcharts (scheduler, api, webhook-receiver, jobs-...](https://i.ibb.co/5WvqkvyM/img-1.jpg)
 
 ---
 
@@ -74,7 +75,8 @@ In Helm templates, branch on the platform gate through a single helper so the co
 
 The `openshift/values.yaml` file becomes a first-class artifact — reviewable in isolation, easy to diff between environments. When a new OpenShift-specific requirement appears (our customer added NFS StorageClass and proxy env vars in the same overlay), you change one file.
 
-[IMAGE_PROMPT: Layered Helm values diagram showing 4 stacked files with override arrows: base → openshift → vendor → environment, with a merged values object on the right side. The openshift layer is highlighted.]
+<!-- image_prompt:archive index=2 b64=TGF5ZXJlZCBIZWxtIHZhbHVlcyBkaWFncmFtIHNob3dpbmcgNCBzdGFja2VkIGZpbGVzIHdpdGggb3ZlcnJpZGUgYXJyb3dzOiBiYXNlIOKGkiBvcGVuc2hpZnQg4oaSIHZlbmRvciDihpIgZW52aXJvbm1lbnQsIHdpdGggYSBtZXJnZWQgdmFsdWVzIG9iamVjdCBvbiB0aGUgcmlnaHQgc2lkZS4gVGhlIG9wZW5zaGlmdCBsYXllciBpcyBoaWdobGlnaHRlZC4 -->
+![Layered Helm values diagram showing 4 stacked files with override arrows: base → openshift → vendor → environment, wi...](https://i.ibb.co/rRhxGGmX/img-2.jpg)
 
 ---
 
@@ -212,7 +214,8 @@ kubectl create secret generic certs-secret \
 
 It's a one-liner, but it's a gap worth knowing about upfront — and worth tracking as a chart enhancement for enterprise environments.
 
-[IMAGE_PROMPT: Pod lifecycle diagram: init container "merge-ca-bundle" runs first, reads Secret mounted at /certs, writes merged PEM to emptyDir at /opt/app/certs, then main container starts with SSL_CERT_FILE env var pointing to the merged bundle.]
+<!-- image_prompt:archive index=3 b64=UG9kIGxpZmVjeWNsZSBkaWFncmFtOiBpbml0IGNvbnRhaW5lciAibWVyZ2UtY2EtYnVuZGxlIiBydW5zIGZpcnN0LCByZWFkcyBTZWNyZXQgbW91bnRlZCBhdCAvY2VydHMsIHdyaXRlcyBtZXJnZWQgUEVNIHRvIGVtcHR5RGlyIGF0IC9vcHQvYXBwL2NlcnRzLCB0aGVuIG1haW4gY29udGFpbmVyIHN0YXJ0cyB3aXRoIFNTTF9DRVJUX0ZJTEUgZW52IHZhciBwb2ludGluZyB0byB0aGUgbWVyZ2VkIGJ1bmRsZS4 -->
+![Pod lifecycle diagram: init container "merge-ca-bundle" runs first, reads Secret mounted at /certs, writes merged PEM...](https://i.ibb.co/nqBQw8xc/img-3.jpg)
 
 ---
 
@@ -380,7 +383,8 @@ spec:
 
 > **Trade-off worth calling out**: Mutating policies are convenient but can mask chart bugs. In production, prefer validating policies with `Enforce` and use mutation only as a migration bridge or for third-party charts you don't control.
 
-[IMAGE_PROMPT: Flow diagram showing Kyverno admission webhook intercepting a Job creation request: request arrives → Kyverno evaluates ClusterPolicies → non-compliant request rejected with descriptive message; compliant request proceeds to OpenShift API server and scheduler.]
+<!-- image_prompt:archive index=4 b64=RmxvdyBkaWFncmFtIHNob3dpbmcgS3l2ZXJubyBhZG1pc3Npb24gd2ViaG9vayBpbnRlcmNlcHRpbmcgYSBKb2IgY3JlYXRpb24gcmVxdWVzdDogcmVxdWVzdCBhcnJpdmVzIOKGkiBLeXZlcm5vIGV2YWx1YXRlcyBDbHVzdGVyUG9saWNpZXMg4oaSIG5vbi1jb21wbGlhbnQgcmVxdWVzdCByZWplY3RlZCB3aXRoIGRlc2NyaXB0aXZlIG1lc3NhZ2U7IGNvbXBsaWFudCByZXF1ZXN0IHByb2NlZWRzIHRvIE9wZW5TaGlmdCBBUEkgc2VydmVyIGFuZCBzY2hlZHVsZXIu -->
+![Flow diagram showing Kyverno admission webhook intercepting a Job creation request: request arrives → Kyverno evaluat...](https://i.ibb.co/jZzyHJcc/img-4.jpg)
 
 ---
 
@@ -496,7 +500,8 @@ The result: Python code stays focused on business logic. Platform compliance —
 
 > **The separation of concerns**: Python owns *what* the job does. Kyverno owns *how* it runs on the platform. Neither knows about the other.
 
-[IMAGE_PROMPT: Flow diagram showing a Python scheduler creating a bare Job manifest (image, env, resources only), the Job hitting the Kyverno admission webhook, three ClusterPolicies firing in sequence — security context injection, image-matched storage volumes, /tmp emptyDir — and the final enriched Pod spec landing on the OpenShift scheduler.]
+<!-- image_prompt:archive index=5 b64=RmxvdyBkaWFncmFtIHNob3dpbmcgYSBQeXRob24gc2NoZWR1bGVyIGNyZWF0aW5nIGEgYmFyZSBKb2IgbWFuaWZlc3QgKGltYWdlLCBlbnYsIHJlc291cmNlcyBvbmx5KSwgdGhlIEpvYiBoaXR0aW5nIHRoZSBLeXZlcm5vIGFkbWlzc2lvbiB3ZWJob29rLCB0aHJlZSBDbHVzdGVyUG9saWNpZXMgZmlyaW5nIGluIHNlcXVlbmNlIOKAlCBzZWN1cml0eSBjb250ZXh0IGluamVjdGlvbiwgaW1hZ2UtbWF0Y2hlZCBzdG9yYWdlIHZvbHVtZXMsIC90bXAgZW1wdHlEaXIg4oCUIGFuZCB0aGUgZmluYWwgZW5yaWNoZWQgUG9kIHNwZWMgbGFuZGluZyBvbiB0aGUgT3BlblNoaWZ0IHNjaGVkdWxlci4 -->
+![Flow diagram showing a Python scheduler creating a bare Job manifest (image, env, resources only), the Job hitting th...](https://i.ibb.co/wZF8GrZ5/img-5.jpg)
 
 ---
 
