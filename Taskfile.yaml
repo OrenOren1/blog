@@ -147,7 +147,8 @@ tasks:
     desc: |
       Resolve IMAGE_PROMPT → ImgBB (Gemini + upload). Pass args after --, e.g.
       task blog:images -- src/content/blog/kubernetes/your-post.md
-      task blog:images -- src/content/blog/kubernetes/your-post.md --dry-run
+      task blog:images -- src/content/blog/kubernetes/your-post.md --cover
+      task blog:images -- src/content/blog/kubernetes/your-post.md --slot=2 --list-slots
     deps:
       - install
     cmds:

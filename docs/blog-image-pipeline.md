@@ -30,19 +30,25 @@ Optional **full automation** is appropriate only for personal drafts, smoke test
 
 You do **not** have to regenerate the whole post.
 
-### Option A — Restore one marker (recommended)
+### Option A — Single-slot flags (recommended)
 
-1. Find the figure’s archive line: `<!-- image_prompt:archive index=N … b64=… -->`.
-2. Decode the prompt (Node):  
-   `node -e "console.log(Buffer.from('PASTE_B64', 'base64url').toString('utf8'))"`
-3. Remove that archive line **and** the following `![…](https://i.ibb.co/…)` line.
-4. Paste either a bare marker or the full cover wrapper, e.g.  
-   `[IMAGE_PROMPT: …your revised brief…]`
-5. Run on the file:  
-   `task blog:images -- path/to/post.md`  
-   (Only slots that are still `[IMAGE_PROMPT:]` are processed; unchanged images stay as-is **only if** you didn’t delete them — the script replaces **markers**, not existing images. So you only remove the one pair you want to redo.)
+List figures (markers + archived) without calling APIs:
 
-**Note:** The script processes **all** `[IMAGE_PROMPT:]` markers in the file in one run. If other markers still exist, they will be regenerated too. To refresh **one** image while leaving others untouched, temporarily move other prompts out (or split work into two commits) — or accept one full pass if all markers are present.
+```bash
+task blog:images -- path/to/post.md --list-slots
+```
+
+Regenerate **one** slot (others unchanged):
+
+```bash
+task blog:images -- path/to/post.md --cover          # front matter image: + archive (no duplicate body hero)
+task blog:images -- path/to/post.md --slot=3         # archive index=3 or 3rd figure in file order
+task blog:images -- path/to/post.md --id=hero-slug   # match cover wrapper id= or archive id=
+```
+
+Works on **pending** `[IMAGE_PROMPT: …]` markers and on **resolved** `<!-- image_prompt:archive … -->` figures (prompt read from `b64=`). Cover regeneration always updates `image:` in front matter, even when it is already an ImgBB URL.
+
+To change the art brief before regenerating: edit the marker text, or decode the archive (`node -e "console.log(Buffer.from('PASTE_B64','base64url').toString('utf8'))"`), replace the archive + `![…](url)` block with a new `[IMAGE_PROMPT: …]`, then run `--slot=N` or `--cover`.
 
 ### Option B — Manual asset swap
 
@@ -85,4 +91,4 @@ If the live post still shows old images, hard-refresh the browser or check CDN; 
 
 ## Feature status
 
-**Done for this repo:** marker parsing, Gemini/OpenAI generation, ImgBB upload, parallel runs, prompt archives, Task UX, responsive CSS, and agent docs (`AGENTS.md`, `.agent/skills/blog/SKILL.md`). Further improvements (e.g. “regenerate slot 3 only” without touching others) would be a follow-up enhancement.
+**Done for this repo:** marker parsing, Gemini/OpenAI generation, ImgBB upload, parallel runs, prompt archives, single-slot `--cover` / `--slot=N` / `--id=`, `--list-slots`, Task UX, responsive CSS, and agent docs (`AGENTS.md`, `.agent/skills/blog/SKILL.md`).

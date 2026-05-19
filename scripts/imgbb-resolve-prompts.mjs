@@ -4,6 +4,10 @@
  *
  * Usage:
  *   node scripts/imgbb-resolve-prompts.mjs <path-to-post.md> [--dry-run] [--use-first-as-cover] [--background]
+ *   node scripts/imgbb-resolve-prompts.mjs <post.md> --cover          # cover marker or archived role=cover only
+ *   node scripts/imgbb-resolve-prompts.mjs <post.md> --slot=3         # one slot (archive index=3 or 3rd figure)
+ *   node scripts/imgbb-resolve-prompts.mjs <post.md> --id=hero-slug   # match <!-- blog:image id="…" --> / archive id=
+ *   node scripts/imgbb-resolve-prompts.mjs <post.md> --list-slots     # catalog without API calls
  *   node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out <path-to.png>  # Gemini Nano Banana → local PNG (site header stamp)
  *
  * --background — detach: writes stdout/stderr to scripts/blog-images-resolve.log and exits immediately (tail that file).
@@ -109,6 +113,7 @@ async function runBrandStampOut(outArg) {
 const WRAPPED_BLOCK =
   /<!--\s*blog:image(?:\s+([^>]*?))?\s*-->\s*\r?\n\[IMAGE_PROMPT:\s*([\s\S]*?)\]\s*\r?\n<!--\s*\/blog:image\s*-->/g;
 const BARE_PROMPT = /\[IMAGE_PROMPT:\s*([\s\S]*?)\]/g;
+const ARCHIVE_LINE = /<!--\s*image_prompt:archive\s+([^>]*?)\s*-->/g;
 
 function readFirstLineSecret(fileName) {
   const lines = readAllSecretLines(fileName);
@@ -596,7 +601,7 @@ function markdownFigureFromResult(it, i, url) {
   return `${comment}![${alt}](${url})`;
 }
 
-function patchFrontMatterImage(markdown, url) {
+function patchFrontMatterImage(markdown, url, { force = false } = {}) {
   const re = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/;
   const m = re.exec(markdown);
   if (!m) return markdown;
@@ -604,10 +609,188 @@ function patchFrontMatterImage(markdown, url) {
   const lines = inner.split(/\r?\n/);
   const idx = lines.findIndex((l) => l.startsWith("image:"));
   if (idx === -1) return markdown;
-  if (!isPlaceholderImage(lines[idx])) return markdown;
+  if (!force && !isPlaceholderImage(lines[idx])) return markdown;
   lines[idx] = `image: "${url}"`;
   const newInner = lines.join("\n");
   return markdown.slice(0, m.index) + "---\n" + newInner + "\n---\n" + markdown.slice(m.index + m[0].length);
+}
+
+function isCliFlag(arg) {
+  return (
+    arg.startsWith("--") ||
+    arg === "-h" ||
+    arg === "--help" ||
+    arg === "--list-slots" ||
+    arg === "--cover"
+  );
+}
+
+/** @returns {{ type: 'cover' } | { type: 'slot', value: number } | { type: 'id', value: string } | null} */
+function parseSlotFilter(args) {
+  for (const a of args) {
+    if (a === "--cover" || a === "--only=cover") return { type: "cover" };
+    const slot = /^--(?:slot|only)=(\d+)$/.exec(a);
+    if (slot) return { type: "slot", value: Number(slot[1], 10) };
+    const id = /^--id=(.+)$/.exec(a);
+    if (id) return { type: "id", value: decodeURIComponent(id[1]) };
+  }
+  return null;
+}
+
+function parseArchiveAttrs(attrStr) {
+  const index = /(?:^|\s)index=(\d+)/i.exec(attrStr)?.[1];
+  const role = /(?:^|\s)role=(cover|inline)/i.exec(attrStr)?.[1]?.toLowerCase() ?? "inline";
+  const idRaw = /(?:^|\s)id=([^\s]+)/i.exec(attrStr)?.[1] ?? null;
+  const id = idRaw ? decodeURIComponent(idRaw) : null;
+  const b64 = /b64=([A-Za-z0-9_-]+)/i.exec(attrStr)?.[1];
+  let prompt = null;
+  if (b64) {
+    try {
+      prompt = Buffer.from(b64, "base64url").toString("utf8");
+    } catch {
+      prompt = Buffer.from(b64, "base64").toString("utf8");
+    }
+  }
+  return {
+    archiveIndex: index ? Number(index, 10) : null,
+    role,
+    id,
+    prompt,
+  };
+}
+
+function collectResolvedFigures(content) {
+  const figures = [];
+  let m;
+  ARCHIVE_LINE.lastIndex = 0;
+  while ((m = ARCHIVE_LINE.exec(content)) !== null) {
+    const attrs = parseArchiveAttrs(m[1]);
+    let end = m.index + m[0].length;
+    const rest = content.slice(end);
+    const img = /^\r?\n!\[[^\]]*\]\([^)]+\)/.exec(rest);
+    if (img) end += img[0].length;
+    figures.push({
+      kind: "resolved",
+      start: m.index,
+      end,
+      prompt: attrs.prompt,
+      role: attrs.role,
+      id: attrs.id,
+      archiveIndex: attrs.archiveIndex,
+      attrs: m[1] ?? "",
+      wrapped: false,
+    });
+  }
+  return figures;
+}
+
+function assignSlotNumbers(items) {
+  const sorted = [...items].sort((a, b) => a.start - b.start);
+  let markerOrdinal = 0;
+  return sorted.map((it, i) => {
+    let markerIndex = null;
+    if (it.kind === "marker") {
+      markerOrdinal += 1;
+      markerIndex = markerOrdinal;
+    }
+    return {
+      ...it,
+      position: i + 1,
+      markerIndex,
+      archiveIndex: it.archiveIndex ?? null,
+    };
+  });
+}
+
+function buildSlotCatalog(raw) {
+  const markers = collectRanges(raw).map((it) => {
+    const { role, id } = parseAttrs(it.attrs);
+    return {
+      kind: "marker",
+      start: it.start,
+      end: it.end,
+      prompt: it.prompt,
+      role,
+      id,
+      archiveIndex: null,
+      attrs: it.attrs,
+      wrapped: it.wrapped,
+    };
+  });
+  const resolved = collectResolvedFigures(raw);
+  return assignSlotNumbers([...markers, ...resolved]);
+}
+
+function matchesSlotFilter(item, filter) {
+  if (!filter) return true;
+  if (filter.type === "cover") return item.role === "cover";
+  if (filter.type === "slot") {
+    if (item.kind === "resolved" && item.archiveIndex != null) {
+      return item.archiveIndex === filter.value;
+    }
+    if (item.kind === "marker" && item.markerIndex != null) {
+      return item.markerIndex === filter.value;
+    }
+    return item.position === filter.value;
+  }
+  if (filter.type === "id") return item.id === filter.value;
+  return false;
+}
+
+function printSlotCatalog(catalog, filePath) {
+  console.log(`Image slots in ${filePath}:\n`);
+  if (!catalog.length) {
+    console.log("  (none — add [IMAGE_PROMPT: …] or resolved archive lines)");
+    return;
+  }
+  for (const it of catalog) {
+    const slotLabel =
+      it.role === "cover"
+        ? "cover"
+        : it.kind === "resolved" && it.archiveIndex != null
+          ? `index=${it.archiveIndex}`
+          : it.kind === "marker"
+            ? `marker #${it.markerIndex}`
+            : `position=${it.position}`;
+    const bits = [
+      slotLabel,
+      it.kind === "marker" ? "pending" : "resolved",
+      it.role !== "inline" && it.role !== "cover" ? `role=${it.role}` : null,
+      it.id ? `id=${it.id}` : null,
+    ].filter(Boolean);
+    const preview = it.prompt
+      ? it.prompt.replace(/\s+/g, " ").trim().slice(0, 72) +
+        (it.prompt.length > 72 ? "…" : "")
+      : "(no prompt)";
+    console.log(`  [${bits.join(" · ")}] ${preview}`);
+  }
+  console.log(
+    "\nRegenerate one slot:  task blog:images -- <post.md> --slot=N\n" +
+      "Regenerate cover:     task blog:images -- <post.md> --cover\n" +
+      "Regenerate by id:     task blog:images -- <post.md> --id=slug",
+  );
+}
+
+function selectWorkItems(raw, filter) {
+  const catalog = buildSlotCatalog(raw);
+  if (!filter) {
+    const markers = catalog.filter((it) => it.kind === "marker");
+    return { catalog, items: markers, mode: "markers-all" };
+  }
+  const matched = catalog.filter((it) => matchesSlotFilter(it, filter));
+  return { catalog, items: matched, mode: "filtered" };
+}
+
+function markdownForWorkItem(it, url) {
+  const archiveIndex =
+    (it.archiveIndex ?? (it.kind === "marker" ? it.markerIndex : it.position) ?? 1) - 1;
+  const comment = imagePromptArchiveComment(it.prompt, {
+    index: archiveIndex,
+    role: it.role,
+    id: it.id,
+  });
+  if (it.role === "cover") return comment.trimEnd() + "\n";
+  return `${comment}![${altFromPrompt(it.prompt)}](${url})`;
 }
 
 async function main() {
@@ -644,13 +827,18 @@ async function main() {
   }
 
   const dryRun = args.includes("--dry-run");
+  const listSlots = args.includes("--list-slots");
   const useFirstAsCover = args.includes("--use-first-as-cover");
-  const fileArg = args.find((a) => !a.startsWith("--"));
+  const slotFilter = parseSlotFilter(args);
+  const fileArg = args.find((a) => !isCliFlag(a));
 
   if (!fileArg) {
     console.error(
-      "Usage: node scripts/imgbb-resolve-prompts.mjs <post.md> [--dry-run] [--use-first-as-cover] [--background]\n" +
-        "   or: node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out <path-to.png>",
+      "Usage: node scripts/imgbb-resolve-prompts.mjs <post.md> [options]\n" +
+        "  --cover --slot=N --id=slug   regenerate one image (marker or archived figure)\n" +
+        "  --list-slots                 show slot catalog without API calls\n" +
+        "  --dry-run --use-first-as-cover --background\n" +
+        "  or: node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out <path-to.png>",
     );
     process.exit(1);
   }
@@ -662,19 +850,40 @@ async function main() {
   }
 
   const raw = readFileSync(filePath, "utf8");
-  const items = collectRanges(raw);
-  const hasExplicitCoverMarker = items.some(
-    (it) => it.wrapped && parseAttrs(it.attrs).role === "cover",
+  const { catalog, items, mode } = selectWorkItems(raw, slotFilter);
+
+  if (listSlots) {
+    printSlotCatalog(catalog, filePath);
+    process.exit(0);
+  }
+
+  const hasExplicitCoverMarker = catalog.some(
+    (it) => it.kind === "marker" && it.role === "cover",
   );
 
   if (items.length === 0) {
+    if (slotFilter) {
+      console.error(`No image slot matched filter: ${JSON.stringify(slotFilter)}`);
+      printSlotCatalog(catalog, filePath);
+      process.exit(1);
+    }
     console.log("No [IMAGE_PROMPT: ...] markers found.");
     if (blogImagesArchivePrompts() && /\bimage_prompt:archive\b/.test(raw)) {
       console.log(
-        "Hint: this file may already be resolved — look for `<!-- image_prompt:archive … b64=… -->` above each `![…](https://i.ibb.co/…)` figure.",
+        "Hint: resolved figures — use --list-slots, then --slot=N or --cover to regenerate one without touching others.",
       );
     }
     process.exit(0);
+  }
+
+  if (slotFilter) {
+    const label =
+      slotFilter.type === "cover"
+        ? "cover"
+        : slotFilter.type === "slot"
+          ? `slot ${slotFilter.value}`
+          : `id=${slotFilter.value}`;
+    console.log(`Single-slot mode (${label}): ${items.length} figure(s) to process.`);
   }
 
   let provider = null;
@@ -693,7 +902,9 @@ async function main() {
     }
   }
 
-  console.log(`Found ${items.length} image prompt(s).${dryRun ? " (dry-run)" : ""}`);
+  console.log(
+    `Found ${items.length} image prompt(s)${mode === "markers-all" ? "" : " (filtered)"}.${dryRun ? " (dry-run)" : ""}`,
+  );
   if (blogImagesArchivePrompts()) {
     console.error(
       "Archiving each original prompt in an HTML comment above the figure (BLOG_IMAGES_ARCHIVE_PROMPTS=0 to disable).",
@@ -714,27 +925,32 @@ async function main() {
   if (dryRun) {
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
-      const attrs = parseAttrs(it.attrs);
-      const { role } = attrs;
-      console.log(`\n[${i + 1}/${items.length}] ${it.wrapped ? `wrapped role=${role}` : "inline"}`);
+      const role = it.role;
+      console.log(
+        `\n[${i + 1}/${items.length}] ${it.kind}${it.role === "cover" ? " cover" : ""}${it.id ? ` id=${it.id}` : ""}`,
+      );
       console.log(it.prompt.slice(0, 240) + (it.prompt.length > 240 ? "…" : ""));
       replacements.push({
         start: it.start,
         end: it.end,
-        markdown: `${imagePromptArchiveComment(it.prompt, { index: i, role: attrs.role, id: attrs.id })}![${altFromPrompt(it.prompt)}](https://i.ibb.co/PLACEHOLDER/dry-run.png)`,
+        markdown: markdownForWorkItem(it, "https://i.ibb.co/PLACEHOLDER/dry-run.png"),
       });
       if (role === "cover") coverUrl = "https://i.ibb.co/PLACEHOLDER/dry-run.png";
     }
   } else {
-    const conc = parallelImageConcurrency();
+    const conc = slotFilter ? 1 : parallelImageConcurrency();
     if (conc > 1) {
       console.error(`Parallel image jobs: up to ${conc} at once (GEMINI_PARALLEL).`);
     }
     const slotResults = await parallelMap(items, conc, async (it, i) => {
-      const { role, id } = parseAttrs(it.attrs);
-      const slug = id ?? `img-${i + 1}`;
+      const role = it.role;
+      const slug =
+        it.id ??
+        (it.role === "cover"
+          ? "cover"
+          : `img-${it.archiveIndex ?? it.markerIndex ?? it.position ?? i + 1}`);
       console.error(
-        `\n[${i + 1}/${items.length}] ${it.wrapped ? `wrapped role=${role}` : "inline"} (parallel)`,
+        `\n[${i + 1}/${items.length}] ${it.kind}${it.role === "cover" ? " cover" : it.archiveIndex != null ? ` index=${it.archiveIndex}` : it.markerIndex != null ? ` marker #${it.markerIndex}` : ""} (${conc > 1 ? "parallel" : "serial"})`,
       );
       console.error("  generating image bytes…");
       const b64 = await generateImageBase64(provider, it.prompt);
@@ -744,7 +960,7 @@ async function main() {
       return {
         start: it.start,
         end: it.end,
-        markdown: markdownFigureFromResult(it, i, url),
+        markdown: markdownForWorkItem(it, url),
         role,
         index: i,
         url,
@@ -760,7 +976,7 @@ async function main() {
     if (byIndex.length) firstUploadedUrl = byIndex[0].url;
   }
 
-  if (useFirstAsCover && firstUploadedUrl && !hasExplicitCoverMarker) {
+  if (useFirstAsCover && firstUploadedUrl && !hasExplicitCoverMarker && !slotFilter) {
     coverUrl = firstUploadedUrl;
   }
 
@@ -770,8 +986,9 @@ async function main() {
     out = out.slice(0, r.start) + r.markdown + out.slice(r.end);
   }
 
+  const forceCoverFm = Boolean(coverUrl && (slotFilter?.type === "cover" || items.some((it) => it.role === "cover")));
   if (!dryRun && coverUrl) {
-    out = patchFrontMatterImage(out, coverUrl);
+    out = patchFrontMatterImage(out, coverUrl, { force: forceCoverFm });
   }
 
   if (!dryRun) writeFileSync(filePath, out, "utf8");

@@ -94,4 +94,4 @@ If a run **hangs**, each Gemini call uses **`GEMINI_REQUEST_TIMEOUT_MS`** (defau
 
 **Parallel images:** `GEMINI_PARALLEL=6` (or `BLOG_IMAGES_PARALLEL`) runs up to that many generate+ImgBB jobs at once (default **4**, max **12**). Use `GEMINI_PARALLEL=1` for a strict queue. Optional `GEMINI_PARALLEL_STAGGER_MS=300` spaces starts slightly to reduce burst **429**s.
 
-`--dry-run` lists prompts without calling APIs or modifying the file. Cover / social preview: wrap the hero prompt with `<!-- blog:image role="cover" id="slug" -->` … `<!-- /blog:image -->` (see `.agent/skills/blog/SKILL.md`).
+`--dry-run` lists prompts without calling APIs or modifying the file. **Single image:** `--list-slots`, `--cover`, `--slot=N`, or `--id=slug` (see [docs/blog-image-pipeline.md](docs/blog-image-pipeline.md)). Cover / social preview: wrap the hero prompt with `<!-- blog:image role="cover" id="slug" -->` … `<!-- /blog:image -->` (see `.agent/skills/blog/SKILL.md`). Resolved `role=cover` slots update front matter only (no duplicate body `![]()` — the post layout hero uses `image:`).

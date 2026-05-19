@@ -3,7 +3,7 @@ title: "Adapting a Helm Chart Suite for OpenShift: 7 Patterns from a Real Deploy
 meta_title: "Helm Charts for OpenShift: 7 Proven Patterns (Visa Case Study)"
 description: "Seven battle-tested patterns for adapting Helm chart suites to OpenShift — from a real enterprise deployment: platform value layers, restricted-v2 helpers, runtime CA injection, Kyverno policies, and migrating Python-built Jobs to Helm."
 date: 2026-05-19T00:00:00+00:00
-image: "https://i.ibb.co/prMR0y4t/Gemini-Generated-Image-kh3sz2kh3sz2kh3s.png"
+image: "https://i.ibb.co/JF2q92yV/helm-openshift-patterns-hero.jpg"
 categories:
   - "Platform Engineering"
   - "DevOps"
@@ -22,6 +22,9 @@ draft: false
 featured: true
 author: "Oren Sultan"
 ---
+
+<!-- image_prompt:archive index=1 role=cover id=helm-openshift-patterns-hero b64=Q2luZW1hdGljIHdpZGUgc2hvdCwgZWRpdG9yaWFsIHBob3RvZ3JhcGh5LCAxNjo5IOKAlCBsYXRlIG5pZ2h0IGluIGEgZ2xhc3Mtd2FsbGVkIHBsYXRmb3JtIGVuZ2luZWVyaW5nIHdhciByb29tOiBhIERldk9wcyBlbmdpbmVlciBsZWFucyB0b3dhcmQgY3VydmVkIG1vbml0b3JzLCBsZWZ0IHNjcmVlbiBnbG93cyBzb2Z0IGdyZWVuIHdpdGggYSBzbWFsbCBsb2NhbCBLdWJlcm5ldGVzIGNsdXN0ZXIsIHJpZ2h0IHNjcmVlbiBmbG9vZHMgcmVkIHdpdGggZmFpbGVkIE9wZW5TaGlmdCBwb2RzIGFuZCBzZWN1cml0eSBwb2xpY3kgYWxlcnRzLiBGb3JlZ3JvdW5kOiBIZWxtIGNoYXJ0IHByaW50b3V0LCByZWQgc2VydmVyIGJhZGdlLCBjb2ZmZWUgc3RlYW0gaW4gYW1iZXIgcHJhY3RpY2FsIGxpZ2h0LiBTaGFsbG93IGRlcHRoIG9mIGZpZWxkLCBmaWxtIGdyYWluLCBkcmFtYXRpYyBjb250cmFzdCwgcGhvdG9yZWFsaXN0aWMgdGVuc2lvbiBvZiAiaXQgd29ya2VkIG9uIGtpbmQiIG1lZXRpbmcgcHJvZHVjdGlvbiBPcGVuU2hpZnQsIG5vIGxlZ2libGUgVUkgdGV4dCwgbm8gY29ycG9yYXRlIGxvZ29zLCBubyBzY2hlbWF0aWMgZGlhZ3JhbXMgb3IgZmxvd2NoYXJ0cy4 -->
+
 
 ## TL;DR
 

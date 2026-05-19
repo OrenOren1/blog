@@ -186,6 +186,8 @@ Optional: `IMAGE_GEN_PROVIDER=gemini|openai|auto`, `GEMINI_IMAGE_MODEL=gemini-3-
 
 Use `--dry-run` to list detected prompts only. Use `--use-first-as-cover` if the first `[IMAGE_PROMPT:]` should become `image:` in YAML (no `role="cover"` block).
 
+**Regenerate one image** (leave other figures unchanged): `task blog:images -- path/to/post.md --list-slots`, then `--cover`, `--slot=N`, or `--id=slug`. Cover slots update `image:` in front matter and write an archive comment only (post layout renders the hero).
+
 Agents should **not** run this command without the user’s keys and explicit request to burn API quota.
 
 ## Execution Checklist for Any Agent
