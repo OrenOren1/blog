@@ -27,10 +27,13 @@ background: /cover-hero.jpg
 <FloatingIcon icon="🔐" />
 
 <!--
-OPEN: this deck walks through Sentra's credentials & access platform from
-problem to architecture to open decisions. Audience: platform eng, security,
-SRE. Target outcome — alignment on the 4-case human model, Workload OIDC for
-services, three-layer IaC (ADR-008). Plan ~25 min + Q&A.
+<div dir="rtl">
+
+פתיחה. הדק הולך מהבעיה דרך הארכיטקטורה אל ההחלטות הפתוחות. קהל: פלטפורמה,
+אבטחה, SRE. יעד היישור — מודל ארבעת המקרים לבני אדם, Workload OIDC לשירותים,
+ושלוש שכבות IaC (ADR-008). ~25 דק' + שאלות.
+
+</div>
 -->
 
 ---
@@ -130,11 +133,15 @@ transition: fade-out
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-02.jpg" alt="kids-book accent — rabbit with broken key" style="width:100%;height:auto;display:block;" /></div>
 
 <!--
-Lead with urgency. Shared SCRAM secret across every workload + every human
-is the headline risk — one stale K8s Secret = persistent full-org write on
-all customer data. Numbers worth landing: 27 K8s Secrets, ages 87–291 d, 16
-Atlas ORG_OWNERs, 18 dormant accounts ≥12 months. Hook: "about to multiply"
-when prod-eu goes live — debt compounds per region × database.
+<div dir="rtl">
+
+לפתוח עם דחיפות. סוד SCRAM משותף לכל workload ולכל אדם הוא הסיכון המוביל —
+לפטופ on-call שנפרץ + סוד K8s ישן = כתיבה מתמשכת על כל הדאטה. מספרים להזכיר:
+27 K8s Secrets בגילאים 87–291 ימים, 16 ORG_OWNERs באטלס, 18 חשבונות לא
+פעילים מעל 12 חודש. הוק: "עומד להכפיל את עצמו" — prod-eu עולה והחוב גדל
+לפי region × DB.
+
+</div>
 -->
 
 ---
@@ -155,14 +162,6 @@ transition: fade-out
 </GlassCard>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-03.jpg" alt="kids-book accent — smiling anchor character" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-Five non-negotiables — frame them as guardrails, not preferences. Pause on
-"split source-of-truth": Okta authoritative for humans, IaC authoritative for
-services — this is the hardest internalisation. "Three-layer IaC" is ADR-008:
-Pulumi bootstrap (Tier 1) + Crossplane admin-baseline in platform-tools
-(Tier 2a) + Crossplane per-region self-service (Tier 2b).
--->
 
 ---
 layout: default
@@ -217,14 +216,6 @@ graph TD
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-04.jpg" alt="kids-book accent — sealed black box peeking eyes" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-The platform is a black box; everything outside is either an actor (services
-/ engineers / admins) or a hard dependency (Okta, PagerDuty, Twingate, the
-DBs). Key boundary — humans never type a DB password, services never store
-one. Reinforce: dependencies serve the human path only; services bypass
-Okta / PD / Twingate entirely via Workload OIDC.
--->
-
 ---
 layout: section
 transition: fade
@@ -235,11 +226,6 @@ transition: fade
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-05.jpg" alt="kids-book accent — gear character mid-turn" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-View transition. The functional view answers "what does the system do" —
-responsibilities, not products. ~10 seconds; the next slide is the meat.
--->
 
 ---
 layout: default
@@ -298,14 +284,6 @@ graph TD
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-06.jpg" alt="kids-book accent — interlocking puzzle pieces" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-Ten elements, each a responsibility. The Eligibility Manager + Trust-Binding
-Manager pair is the split-SoT realisation. Service Role Reconciler + Workload
-Identity Verifier handle the service path. Identity Federator + JIT Role
-Materializer carry the human path — JIT mechanism is still open (D-1).
-Audit Aggregator → Access Review Aggregator closes the audit loop.
--->
-
 ---
 layout: default
 transition: zoom-out
@@ -355,13 +333,6 @@ Converts Okta eligibility + trigger into time-bound group membership (mechanism 
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-07.jpg" alt="kids-book accent — row of tiny mascots" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-Six cards — the always-on responsibilities. The "open per D-1" element is
-JIT Role Materializer; its realisation (Path A: Okta API build · Path B:
-3rd-party vendor · Path C: hybrid) is the one undecided architectural piece
-in ADR-007.
--->
-
 ---
 layout: default
 transition: zoom-out
@@ -406,13 +377,6 @@ transition: zoom-out
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-08.jpg" alt="kids-book accent — three heads peering through magnifying glass" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-R&W functional-view pattern — pose the three perspectives that matter to
-different stakeholders. Security asks blast radius. Evolution asks change
-cost when a new DB type lands. Usability asks who-learns-what. Keep this
-slide tight; it sets up the views to come.
--->
-
 ---
 layout: two-cols-header
 transition: slide-left
@@ -447,14 +411,6 @@ transition: slide-left
 </div>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-09.jpg" alt="kids-book accent — robot and human shaking hands" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-Single most important framing in the deck. Two distinct identity paths:
-humans via the Okta SAML backbone (3 flavors — standing RO from a group
-attr · JIT Platform for RW + on-call admin · break-glass for the legacy
-admin / ORG_OWNER retrieval) and services via Workload OIDC (no shared
-secret, no Okta, no Twingate). Reinforce: services never touch Okta.
--->
 
 ---
 layout: default
@@ -494,13 +450,6 @@ sequenceDiagram
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-10.jpg" alt="kids-book accent — robot handing envelope to server" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-Walk the sequence: K8s ServiceAccount → EKS OIDC → AWS IAM trust → DB. TTL
-15 min, auto-refresh on the pod side. No human, no Okta, no Twingate in the
-hot path. RDS uses IRSA + IAM DB auth; Atlas uses Workload OIDC directly.
-This is the steady-state credential lifecycle for services.
--->
-
 ---
 layout: default
 transition: fade
@@ -532,14 +481,6 @@ sequenceDiagram
 > **Manager-approved, TTL-bound.** No platform team in the loop — developer + manager only. Grant + revoke both audited.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-11.jpg" alt="kids-book accent — big key with mini-keys dangling" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-The one case with a human approval gate. Developer requests via the
-platform (Slack command / web form), approver (peer or team lead) signs off,
-ephemeral Okta group membership written for a bounded TTL, downstream
-federation projects the new scoped role. Sub-variants here depend on D-1
-(Path A timer, vendor, etc.).
--->
 
 ---
 layout: default
@@ -574,14 +515,6 @@ sequenceDiagram
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-12.jpg" alt="kids-book accent — pager with on-call bandana" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-On-call gets admin scope automatically — no ticket, no approver. PagerDuty
-subscription drives the ephemeral Okta group membership. Latency is
-trigger-dependent: hourly under the GHA-cron sub-variant; seconds under PD
-webhook → Lambda or Slack-command sub-variants. User must reconnect to the
-DB to pick up the new group attribute.
--->
-
 ---
 layout: section
 transition: slide-up
@@ -592,11 +525,6 @@ transition: slide-up
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-13.jpg" alt="kids-book accent — open ledger book character" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-View transition. Information view = entities and the rules that protect
-them. Next slide is the entity model + invariants.
--->
 
 ---
 layout: default
@@ -649,13 +577,6 @@ erDiagram
 </CardGrid>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-14.jpg" alt="kids-book accent — stack of folders with padlocks" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-Four core entities. Hammer on the four invariants — no standing RW/admin
-for humans, no stored DB passwords for services, every materialized DB role
-traces to a Gate or a Binding (origin), Trust Binding write = grant (audit
-anchor). 18-month audit retention; Audit Event is append-only.
--->
 
 ---
 layout: default
@@ -768,13 +689,6 @@ graph LR
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-15.jpg" alt="kids-book accent — treasure map with winding path" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-The mermaid traces every reach path. Two auth backbones, three human
-flavors, one service path. "R&D group → SAML attr" is the standing-RO case
-(no JIT). JIT Platform is boxed — it's where TTL + approval live. Break-
-glass also boxed — bypasses JIT and pages on every use.
--->
-
 ---
 layout: section
 transition: zoom-out
@@ -785,11 +699,6 @@ transition: zoom-out
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-16.jpg" alt="kids-book accent — friendly cargo ship" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-View transition. Deployment view = where elements actually run. Next: R&W
-perspectives on the deployment, then the multi-region topology.
--->
 
 ---
 layout: default
@@ -836,13 +745,6 @@ transition: slide-left
 </CardGrid>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-17.jpg" alt="kids-book accent — two binoculars characters" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-Three stakeholder perspectives on the deployment. SRE / on-call: where does
-it run, who pages on it. Security: cross-cluster trust boundaries (especially
-prod-us vs prod-eu isolation). Platform: operational ownership of the
-admin plane vs the per-region planes.
--->
 
 ---
 layout: default
@@ -936,15 +838,6 @@ flowchart TB
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-18.jpg" alt="kids-book accent — two globes holding hands across bridge" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-The deployment map. platform-tools cluster (eu-central-1) holds the admin
-plane — Eligibility Manager, PD-Sync, Audit Aggregator, plus Tier 2a
-controllers (admin baseline, cross-region reach). prod-us and prod-eu each
-hold their own Tier 2b controllers (region-scoped self-service). Blast
-radius: prod-us controllers cannot reach prod-eu — region-bounded by
-design. Every human DB hop transits Twingate.
--->
-
 ---
 layout: section
 transition: fade
@@ -955,12 +848,6 @@ transition: fade
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-19.jpg" alt="kids-book accent — friendly hammer and wrench" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-View transition. Development view = how the platform's IaC + controllers
-are organised as code. Next: R&W perspectives, then the Pulumi-vs-Crossplane
-scored comparison.
--->
 
 ---
 layout: default
@@ -1011,13 +898,6 @@ transition: slide-left
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-20.jpg" alt="kids-book accent — brick wall character with protective arms" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-Three perspectives on dev. Service teams: how do I add a DB role for my
-service today (answer: one PR to the umbrella chart). Platform team: how do
-I keep the chart consistent across 5 upstream systems. Operators: where do
-I look when a CRD is stuck. Sets up why Crossplane wins Tier 2.
--->
-
 ---
 layout: default
 transition: slide-left
@@ -1054,15 +934,6 @@ class: slide-tools-selection
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-21.jpg" alt="kids-book accent — three big eyes peering at scroll" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-The scored comparison — Pulumi 17/40, Crossplane 39/40. Only tie is State
-management (Pulumi's explicit history vs Crossplane's live etcd). Critical
-row: Infra↔code alignment — Pulumi needs two PRs in separate repos and
-order-sensitive deploy; Crossplane ships the role + binding CRD atomically
-with the service helm release. Pulumi stays for Tier 1 (VPCs, EKS, AWS
-accounts); Crossplane owns Tier 2 onward.
--->
-
 ---
 layout: default
 transition: fade-out
@@ -1082,13 +953,6 @@ transition: fade-out
 > **One chart, six target-system folders, one access-matrix.** The whole platform fits in one Helm release per cluster.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-22.jpg" alt="kids-book accent — tree with file-folder leaves" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-One umbrella helm chart, pinned sub-charts (Crossplane 1.18, Atlas Operator
-2.5). Six templates/ folders, one per target system — crossplane, iam-ic,
-mongodb, rds, okta, observe. Service teams contribute via PR; access-
-matrix.md is the human-readable audit joint that joins it all.
--->
 
 ---
 layout: default
@@ -1153,14 +1017,6 @@ graph TD
 > **One Helm chart, two reconciliation backends.** **Crossplane** owns everything that lands in AWS / Okta / PagerDuty / PostgreSQL (4 providers, 4 upstream APIs). **MongoDB Atlas Operator** owns everything that lands in Atlas (3 CRDs, 1 upstream API). The chart routes each `templates/{system}/` folder to its matching backend — *one PR adds a role across all five upstream systems consistently*.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-23.jpg" alt="kids-book accent — robot conductor with baton" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-One helm chart, two reconciliation backends. Crossplane handles AWS / Okta
-/ PagerDuty / PostgreSQL (4 providers, 4 upstream APIs). MongoDB Atlas
-Operator handles Atlas (3 CRDs, 1 upstream API). The chart routes each
-templates/{system}/ folder to its matching backend — one PR adds a role
-across all 5 upstream systems consistently.
--->
 
 ---
 layout: default
@@ -1240,14 +1096,6 @@ graph LR
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-24.jpg" alt="kids-book accent — owl in cyan glasses with log scroll" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-G-4 is the audit attribution gap — the "pasha_boss at 03:17" moment that's
-unanswerable today. Audit Event is the carrier; append-only invariant.
-18-month retention target (SOC 2 minimum + intra-year incident lookback).
-Coverage target: 100% of DB connects identity-attributable. Reconciler
-activity (Crossplane + Atlas Op) feeds the same audit pipeline.
--->
-
 ---
 layout: section
 transition: slide-up
@@ -1258,11 +1106,6 @@ transition: slide-up
 ## <span class="neon">& What's Open</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-25.jpg" alt="kids-book accent — scales of justice character" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-Closing section. Decisions = what's locked and what's still open. Next
-slide is the takeaway summary.
--->
 
 ---
 layout: default
@@ -1308,16 +1151,6 @@ class: slide-dense
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-26.jpg" alt="kids-book accent — locked + open padlock friends" style="width:100%;height:auto;display:block;" /></div>
 
-<!--
-Three columns. Locked — Group→Role (Okta group → scoped IAM + Atlas roles,
-not per-user) · Break-Glass (admin + ORG_OWNER → 2–3 humans, 1h cap) ·
-Okta+JIT = SoT (standing via Okta, time-bound via JIT, not DB-as-truth).
-Open — D-1 JIT Path (A custom Okta build · B vendor like Britive · C
-hybrid) — pick at next ADR review. D-2 Vendor — only triggers if D-1 →
-Path B. IaC is *not* open — ADR-008 locks Pulumi + Crossplane tier
-structure.
--->
-
 ---
 layout: cover
 transition: fade
@@ -1332,8 +1165,11 @@ class: thanks-slide
 [app.sultano.blog](https://app.sultano.blog) · [linkedin.com/in/oren-sultan-0527bab6](https://www.linkedin.com/in/oren-sultan-0527bab6/) · [github.com/orenoren1](https://github.com/orenoren1)
 
 <!--
-Wrap up. Three asks for the audience: feedback on the 4-case human model
-(the conceptual core), Path A/B/C preference for D-1 (the open call), and
-any blast-radius scenario I missed in the trust-zone analysis. Contact info
-on screen — Slack, LinkedIn, GitHub.
+<div dir="rtl">
+
+סיכום. שלוש בקשות מהקהל: פידבק על מודל ארבעת המקרים (הליבה הרעיונית),
+העדפה ל-Path A / B / C עבור D-1 (ההחלטה הפתוחה), וכל תרחיש blast-radius
+שפספסתי בניתוח אזורי האמון. פרטי קשר על המסך — Slack, LinkedIn, GitHub.
+
+</div>
 -->
