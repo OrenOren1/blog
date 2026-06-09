@@ -1,0 +1,695 @@
+---
+
+## system: "Credentials & Access Platform"
+slug: "credentials-access-platform"
+author: "Oren Sultan | Senior DevOps & Platform Engineer | Tikal"
+date: "2026-06-08"
+style: "hera"
+
+
+
+# Credentials &
+
+# Access Platform
+
+**Oren Sultan** | Senior DevOps & Platform Engineer | Tikal | 2026
+
+
+
+## 🚨 Current State Is Not Acceptable
+
+- **One shared SCRAM secret** for every workload **and** every human — across 3× RDS + 1× MongoDB (mid-split) in `prod-us`
+- **27 K8s Secrets · ages 87–291 days · no rotation in practice** — RDS Secrets Manager Lambda exists, but downstream `kubectl` roll is manual ⇒ never done
+- **16 Atlas `ORG_OWNER`s + 9 `ORG_OWNER` API keys + 18 dormant accounts ≥12 months** — verified 2026-06-07
+- **G-4 audit attribution gap** — `pasha_boss` at 03:17 unanswerable · 3 of 16 RDS still without IAM DB auth
+- **About to multiply** — `prod-eu` going live · MongoDB splitting per-tenant · more RDS incoming → debt compounds per **region × database**
+
+> Compromised on-call laptop + one stale K8s Secret = **persistent full-org write on all customer data** — and we are weeks from shipping this same model into a second region.
+
+
+
+# 🔒 Constraints
+
+# Non-Negotiable
+
+
+
+## ⚓ Locked Architectural Principles
+
+- **Decompose by audience** — services vs humans, *not* by DB technology 
+- **Split source-of-truth** — Okta authoritative for humans · IaC authoritative for services 
+- **Workload-native identity** — no stored DB passwords for services in steady state 
+- **4-case human model** — standing RO · JIT RW · JIT admin · break-glass 
+- **Three-layer IaC** — Pulumi bootstrap · admin-baseline (Tier 2a) · per-region self-service (Tier 2b)
+
+
+
+# 🌐 Context
+
+# View
+
+
+
+## 🌐 Context View — System as Black Box
+
+```mermaid
+graph TD
+    Services["Service Workloads"]
+    Humans["Engineers / On-call /<br/>Analysts"]
+    Admins["Platform<br/>Administrators"]
+    System["🔐 Credentials &<br/>Access Platform"]
+    Twingate["🛡️ Twingate<br/>(ZTNA gate)"]
+    Okta["🪪 Okta<br/>(IdP)"]
+    PD["📟 PagerDuty<br/>(on-call schedule)"]
+    Atlas["🍃 MongoDB Atlas"]
+    AWS["☁️ AWS<br/>(RDS / IAM / STS)"]
+    EKS["⎈ EKS OIDC Provider"]
+
+    Services -->|"assume DB role"| System
+    Humans -->|"DB access (4-case model)"| System
+    Admins -->|"manage roles, groups, bindings"| System
+
+    Humans -.->|"always-on session"| Twingate
+    Twingate -.->|"gates network reach"| Atlas
+    Twingate -.->|"gates network reach"| AWS
+
+    System -->|"read groups · admin writes"| Okta
+    System -->|"on-call events · roster"| PD
+    System -->|"auth · admin ops"| Atlas
+    System -->|"auth · admin ops"| AWS
+    System -->|"verify workload identity"| EKS
+
+    Okta -->|"SAML group attributes"| System
+    Atlas -->|"DB audit log"| System
+    AWS -->|"CloudTrail · pgaudit"| System
+```
+
+
+
+> **Key boundary:** the platform owns the credential lifecycle — humans never type a DB password, services never store one.
+
+
+
+## 🌐 External Dependencies & DB Targets
+
+**Dependencies (human path only · services bypass all three):**
+
+- 🪪 Okta · 📟 PagerDuty · 🛡️ Twingate · 📊 SIEM / Datadog *(audit egress · D-6)*
+
+**DB targets behind the boundary:**
+
+- 🐘 **RDS PostgreSQL** — 16 instances · 5 AWS accounts · 13 IAM-DB-auth on / 3 off
+- 🍃 **MongoDB Atlas** — Sentra org · 3 projects · 4 clusters · 23 DB users
+- 🌍 **Regions** — `prod-us` (us-east-1) · `prod-eu` (eu-central-1) · `platform-tools` (admin)
+
+> All four dependencies serve the **human path only**. Services authenticate via Workload OIDC and never transit Okta · PD · Twingate.
+
+
+
+# ⚙️ Functional
+
+# View
+
+
+
+## ⚙️ Functional Elements & Interactions
+
+```mermaid
+graph TD
+    EM["📋 Eligibility<br/>Manager"]
+    TBM["🔗 Trust-Binding<br/>Manager"]
+    SRR["🛠️ Service Role<br/>Reconciler"]
+    WIV["🪪 Workload Identity<br/>Verifier"]
+    IF["🌉 Identity<br/>Federator"]
+    GRP["⏱️ JIT Role Materializer<br/>(open — D-1)"]
+    PDS["📟 PD-to-Grant<br/>Synchronizer"]
+    ASR["🔍 Access State<br/>Reconciler"]
+    AUD["📊 Audit<br/>Aggregator"]
+    ARA["📑 Access Review<br/>Aggregator"]
+
+    TBM -->|"declares bindings"| SRR
+    SRR -->|"provisions DB roles + trust"| WIV
+    PDS -->|"writes group membership"| EM
+    EM -->|"publishes eligibility"| GRP
+    IF -->|"carries human identity"| GRP
+    EM --> ASR
+    TBM --> ASR
+    WIV --> AUD
+    GRP --> AUD
+    ASR --> AUD
+    AUD --> ARA
+```
+
+
+
+> **Naming discipline:** elements are responsibilities, not products. Product mapping shows up only in the Deployment view.
+
+
+
+## 🧩 Core Functional Elements
+
+### 📋 Eligibility Manager
+
+Maintains Okta groups + group→DB-role gating rules (humans side of split source-of-truth)
+
+### 🔗 Trust-Binding Manager
+
+Maintains workload-identity → DB-role bindings as IaC (services side of split source-of-truth)
+
+### 🛠️ Service Role Reconciler
+
+Watches declared bindings → produces DB-side roles + cloud-IAM trust artefacts
+
+### 🪪 Workload Identity Verifier
+
+Verifies workload assertion at connect-time → issues short-lived DB-bound credential
+
+### 🌉 Identity Federator
+
+Carries Okta identity into the downstream DB auth path via SAML (active) / OIDC (future)
+
+### ⏱️ JIT Role Materializer
+
+Converts Okta eligibility + trigger into time-bound group membership (mechanism open — D-1)
+
+
+
+## 🔀 Two Audiences, Two Paths
+
+### 🤖 Service Access Flow
+
+- Trust binding declared in **IaC** (Git)
+- **EKS OIDC** at connect-time · short-lived DB-bound credential
+- **Okta not in this path** · no stored passwords
+
+### 👤 Human Access Flow
+
+- Eligibility lives in **Okta groups**
+- **Twingate L3 gate first** · SAML carries group attribute
+- 4 cases · steady-state RO · transient JIT (B/C/D)
+
+
+
+## 🤖 Service Access — Workload Identity Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Dev as Developer
+    participant Git as Git (IaC)
+    participant TBM as Trust-Binding<br/>Manager
+    participant SRR as Service Role<br/>Reconciler
+    participant CIAM as Cloud IAM<br/>(STS · Atlas)
+    participant Pod as Service Pod<br/>(EKS)
+    participant WIV as Workload Identity<br/>Verifier
+    participant DB as DB Target
+
+    Note over Dev,SRR: Declarative grant — once per binding (PR-time)
+    Dev->>Git: PR — workload → DB role binding
+    Git->>TBM: merged binding (source of truth)
+    TBM->>SRR: declared spec
+    SRR->>DB: create / update scoped DB role
+    SRR->>CIAM: create trust artefact<br/>(IRSA · Atlas OIDC mapping)
+
+    Note over Pod,DB: Connect-time — every pod start
+    Pod->>Pod: read projected SA token (EKS OIDC)
+    Pod->>WIV: present workload assertion
+    WIV->>CIAM: verify signature + binding match
+    CIAM-->>Pod: short-lived credential<br/>(IAM DB auth token · Atlas X.509)
+    Pod->>DB: connect with scoped DB role
+```
+
+
+
+> **No stored passwords.** Identity flows K8s SA → EKS OIDC → cloud IAM trust → DB · TTL 15 min · auto-refresh on the pod side · no human, no Okta, no Twingate.
+
+
+
+## 🎯 Human Access — 4-Case Model (ADR-004)
+
+- **Case A · Standing RO** — direct group → `_engineering_ro` role · no JIT step · audit-friendly default
+- **Case B · JIT RW** — developer-requested · second-operator approval · TTL-bound · ticket reference
+- **Case C · JIT admin** — **PagerDuty on-call drives it** · shift starts → grant · shift ends → revoke
+- **Case D · Break-glass** — out-of-band runbook · 1h default / 4h cap · pages `#sec-ops` on grant + every connect
+- **All four** gated by Twingate at the network layer · all four emit Audit Events for review
+
+
+
+## 📟 Case C — JIT Admin (PagerDuty-Triggered)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant PD as PagerDuty
+    participant PDS as PD-to-Grant Sync
+    participant Okta as Okta
+    participant Human as On-call
+    participant TG as Twingate
+    participant IF as Identity Federator
+    participant DB as DB Target
+
+    PD->>PDS: on-call assignment event
+    PDS->>Okta: add user to oncall_admin group
+    Human->>TG: establish ZTNA session
+    Human->>Okta: authenticate (SAML)
+    Okta->>IF: SAML assertion + admin group attr
+    IF->>DB: federated session as oncall_admin
+    Note over PD,PDS: Shift ends
+    PD->>PDS: assignment-end event
+    PDS->>Okta: remove user from group
+```
+
+
+
+> **Latency depends on D-1.** Hourly under GHA-cron sub-variant · seconds under PD-webhook sub-variant.
+
+
+
+## 🔬 Functional View — Three Stakeholder Questions
+
+### 🔒 Security — Blast radius?
+
+Two trust gates only · compromise bounded to one binding · no element holds both audiences' credentials
+
+### 🔮 Evolution — New DB next year?
+
+Element graph unchanged · one new adapter inside the Reconciler · D-1 lives below this layer
+
+### 🧑‍💻 Usability — Who learns what?
+
+Engineers: standing RO for daily reads · JIT only when needed · Officers: IaC PRs · `git log` is the audit
+
+> 🔍 **Observability hook:** Audit Aggregator is the spine · every element emits to it.
+
+
+
+# 📦 Information
+
+# View
+
+
+
+## 📦 Entities & Integrity Invariants
+
+```mermaid
+erDiagram
+    HUMAN_IDENTITY ||--o{ GROUP_MEMBERSHIP : "has"
+    GROUP ||--o{ GROUP_MEMBERSHIP : "contains"
+    GROUP ||--o{ GROUP_TO_DB_ROLE_GATE : "gates"
+    DB_ROLE ||--o{ GROUP_TO_DB_ROLE_GATE : "gated-by"
+    SERVICE_IDENTITY ||--o{ TRUST_BINDING : "subject"
+    DB_ROLE ||--o{ TRUST_BINDING : "target"
+    ON_CALL_ASSIGNMENT }o--o{ GROUP_MEMBERSHIP : "produces"
+    HUMAN_IDENTITY ||--o{ AUDIT_EVENT : "subject"
+    SERVICE_IDENTITY ||--o{ AUDIT_EVENT : "subject"
+```
+
+
+
+> **🔒 Security lens — four invariants:** No standing RW/admin for humans · No stored DB passwords for services · Audit Events append-only · Every materialized DB Role traces to a Gate or a Binding. **Sensitive entities:** Trust Binding (write = grant) · Audit Event (read = exfil risk) · Group Membership (transient state must reconcile).
+
+> 🔍 **Observability hook:** `Audit Event` is the observability carrier · **append-only invariant** (no Update / no Delete by any actor) · retention target **18 months** (D-6 finalizes) · read access limited to `Auditor` + `Security Reviewer` · PII redacted at capture.
+
+
+
+## 🔑 Access Topology — Who Reaches What, How, With Which Role
+
+```mermaid
+graph LR
+    subgraph S["👥 SUBJECTS"]
+        direction TB
+        H_RO["👤 Engineer<br/>(standing)"]
+        H_JIT["👤 Engineer<br/>(JIT RW)"]
+        H_OC["📟 On-call"]
+        H_BG["🚨 Platform Admin<br/>(break-glass)"]
+        SVC["🤖 Service workload<br/>(per domain)"]
+        ANL["🤖 Analytics workload"]
+    end
+
+    subgraph OKTA_STACK["🪪 OKTA SAML — human auth backbone"]
+        direction TB
+        G_OKTA["R&D Okta group<br/>group → SAML attr at login<br/>(standing · no JIT)"]
+        subgraph GJIT_BOX["⏱️ JIT Platform"]
+            G_JIT["Path A / B / C — D-1<br/>request · approve · TTL<br/>writes time-bound<br/>Okta group membership"]
+        end
+        subgraph BG_BOX["🚨 Break-glass · BYPASSES JIT"]
+            G_BG["Okta-gated retrieval of<br/>shared <b>admin</b> SCRAM (RDS)<br/>+ Atlas <b>ORG_OWNER</b> API key<br/>· paged · 1h cap"]
+        end
+    end
+
+    subgraph OIDC_STACK["🪪 WORKLOAD OIDC — service auth backbone (direct, NOT via Okta)"]
+        direction TB
+        G_WL["EKS OIDC · IRSA<br/>Atlas Workload OIDC<br/>15-min credentials"]
+    end
+
+    subgraph R["🎭 ROLES"]
+        direction TB
+        R_RO["engineering_ro<br/>SELECT · standing"]
+        R_JIT["jit_*_rw<br/>scoped RW · TTL"]
+        R_OC["oncall_admin<br/>full · shift TTL"]
+        R_BG["legacy admin<br/>full · 1h cap · paged"]
+        R_SVC["<svc>_svc_rw<br/>own schema · 15-min creds"]
+        R_ANL["analytics_ro<br/>cross-DB read · 15-min creds"]
+    end
+
+    subgraph T["🗃️ TARGETS"]
+        direction TB
+        RDS["🐘 RDS<br/>(per-domain · prod-us · prod-eu)"]
+        ATLAS["🍃 MongoDB Atlas<br/>(per-tenant clusters)"]
+    end
+
+    H_RO --> G_OKTA --> R_RO
+    H_JIT --> G_JIT
+    H_OC --> G_JIT
+    G_JIT --> R_JIT
+    G_JIT --> R_OC
+    H_BG -.-> G_BG -.-> R_BG
+    SVC --> G_WL --> R_SVC
+    ANL --> G_WL --> R_ANL
+
+    R_RO --> RDS
+    R_RO --> ATLAS
+    R_JIT --> RDS
+    R_OC --> RDS
+    R_OC --> ATLAS
+    R_BG -.-> RDS
+    R_BG -.-> ATLAS
+    R_SVC --> RDS
+    R_SVC --> ATLAS
+    R_ANL --> RDS
+
+    classDef human fill:#1e3a5f,stroke:#5a8cc8,color:#fff
+    classDef service fill:#5f3a1e,stroke:#c89c5a,color:#fff
+    classDef grant fill:#3a1e5f,stroke:#9c5ac8,color:#fff
+    classDef grantbg fill:#5f1e1e,stroke:#c85a5a,color:#fff,stroke-dasharray: 5 3
+    classDef role fill:#2a2a2a,stroke:#aaa,color:#fff
+    classDef target fill:#1e5f3a,stroke:#5ac88c,color:#fff
+    class H_RO,H_JIT,H_OC,H_BG human
+    class SVC,ANL service
+    class G_OKTA,G_JIT,G_WL grant
+    class G_BG grantbg
+    class R_RO,R_JIT,R_OC,R_BG,R_SVC,R_ANL role
+    class RDS,ATLAS target
+    style OKTA_STACK fill:#142838,stroke:#5a8cc8,stroke-width:2px,color:#fff
+    style OIDC_STACK fill:#1f1a14,stroke:#c89c5a,stroke-width:2px,color:#fff
+    style GJIT_BOX fill:#2d1748,stroke:#b07adb,stroke-width:3px,color:#fff
+    style BG_BOX fill:#3a1414,stroke:#c85a5a,stroke-width:3px,stroke-dasharray:8 4,color:#fff
+```
+
+
+
+> **Two auth backbones, three human flavors, one service path.** Humans **always** transit the **🪪 Okta SAML backbone** — in one of three flavors: **R&D group → SAML attr** (standing RO only) · **JIT Platform** (boxed — JIT RW + on-call admin, TTL + approval live here) · **break-glass** (boxed — Okta-gated retrieval of legacy `admin` / `ORG_OWNER`, *bypasses JIT*, paged on every use). Services **never touch Okta** — they auth **directly via Workload OIDC** (EKS OIDC + IRSA for RDS, Atlas Workload OIDC for Mongo).
+
+
+
+# 🚢 Deployment
+
+# View
+
+
+
+## 🚢 Multi-Region Topology
+
+```mermaid
+graph TD
+    subgraph PT["AWS: platform-tools (eu-central-1)"]
+        EM["📋 Eligibility Manager"]
+        PDS["📟 PD-to-Grant Sync"]
+        ASR["🔍 Access State Recon"]
+        AUD["📊 Audit Aggregator"]
+        Tier2a["🛠️ Tier 2a Crossplane +<br/>Atlas Operator (baseline)"]
+    end
+    subgraph US["AWS: prod (us-east-1)"]
+        WL_US["📦 Service workload"]
+        Tier2b_US["🛠️ Tier 2b<br/>(US self-service)"]
+    end
+    subgraph EU["AWS: prod (eu-central-1)"]
+        WL_EU["📦 Service workload"]
+        Tier2b_EU["🛠️ Tier 2b<br/>(EU self-service)"]
+    end
+    Okta["🪪 Okta"]
+    Atlas["🍃 Atlas"]
+    AWS_IAM["☁️ AWS IAM/STS"]
+
+    EM -->|"admin API"| Okta
+    PDS -->|"group writes"| Okta
+    Tier2a -->|"baseline roles"| Atlas
+    Tier2a -->|"baseline IAM"| AWS_IAM
+    WL_US -->|"Workload OIDC"| Atlas
+    WL_US -->|"IRSA → IAM DB auth"| AWS_IAM
+    WL_EU -->|"Workload OIDC"| Atlas
+    WL_EU -->|"IRSA → IAM DB auth"| AWS_IAM
+    Tier2b_US -->|"per-service roles (US only)"| AWS_IAM
+    Tier2b_EU -->|"per-service roles (EU only)"| AWS_IAM
+```
+
+
+
+> **Blast radius:** `prod-us` controllers cannot reach `prod-eu` resources · region-bounded by design.
+
+
+
+## 🛡️ Trust Zones — Region-Bounded Blast Radius
+
+- `**platform-tools` admin plane** — cross-region admin-baseline reach by design · **strictest protection**
+- `**prod-us` regional plane** — IAM scoped to US-resident resources only · cannot touch EU
+- `**prod-eu` regional plane** — IAM scoped to EU-resident resources only · cannot touch US
+- `**platform-tools` outage** does *not* affect existing service connections in either region
+- **Region Tier 2b outage** affects new provisioning in that region only · existing services keep running
+
+
+
+## 🔬 Deployment View — Through Two Lenses
+
+### ⚡ Performance Lens
+
+- **Region affinity** · no cross-region SAML hop
+- **Twingate** session once · zero per-connect cost
+- **15-min IAM tokens** · federation hop dominates human latency
+
+### ⚖️ Regulation Lens
+
+- **Residency** · prod-eu in eu-central-1 · prod-us in us-east-1
+- **Region-scoped controllers** · no implicit cross-region reach
+- **Audit retention D-6 open** · Tier 2a pinned for SOC2 evidence
+
+
+
+# 🛠️ Development
+
+# View
+
+
+
+## 📁 `sentra-db-permissions` — Chart Tree
+
+- **Umbrella chart** · `Chart.yaml` + pinned sub-charts (crossplane 1.18 · atlas-operator 2.5)
+- `**templates/`** · 6 folders, one per target system (crossplane · iam-ic · mongodb · rds · okta · observe)
+- `**values/**` · environment overlays (`staging.yaml`, `prod.yaml`) + `access-matrix.md`
+- `**examples/**` · runnable onboarding snippets per use-case
+
+> **One chart, six target-system folders, one access-matrix.** The whole platform fits in one Helm release per cluster.
+
+
+
+## 🛠️ Controller Plane — Backends Behind `db-permissions`
+
+```mermaid
+graph TD
+    Chart["📁 <b>db-permissions</b> Helm chart<br/>(umbrella · sub-charts pinned · one release per cluster)"]
+
+    subgraph CP["🛠️ Crossplane (Tier 2a · platform-tools)"]
+        direction TB
+        P_AWS["provider-aws<br/>IAM Identity Center<br/>· IAM roles · permission sets"]
+        P_OKTA["provider-okta<br/>groups · group→app assignments<br/>· SAML attribute statements"]
+        P_PD["provider-pagerduty<br/>rosters · schedules<br/>→ feeds PD-to-Grant Sync"]
+        P_SQL["provider-sql<br/>PostgreSQL roles · grants<br/>· role memberships"]
+    end
+
+    subgraph AO["🍃 MongoDB Atlas Operator (Tier 2a · platform-tools)"]
+        direction TB
+        AO_USER["AtlasDatabaseUser<br/>SCRAM · X.509 · OIDC users"]
+        AO_ROLE["AtlasCustomRole<br/>per-DB scoped roles"]
+        AO_FED["AtlasFederatedAuth +<br/>WorkloadIdentity bindings<br/>(SAML + Workload OIDC)"]
+    end
+
+    Chart -->|"templates/crossplane/"| P_AWS
+    Chart -->|"templates/crossplane/"| P_OKTA
+    Chart -->|"templates/crossplane/"| P_PD
+    Chart -->|"templates/rds/"| P_SQL
+    Chart -->|"templates/mongodb/"| AO_USER
+    Chart -->|"templates/mongodb/"| AO_ROLE
+    Chart -->|"templates/mongodb/"| AO_FED
+
+    AWS_API["☁️ AWS<br/>IAM · STS · IAM IC"]
+    OKTA_API["🪪 Okta Admin API"]
+    PD_API["📟 PagerDuty REST API"]
+    RDS_API["🐘 RDS PG SQL endpoint"]
+    ATLAS_API["🍃 Atlas Admin API"]
+
+    P_AWS -->|"reconcile"| AWS_API
+    P_OKTA -->|"reconcile"| OKTA_API
+    P_PD -->|"reconcile"| PD_API
+    P_SQL -->|"reconcile"| RDS_API
+    AO_USER -->|"reconcile"| ATLAS_API
+    AO_ROLE -->|"reconcile"| ATLAS_API
+    AO_FED -->|"reconcile"| ATLAS_API
+
+    classDef chart fill:#142838,stroke:#5a8cc8,stroke-width:3px,color:#fff
+    classDef provider fill:#2d1748,stroke:#b07adb,color:#fff
+    classDef atlas fill:#1e5f3a,stroke:#5ac88c,color:#fff
+    classDef extapi fill:#2a2a2a,stroke:#aaa,color:#fff
+    class Chart chart
+    class P_AWS,P_OKTA,P_PD,P_SQL provider
+    class AO_USER,AO_ROLE,AO_FED atlas
+    class AWS_API,OKTA_API,PD_API,RDS_API,ATLAS_API extapi
+    style CP fill:#1f1430,stroke:#9c5ac8,stroke-width:2px,color:#fff
+    style AO fill:#143020,stroke:#5ac88c,stroke-width:2px,color:#fff
+```
+
+
+
+> **One Helm chart, two reconciliation backends.** **Crossplane** owns everything that lands in AWS / Okta / PagerDuty / PostgreSQL (4 providers, 4 upstream APIs). **MongoDB Atlas Operator** owns everything that lands in Atlas (3 CRDs, 1 upstream API). The chart routes each `templates/{system}/` folder to its matching backend — *one PR adds a role across all five upstream systems consistently*.
+
+
+
+## 🔬 Codeline Through Three Lenses
+
+### 🔮 Evolution — Split by Target System
+
+Templates folder mirrors **external systems**, not services — adding a 3rd DB technology = one new `templates/{tech}/` folder, **no chart restructure**
+
+### ⚖️ Regulation — Git PRs + Pinned Versions
+
+All access changes flow through Git PRs (auditable, reviewable, signed) · sub-chart versions pinned (crossplane 1.18, atlas-operator 2.5) · `access-matrix.md` is the human-readable audit joint
+
+### 🧑‍💻 Usability — Examples as Onboarding
+
+`examples/*.yaml` are **runnable snippets** per use-case — service-team's first PR copies one file, not the whole chart · onboarding measured in minutes
+
+> 🔍 **Observability hook:** `git log` of the chart **is** the human-readable change-audit timeline · `access-matrix.md` is the queryable summary · CI lints block out-of-band grants (e.g. rejects `psql GRANT` outside `templates/`) · CODEOWNERS gates access-PR review.
+
+
+
+## 🔍 Observability — Closing the G-4 Attribution Gap
+
+```mermaid
+graph LR
+    subgraph SRC["📤 Signal Sources (functional elements + DB targets)"]
+        direction TB
+        H["👥 Human DB connect<br/>(SAML / vault retrieval)"]
+        S["🤖 Service DB connect<br/>(Workload OIDC)"]
+        G["🎫 Grant / revoke events<br/>(JIT Platform · Okta · PD)"]
+        R["🛠️ Reconciler activity<br/>(Crossplane · Atlas Op)"]
+    end
+
+    subgraph CAP["🪵 Native Capture Layer"]
+        direction TB
+        PG["pgaudit (RDS)"]
+        ATLAS_AUD["Atlas audit log"]
+        CT["AWS CloudTrail"]
+        OKTA_LOG["Okta System Log"]
+        PD_LOG["PagerDuty audit"]
+        METRICS["Prometheus<br/>(controller health)"]
+    end
+
+    SINK["📊 Datadog / SIEM<br/>(D-6 picks specific sink)"]
+    DASH["📈 Dashboards + SLOs"]
+    ALERT["🚨 Alerts<br/>(privileged ops · break-glass connect · drift)"]
+    REVIEW["📑 Quarterly access review<br/>(Access Review Aggregator)"]
+
+    H --> PG
+    H --> ATLAS_AUD
+    S --> PG
+    S --> ATLAS_AUD
+    G --> OKTA_LOG
+    G --> PD_LOG
+    R --> CT
+    R --> METRICS
+
+    PG --> SINK
+    ATLAS_AUD --> SINK
+    CT --> SINK
+    OKTA_LOG --> SINK
+    PD_LOG --> SINK
+    METRICS --> SINK
+
+    SINK --> DASH
+    SINK --> ALERT
+    SINK --> REVIEW
+
+    classDef src fill:#1e3a5f,stroke:#5a8cc8,color:#fff
+    classDef cap fill:#5f3a1e,stroke:#c89c5a,color:#fff
+    classDef sink fill:#1e5f3a,stroke:#5ac88c,color:#fff
+    classDef consumer fill:#2a2a2a,stroke:#aaa,color:#fff
+    class H,S,G,R src
+    class PG,ATLAS_AUD,CT,OKTA_LOG,PD_LOG,METRICS cap
+    class SINK sink
+    class DASH,ALERT,REVIEW consumer
+```
+
+
+
+> **Closes G-4 (today's question: *"who was `pasha_boss` at 03:17?"* — unanswerable).** Every connection now carries the federated identity that authorized it · pgaudit + Atlas audit record the principal · SIEM correlates across the full chain. **Open: D-6 picks the sink (Datadog vs alternative SIEM) + retention period.**
+
+**SLOs — three axes, one table:**
+
+
+| Signal                                                | SLO target              | Why it matters                                                |
+| ----------------------------------------------------- | ----------------------- | ------------------------------------------------------------- |
+| **JIT grant latency** (request → SAML attribute live) | **< 60s P95**           | On-call usability — Case C automatic grant must beat the page |
+| **Audit egress lag** (DB connect → in SIEM)           | **< 5 min P99**         | Forensics + alerting need near-real-time                      |
+| **Drift reconcile cadence** (Git vs reality)          | **every 5 min**         | Detect out-of-band grants before they age                     |
+| **Break-glass connect → `#sec-ops` page**             | **< 30s**               | If `admin` SCRAM is in use, security must know now            |
+| **Identity attribution coverage**                     | **100%** of DB connects | Closes G-4 — no `pasha_boss` mystery left                     |
+| **Audit retention**                                   | **18 months** (target)  | SOC2 minimum + intra-year incident lookback                   |
+
+
+
+
+# 📑 Decisions
+
+# & What's Open
+
+
+
+## 📑 Decisions — Locked + Open
+
+### 🎯 Locked
+
+**Group → Role** — Okta group → scoped IAM + Atlas roles · *rejected:* per-user grants
+
+**Break-Glass** — `admin` + `ORG_OWNER` → 2–3 humans · 1h cap · *rejected:* status quo
+
+**Okta + JIT = SoT** — standing via Okta · time-bound via JIT · *rejected:* DB-as-truth
+
+### 🔮 D-1 — JIT Path
+
+**🅰️ Path A** — Okta API build · Lambda + GHA + Slack · needs Lifecycle Mgmt uplift
+
+**🅲 Path C** — Self-managed OIDC broker · Keycloak / Dex · sidesteps Okta uplift
+
+**🅱️ Path B** — Vendor (Britive / BeyondTrust / Snyk) · SOC2 · 4 integrations required
+
+### 🛠️ D-2 — IaC Tool
+
+**Scope 1** — `db-permission-module` · Pulumi (typed) vs Crossplane (drift)
+
+**Scope 2** — Workload bindings · Pulumi (per-team) vs Crossplane (K8s-native)
+
+**Sub-Q** — Workload-auth migration timing *(ADR-003 locked OIDC; pace open)*
+
+
+
+
+
+## Questions?
+
+
+
+
+
+# Thank You
+
+**Oren Sultan** · Senior DevOps & Platform Engineer · Tikal
+[app.sultano.blog](https://app.sultano.blog) · [linkedin.com/in/oren-sultan-0527bab6](https://www.linkedin.com/in/oren-sultan-0527bab6/) · [github.com/orenoren1](https://github.com/orenoren1)

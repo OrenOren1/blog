@@ -83,8 +83,8 @@ Username convention: `<service>_<env>_<role>` — for example `connectors_prod_r
 
 Rotation propagation was the detail I almost missed. When ESO syncs a new password, the Atlas Operator reconciles and updates the Atlas user — but the running pod is still holding the old password in memory. The answer was already deployed: **Reloader** (Stakater), which runs cluster-wide via an ArgoCD ApplicationSet with `clusters: {}`. It watches K8s Secrets and triggers rolling restarts when values change. Zero manual steps on rotation.
 
-<!-- image_prompt:archive index=3 b64=U2VxdWVuY2UgZGlhZ3JhbSBzaG93aW5nOiBTZWNyZXRzIE1hbmFnZXIgcGFzc3dvcmQgcm90YXRpb24g4oaSIEVTTyBzeW5jIOKGkiBLOHMgU2VjcmV0IHVwZGF0ZWQg4oaSIEF0bGFzIE9wZXJhdG9yIHVwZGF0ZXMgQXRsYXMgdXNlciDihpIgUmVsb2FkZXIgZGV0ZWN0cyBjaGFuZ2Ug4oaSIHJvbGxpbmcgcG9kIHJlc3RhcnQuIENsZWFuIHRlY2huaWNhbCBkaWFncmFtLCBkYXJrIGJhY2tncm91bmQu -->
-![Sequence diagram showing: Secrets Manager password rotation → ESO sync → K8s Secret updated → Atlas Operator updates ...](https://i.ibb.co/3yXnMCdT/img-3.jpg)
+<!-- diagram_mermaid:archive index=1 id=mongo-rotation b64=Zmxvd2NoYXJ0IExSCiAgc3ViZ3JhcGggbWdtdFsi4piB77iPIE1hbmFnZW1lbnQgUGxhbmUiXQogICAgUFVMVU1JWyJQdWx1bWlcbmdlbmVyYXRlcyBwYXNzd29yZCJdCiAgICBTTVsiU2VjcmV0cyBNYW5hZ2VyXG5wcm9kL21vbmdvLWNvbm5lY3RvcnMtcGFzc3dvcmQiXQogICAgUFVMVU1JIC0tPnx3cml0ZXN8IFNNCiAgZW5kCiAgc3ViZ3JhcGggZGVsaXZlcnlbIuKYuO+4jyBEZWxpdmVyeSBQbGFuZSJdCiAgICBFU09bIkVTT1xuc3luY3MgZXZlcnkgMWgiXQogICAgSzhTWyJLOHMgU2VjcmV0XG5hdGxhcy1jb25uZWN0b3JzLXBhc3N3b3JkIl0KICAgIEFUTEFTX09QWyJBdGxhcyBPcGVyYXRvciJdCiAgICBBVExBU19VU0VSWyJBdGxhcyBVc2VyXG5jb25uZWN0b3JzX3Byb2RfcnciXQogICAgUkVMT0FERVJbIlJlbG9hZGVyXG5TdGFrYXRlciJdCiAgICBQT0RbIlNlcnZpY2UgUG9kIl0KICBlbmQKICBTTSAtLT58c3luY3wgRVNPCiAgRVNPIC0tPiBLOFMKICBLOFMgLS0+fHBhc3N3b3JkIHJlZnwgQVRMQVNfT1AKICBLOFMgLS0+fGVudiB2YXJ8IFBPRAogIEFUTEFTX09QIC0tPnxjcmVhdGUvdXBkYXRlfCBBVExBU19VU0VSCiAgUkVMT0FERVIgLS0+fGRldGVjdHMgc2VjcmV0IGNoYW5nZXwgSzhTCiAgUkVMT0FERVIgLS0+fHJvbGxpbmcgcmVzdGFydHwgUE9E -->
+![MongoDB credential rotation — Secrets Manager → ESO → K8s Secret → Atlas Operator + Reloader](https://i.ibb.co/n8rMCmmK/mongo-rotation.jpg)
 
 ### RDS: IRSA + RDS Proxy
 
@@ -132,8 +132,8 @@ PagerDuty (prod-db-admin schedule) → polled hourly by GHA
 
 The `slack_assign_on_call_groups.py` script is the exact template — same logic, same structure, just targeting the Okta groups API instead of the Slack SDK. One new script, one new GHA step. The on-call engineer gets `atlasAdmin` and `break_glass_admin` (RDS) automatically when their shift starts, and loses it when it ends. No commands to run. Every access fires a P1 Datadog alert.
 
-<!-- image_prompt:archive index=4 b64=Rmxvd2NoYXJ0IHNob3dpbmcgUGFnZXJEdXR5IHNjaGVkdWxlIGFzc2lnbm1lbnQg4oaSIEdpdEh1YiBBY3Rpb25zIGNyb24g4oaSIE9rdGEgZ3JvdXAgbWVtYmVyc2hpcCDihpIgQXRsYXMgcm9sZSBncmFudGVkIOKGkiBhdXRvbWF0aWMgUDEgYWxlcnQuIENsZWFuIGZsb3djaGFydCwgc2VjdXJpdHktdGhlbWVkIGNvbG9yIHBhbGV0dGUu -->
-![Flowchart showing PagerDuty schedule assignment → GitHub Actions cron → Okta group membership → Atlas role granted → ...](https://i.ibb.co/Rk1hpGkD/img-4.jpg)
+<!-- diagram_mermaid:archive index=2 id=break-glass b64=Zmxvd2NoYXJ0IFRECiAgUERbIlBhZ2VyRHV0eVxucHJvZC1kYi1hZG1pbiBzY2hlZHVsZSJdCiAgR0hBWyJHaXRIdWIgQWN0aW9uc1xuY3JvbjogZXZlcnkgaG91ciJdCiAgQ0FMTEVSU1sib25fY2FsbGVycy5qc29uXG5jdXJyZW50IG9uLWNhbGwgZW5naW5lZXIiXQogIFNMQUNLWyJTbGFjayBHcm91cHNcbnN0ZXAgMjogZXhpc3RpbmciXQogIE9LVEFbIk9rdGEgR3JvdXBcbnNlbnRyYS1kYi1hZG1pbnMiXQogIEFUTEFTWyJBdGxhcyBSb2xlXG5hdGxhc0FkbWluIl0KICBSRFNbIlJEUyBSb2xlXG5icmVha19nbGFzc19hZG1pbiJdCiAgQUxFUlRbIkRhdGFkb2cgUDEgQWxlcnRcbmV2ZXJ5IGFjY2VzcyJdCiAgUEQgLS0+fHBvbGx8IEdIQQogIEdIQSAtLT58c3RlcCAxOiBnZXQtcGFnZXJkdXR5LW9uLWNhbGxlcnN8IENBTExFUlMKICBDQUxMRVJTIC0tPnxzdGVwIDI6IHNldC1zbGFjay1vbi1jYWxsZXJzfCBTTEFDSwogIENBTExFUlMgLS0+fHN0ZXAgMzogc2V0LW9rdGEtZGItYWRtaW5zfCBPS1RBCiAgT0tUQSAtLT58Z3JhbnRzIGZvciBzaGlmdCBkdXJhdGlvbnwgQVRMQVMKICBPS1RBIC0tPnxncmFudHMgZm9yIHNoaWZ0IGR1cmF0aW9ufCBSRFMKICBBVExBUyAtLT58ZmlyZXN8IEFMRVJUCiAgUkRTIC0tPnxmaXJlc3wgQUxFUlQ= -->
+![Break-glass access — PagerDuty on-call schedule drives Okta group membership and Atlas/RDS admin grants](https://i.ibb.co/Pv9tpNjd/break-glass.jpg)
 
 ---
 

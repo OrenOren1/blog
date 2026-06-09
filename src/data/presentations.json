@@ -1,0 +1,13 @@
+{
+  "decks": [
+    {
+      "slug": "credentials-access-platform",
+      "title": "Credentials & Access Platform",
+      "subtitle": "Workforce + workload identity federation across RDS, MongoDB Atlas, and Okta",
+      "date": "2026-06-08",
+      "audience": "Platform engineering · Security · SRE",
+      "tags": ["platform", "security", "iam", "rds", "mongodb-atlas", "okta"],
+      "source": "presentations/credentials-access-platform/slides.md"
+    }
+  ]
+}

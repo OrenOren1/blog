@@ -1,0 +1,1 @@
+import{f as t,o as e,e as n,t as s}from"./modules/vue-C0Cc95M1.js";import{u as a}from"./slidev/context-B-yehtU-.js";import{_ as c}from"./index-LP1GsmQK.js";const i={class:"floating-icon","aria-hidden":"true"},_=t({__name:"FloatingIcon",props:{icon:{}},setup(o){return a(),(r,p)=>(e(),n("div",i,s(o.icon),1))}}),d=c(_,[["__scopeId","data-v-a72f2c3e"]]);export{d as _};

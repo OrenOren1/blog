@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "astro dev --host 127.0.0.1",
     "start": "astro dev --host 127.0.0.1",
-    "build": "astro build",
+    "build": "npm run presentations:build && astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "presentations:build": "node scripts/presentations.mjs build",
+    "presentations:dev": "node scripts/presentations.mjs dev",
+    "presentations:install": "node scripts/presentations.mjs install",
+    "postinstall": "node scripts/presentations.mjs install",
     "migrate": "python3 scripts/migrate_hugo.py",
     "blog:images": "node scripts/imgbb-resolve-prompts.mjs",
+    "blog:diagrams": "node scripts/diagram-resolve.mjs",
     "site:brand-stamp": "GEMINI_IMAGE_SIZE=512 node scripts/imgbb-resolve-prompts.mjs --brand-stamp-out public/images/by-oren-sultan-stamp.png",
     "giscus:setup": "node scripts/giscus-setup.mjs"
   },

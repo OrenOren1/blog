@@ -154,6 +154,20 @@ tasks:
     cmds:
       - npm run blog:images -- {{.CLI_ARGS}}
 
+  blog:diagrams:
+    desc: |
+      Convert [DIAGRAM_MERMAID: ...] markers → Gemini text (image prompt) → Gemini image → ImgBB → ![alt](url).
+      Pass args after --, e.g.
+        task blog:diagrams -- src/content/blog/your-post.md
+        task blog:diagrams -- src/content/blog/your-post.md --dry-run
+        task blog:diagrams -- src/content/blog/your-post.md --list-slots
+        task blog:diagrams -- src/content/blog/your-post.md --slot=2
+      Env overrides: GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL_CHAIN, DIAGRAM_STYLE, DIAGRAM_SKIP_LLM=1
+    deps:
+      - install
+    cmds:
+      - npm run blog:diagrams -- {{.CLI_ARGS}}
+
   giscus:setup:
     desc: |
       Print Giscus repoId/categoryId via gh (enable Discussions if needed).

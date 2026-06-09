@@ -1,0 +1,173 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import presentationsData from "../../data/presentations.json";
+
+type Deck = {
+  slug: string;
+  title: string;
+  subtitle?: string;
+  date: string;
+  audience?: string;
+  tags?: string[];
+  source?: string;
+};
+
+const decks = (presentationsData.decks as Deck[]).slice().sort(
+  (a, b) => b.date.localeCompare(a.date),
+);
+
+const fmtDate = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+};
+---
+
+<BaseLayout
+  title="Presentations"
+  description="Talks, decks, and architecture walkthroughs by Oren Sultan."
+>
+  <div class="wrap-narrow">
+    <h1 style="margin-top:3rem;">Presentations</h1>
+    <p class="lede">
+      Decks I've built for talks, architecture reviews, and tech-radar sessions.
+      Each one is a live Slidev deck — open the deck for the slideshow, or the
+      presenter view for speaker notes and a next-slide preview.
+    </p>
+
+    <ul class="deck-list">
+      {decks.map((d) => (
+        <li class="deck-card">
+          <div class="deck-card__meta">
+            <time datetime={d.date}>{fmtDate(d.date)}</time>
+            {d.audience && <span class="deck-card__audience">{d.audience}</span>}
+          </div>
+          <h2 class="deck-card__title">
+            <a href={`/presentations/${d.slug}/`}>{d.title}</a>
+          </h2>
+          {d.subtitle && <p class="deck-card__subtitle">{d.subtitle}</p>}
+          {d.tags && d.tags.length > 0 && (
+            <ul class="deck-card__tags">
+              {d.tags.map((t) => <li>{t}</li>)}
+            </ul>
+          )}
+          <div class="deck-card__actions">
+            <a class="deck-btn deck-btn--primary" href={`/presentations/${d.slug}/`}>
+              Open deck →
+            </a>
+            <a class="deck-btn" href={`/presentations/${d.slug}/presenter/`}>
+              Presenter view
+            </a>
+            <a class="deck-btn" href={`/presentations/${d.slug}/overview/`}>
+              Overview
+            </a>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .lede {
+    color: var(--muted, #9aa0a6);
+    margin-bottom: 2rem;
+  }
+
+  .deck-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.2rem;
+  }
+
+  .deck-card {
+    padding: 1.2rem 1.3rem;
+    background: var(--card-bg, rgba(255, 255, 255, 0.03));
+    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+    border-radius: 12px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .deck-card:hover {
+    border-color: rgba(255, 107, 26, 0.55);
+  }
+
+  .deck-card__meta {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--muted, #9aa0a6);
+    margin-bottom: 0.4rem;
+  }
+  .deck-card__audience::before {
+    content: "·";
+    margin-right: 0.5rem;
+  }
+
+  .deck-card__title {
+    margin: 0 0 0.3rem 0;
+    font-size: 1.4rem;
+    line-height: 1.25;
+  }
+  .deck-card__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .deck-card__title a:hover {
+    color: #ff6b1a;
+  }
+
+  .deck-card__subtitle {
+    margin: 0 0 0.8rem 0;
+    color: var(--muted, #9aa0a6);
+    font-size: 0.95rem;
+  }
+
+  .deck-card__tags {
+    list-style: none;
+    margin: 0 0 1rem 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .deck-card__tags li {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    color: var(--muted, #9aa0a6);
+    letter-spacing: 0.02em;
+  }
+
+  .deck-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .deck-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+    text-decoration: none;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .deck-btn:hover {
+    border-color: rgba(255, 107, 26, 0.55);
+    background: rgba(255, 107, 26, 0.08);
+  }
+  .deck-btn--primary {
+    background: rgba(255, 107, 26, 0.18);
+    border-color: rgba(255, 107, 26, 0.55);
+    color: #fff;
+  }
+  .deck-btn--primary:hover {
+    background: rgba(255, 107, 26, 0.28);
+  }
+</style>
