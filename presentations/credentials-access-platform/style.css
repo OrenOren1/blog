@@ -1,189 +1,681 @@
-.slidev-layout {
-  --neon: #7ee8ff;
-  --tikal-orange: #ff6b1a;
-  --tikal-orange-soft: #ff8a3d;
+/* ── Dark base override for seriph ── */
+:root {
+  --slidev-theme-primary: #7efff5;
+  --slidev-theme-background: #0d1117;
+  --color-primary: #7efff5;
+  --color-accent: #a78bfa;
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-border: rgba(255, 255, 255, 0.1);
 }
 
-/* Hide Slidev's goto-dialog autocomplete overlay. The dialog itself sits at
-   -top-20 but its long inner list overflows back into view in dev. The custom
-   .deck-menu dropdown (top-right) is the slide navigator now. */
+.slidev-layout {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+/* ── Neon text effect ── */
+.neon {
+  color: var(--color-primary);
+  text-shadow: 0 0 8px var(--color-primary), 0 0 20px var(--color-primary);
+}
+
+/* ── Glass card (compact) ── */
+.glass {
+  background: var(--color-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1em 1.4em;
+  margin: 0.6em 0;
+}
+
+/* ── 3D card (compact) ── */
+.card-3d {
+  background: linear-gradient(135deg, rgba(126, 255, 245, 0.08), rgba(167, 139, 250, 0.06));
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.75em 1.1em;
+  margin: 0.4em 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: transform 0.2s ease;
+}
+
+/* ── Gradient divider line ── */
+.gradient-line {
+  height: 2px;
+  background: linear-gradient(to right, var(--color-primary), transparent);
+  border-radius: 2px;
+  margin: 1em 0;
+}
+
+/* ── Floating icon ── */
+.floating-icon {
+  font-size: 4em;
+  display: block;
+  text-align: center;
+  filter: drop-shadow(0 0 12px var(--color-primary));
+}
+
+/* ── Two-column comparison ── */
+.two-cols-header .highlight-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1em 1.4em;
+}
+
+/* ── Headings (compact density — default) ── */
+h1, h2, h3 { color: #e6edf3; }
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.3em; margin-bottom: 0.4em; }
+h3 { font-size: 1.0em; color: var(--color-primary); margin-bottom: 0.2em; }
+
+/* ── Body & bullets ── */
+.slidev-layout { font-size: 0.92em; }
+li { margin: 0.25em 0; line-height: 1.4; }
+li strong { color: var(--color-primary); }
+
+/* ── Blockquotes ── */
+blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1em;
+  color: rgba(230, 237, 243, 0.75);
+  font-style: italic;
+  margin-top: 0.8em;
+}
+
+/* ── Section layout — style only, don't override seriph's grid layout ── */
+.slidev-layout.section h1 {
+  font-size: 2.2em;
+  line-height: 1.1;
+  margin: 0 0 0.3em 0;
+}
+
+.slidev-layout.section h2 {
+  font-size: 1.4em;
+  color: var(--color-primary);
+  text-shadow: 0 0 8px var(--color-primary);
+  margin: 0;
+}
+
+/* ── Constraints banner — transitions Current State into Locked Principles ── */
+.constraints-banner {
+  margin-top: 0.7em;
+  padding: 0.55em 1em;
+  font-size: 0.75em;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(126, 255, 245, 0.06), rgba(167, 139, 250, 0.08));
+  border: 1px solid rgba(126, 255, 245, 0.25);
+  border-radius: 8px;
+}
+.constraints-banner p {
+  margin: 0 !important;
+}
+.constraints-banner strong {
+  color: var(--color-primary);
+}
+
+/* ── Slide-dense — for slides with too much text to fit at default size ── */
+.slide-dense {
+  font-size: 0.72em;
+  overflow: hidden;
+}
+.slide-dense h2 {
+  font-size: 1.25em !important;
+  margin: 0 0 0.3em !important;
+  padding: 0 !important;
+}
+.slide-dense h3 {
+  font-size: 0.95em !important;
+  margin-bottom: 0.15em !important;
+}
+.slide-dense p {
+  margin: 0.7em 0 !important;
+  line-height: 1.45 !important;
+}
+.slide-dense li {
+  margin: 0.4em 0 !important;
+  line-height: 1.4 !important;
+}
+.slide-dense ul {
+  margin: 0.3em 0 !important;
+  padding-left: 1.2em !important;
+}
+.slide-dense .glass {
+  padding: 0.7em 1em !important;
+  margin: 0.4em 0 !important;
+}
+.slide-dense .card-3d {
+  padding: 0.7em 1em !important;
+  margin: 0.3em 0 !important;
+}
+/* breathing room between bold-paragraph items inside dense cards */
+.slide-dense .card-3d p + p {
+  margin-top: 0.85em !important;
+}
+.slide-dense .highlight-box {
+  padding: 0.5em 0.9em !important;
+}
+.slide-dense blockquote {
+  font-size: 0.85em;
+  margin-top: 0.3em;
+  padding-left: 0.7em;
+}
+
+/* ── Cover layout ── */
+.slidev-layout.cover h1 {
+  font-size: 3em;
+  line-height: 1.15;
+}
+
+/* ── Mermaid diagrams ── */
+.slidev-layout .mermaid,
+.slidev-layout .slidev-mermaid {
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0.3em 0;
+}
+
+.slidev-layout .mermaid svg,
+.slidev-layout .slidev-mermaid svg {
+  max-width: 100% !important;
+  max-height: 62vh !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Mermaid text sizing — smaller default so nodes don't overflow */
+.mermaid .nodeLabel,
+.mermaid .edgeLabel,
+.mermaid .label,
+.mermaid .messageText,
+.mermaid .actor,
+.mermaid text {
+  font-size: 13px !important;
+}
+
+/* Diagram slides — tighten H2 to give the diagram more vertical room */
+.slide-diagram h2 {
+  font-size: 1.4em !important;
+  margin-bottom: 0.3em !important;
+}
+
+/* Captions under diagrams */
+.slide-diagram blockquote {
+  font-size: 0.75em;
+  margin-top: 0.4em;
+}
+
+/* ── Combined Context slide (diagram + dependencies in one) ── */
+.slide-context-combined h2 {
+  font-size: 1.2em !important;
+  margin-bottom: 0.2em !important;
+}
+.slide-context-combined .mermaid svg,
+.slide-context-combined .slidev-mermaid svg {
+  max-height: 52vh !important;
+}
+.slide-context-combined .mermaid .nodeLabel,
+.slide-context-combined .mermaid .edgeLabel,
+.slide-context-combined .mermaid text {
+  font-size: 11px !important;
+}
+.slide-context-combined .ctx-foot {
+  font-size: 0.6em;
+  line-height: 1.4;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.55em 0.9em;
+  margin: 0.4em 0 0.3em;
+}
+.slide-context-combined .ctx-foot ul {
+  margin: 0 !important;
+  padding-left: 1.1em !important;
+  list-style: disc;
+}
+.slide-context-combined .ctx-foot li {
+  margin: 0.18em 0 !important;
+  line-height: 1.4 !important;
+}
+.slide-context-combined .ctx-foot strong {
+  color: var(--color-primary);
+}
+.slide-context-combined blockquote {
+  font-size: 0.65em;
+  margin-top: 0.25em;
+  padding-left: 0.7em;
+}
+
+/* ── Observability G-4 — wide LR diagram ── */
+.slide-observability-fit {
+  padding-top: 0.7em !important;
+  padding-bottom: 0.6em !important;
+  position: relative;
+}
+.slide-observability-fit h2 {
+  font-size: 1.1em !important;
+  margin-bottom: 0.3em !important;
+}
+.slide-observability-fit .mermaid,
+.slide-observability-fit .slidev-mermaid {
+  transform: scale(0.78);
+  transform-origin: center top;
+  margin: 0 !important;
+  width: 100% !important;
+}
+.slide-observability-fit .mermaid svg,
+.slide-observability-fit .slidev-mermaid svg {
+  max-height: none !important;
+  max-width: none !important;
+}
+.slide-observability-fit .mermaid .nodeLabel,
+.slide-observability-fit .mermaid .edgeLabel,
+.slide-observability-fit .mermaid .cluster-label,
+.slide-observability-fit .mermaid text {
+  font-size: 12px !important;
+}
+.slide-observability-fit blockquote {
+  font-size: 0.65em;
+  position: absolute;
+  bottom: 0.6em;
+  left: 1.5em;
+  right: 1.5em;
+  margin: 0;
+  text-align: center;
+  border-left: none;
+  font-style: normal;
+}
+
+/* ── Tools Selection — Pulumi vs Crossplane comparison table ── */
+.slide-tools-selection h2 {
+  font-size: 1.15em !important;
+  margin-bottom: 0.5em !important;
+}
+.slide-tools-selection .tools-table {
+  font-size: 0.52em;
+}
+.slide-tools-selection .tools-table table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.slide-tools-selection .tools-table th,
+.slide-tools-selection .tools-table td {
+  padding: 0.55em 0.85em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  vertical-align: top;
+  line-height: 1.4;
+}
+.slide-tools-selection .tools-table thead th {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-primary);
+  text-align: left;
+  font-weight: 600;
+}
+.slide-tools-selection .tools-table th:first-child,
+.slide-tools-selection .tools-table td:first-child {
+  width: 18%;
+  background: rgba(126, 255, 245, 0.04);
+}
+.slide-tools-selection .tools-table th:last-child,
+.slide-tools-selection .tools-table td:last-child {
+  width: 16%;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(167, 139, 250, 0.06);
+}
+.slide-tools-selection .tools-table tbody tr:last-child th,
+.slide-tools-selection .tools-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.slide-tools-selection .tools-table strong {
+  color: var(--color-primary);
+}
+.slide-tools-selection .tools-conclusion {
+  margin-top: 0.7em;
+  padding: 0.75em 1.1em;
+  font-size: 0.58em;
+  line-height: 1.5;
+  background: linear-gradient(135deg, rgba(126, 255, 245, 0.08), rgba(167, 139, 250, 0.06));
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+.slide-tools-selection .tools-conclusion strong {
+  color: var(--color-primary);
+}
+.slide-tools-selection .tools-conclusion p {
+  margin: 0 0 0.4em !important;
+}
+.slide-tools-selection .tools-conclusion ul {
+  margin: 0 !important;
+  padding-left: 1.2em !important;
+}
+.slide-tools-selection .tools-conclusion li {
+  margin: 0.18em 0 !important;
+  line-height: 1.45 !important;
+}
+
+/* ── Multi-Region Topology — wide LR with 3 subgraphs ── */
+.slide-multi-region {
+  padding-top: 0.8em !important;
+  padding-bottom: 0.6em !important;
+  position: relative;
+}
+.slide-multi-region h2 {
+  font-size: 1.1em !important;
+  margin-bottom: 0.2em !important;
+}
+.slide-multi-region .multi-region-diagram {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.slide-multi-region .multi-region-diagram .mermaid,
+.slide-multi-region .multi-region-diagram .slidev-mermaid {
+  transform: scale(1.05);
+  transform-origin: center top;
+  margin: 0.6em 0 0 !important;
+  width: 100% !important;
+}
+.slide-multi-region .tier-explainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+  margin: 0.3em 0 0.4em;
+  font-size: 0.42em;
+}
+.slide-multi-region .tier-card {
+  border-radius: 6px;
+  padding: 0.45em 0.7em;
+  line-height: 1.35;
+}
+.slide-multi-region .tier-card.tier-2a {
+  background: rgba(126, 255, 245, 0.08);
+  border: 1px solid rgba(126, 255, 245, 0.35);
+}
+.slide-multi-region .tier-card.tier-2b {
+  background: rgba(167, 139, 250, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+}
+.slide-multi-region .tier-card p {
+  margin: 0 0 0.3em !important;
+}
+.slide-multi-region .tier-card ul {
+  margin: 0 !important;
+  padding-left: 1.1em !important;
+}
+.slide-multi-region .tier-card li {
+  margin: 0.15em 0 !important;
+}
+.slide-multi-region .tier-card strong {
+  color: var(--color-primary);
+}
+.slide-multi-region .mermaid svg,
+.slide-multi-region .slidev-mermaid svg {
+  max-height: none !important;
+  max-width: none !important;
+}
+.slide-multi-region .mermaid .nodeLabel,
+.slide-multi-region .mermaid .edgeLabel,
+.slide-multi-region .mermaid .cluster-label,
+.slide-multi-region .mermaid text {
+  font-size: 13px !important;
+}
+.slide-multi-region blockquote {
+  font-size: 0.7em;
+  position: absolute;
+  bottom: 0.6em;
+  left: 2em;
+  right: 2em;
+  margin: 0;
+  text-align: center;
+  border-left: none;
+  font-style: normal;
+}
+
+/* ── Access Topology — bullets (1/3) + LR graph (2/3) ── */
+.slide-access-topology {
+  padding-top: 0.8em !important;
+  padding-bottom: 0.6em !important;
+}
+.slide-access-topology h2 {
+  font-size: 1.1em !important;
+  margin-bottom: 0.3em !important;
+}
+.slide-access-topology .topo-grid {
+  display: grid;
+  grid-template-columns: 1fr 3.5fr;
+  gap: 0.8em;
+  align-items: center;
+}
+.slide-access-topology .topo-side {
+  font-size: 0.58em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.7em 0.85em;
+  line-height: 1.4;
+}
+.slide-access-topology .topo-side p {
+  margin: 0 0 0.4em !important;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.slide-access-topology .topo-side ul {
+  margin: 0 !important;
+  padding-left: 1.1em !important;
+}
+.slide-access-topology .topo-side li {
+  margin: 0.2em 0 !important;
+  line-height: 1.4 !important;
+}
+.slide-access-topology .topo-side ul ul {
+  margin: 0.15em 0 0.2em !important;
+  padding-left: 1em !important;
+}
+.slide-access-topology .topo-side strong {
+  color: var(--color-primary);
+}
+.slide-access-topology .topo-diagram {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slide-access-topology .topo-diagram .mermaid,
+.slide-access-topology .topo-diagram .slidev-mermaid {
+  margin: 0 !important;
+  transform: scale(0.82);
+  transform-origin: center center;
+  width: 100% !important;
+}
+.slide-access-topology .topo-diagram .mermaid svg,
+.slide-access-topology .topo-diagram .slidev-mermaid svg {
+  max-height: none !important;
+  max-width: none !important;
+}
+.slide-access-topology .mermaid .nodeLabel,
+.slide-access-topology .mermaid .edgeLabel,
+.slide-access-topology .mermaid .cluster-label,
+.slide-access-topology .mermaid text {
+  font-size: 11px !important;
+}
+
+/* ── JIT variants — two sequence diagrams side-by-side ── */
+.slide-jit-variants h1 {
+  font-size: 1.4em !important;
+  margin-bottom: 0.4em !important;
+}
+.slide-jit-variants h3 {
+  font-size: 0.95em !important;
+  color: var(--color-primary);
+  margin: 0 0 0.3em !important;
+  text-align: center;
+}
+.slide-jit-variants .mermaid svg,
+.slide-jit-variants .slidev-mermaid svg {
+  max-height: 70vh !important;
+  max-width: 100% !important;
+}
+.slide-jit-variants .mermaid .actor,
+.slide-jit-variants .mermaid .messageText,
+.slide-jit-variants .mermaid .labelText,
+.slide-jit-variants .mermaid .noteText,
+.slide-jit-variants .mermaid text {
+  font-size: 11px !important;
+}
+
+/* ── Functional combined — diagram + side bullets ── */
+.slide-functional-combined {
+  padding-top: 0.8em !important;
+  padding-bottom: 0.8em !important;
+  position: relative;
+}
+.slide-functional-combined h2 {
+  font-size: 1.15em !important;
+  margin-bottom: 0.3em !important;
+}
+.slide-functional-combined .fn-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 0.8em;
+  align-items: center;
+}
+.slide-functional-combined .fn-diagram .mermaid,
+.slide-functional-combined .fn-diagram .slidev-mermaid {
+  transform: scale(0.78);
+  transform-origin: center top;
+  margin: 0 !important;
+}
+.slide-functional-combined .fn-diagram .mermaid svg,
+.slide-functional-combined .fn-diagram .slidev-mermaid svg {
+  max-height: none !important;
+  max-width: 100% !important;
+}
+.slide-functional-combined .mermaid .nodeLabel,
+.slide-functional-combined .mermaid .edgeLabel,
+.slide-functional-combined .mermaid text {
+  font-size: 13px !important;
+}
+.slide-functional-combined .fn-side {
+  font-size: 0.6em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.8em 1em;
+}
+.slide-functional-combined .fn-side p {
+  margin: 0 0 0.4em !important;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 1.1em;
+}
+.slide-functional-combined .fn-side ul {
+  margin: 0 !important;
+  padding-left: 1em !important;
+}
+.slide-functional-combined .fn-side li {
+  margin: 0.3em 0 !important;
+  line-height: 1.35 !important;
+}
+.slide-functional-combined .fn-side strong {
+  color: var(--color-primary);
+}
+.slide-functional-combined blockquote {
+  font-size: 0.7em;
+  position: absolute;
+  bottom: 0.6em;
+  left: 2em;
+  right: 2em;
+  margin: 0;
+  text-align: center;
+  border-left: none;
+  font-style: normal;
+}
+
+/* ── Diagram-fit — for diagram-only slides where mermaid overflows the viewport ── */
+.slide-diagram-fit {
+  padding-top: 1.2em !important;
+  padding-bottom: 1em !important;
+}
+.slide-diagram-fit h2 {
+  font-size: 1.1em !important;
+  margin-bottom: 0.2em !important;
+}
+.slide-diagram-fit .mermaid,
+.slide-diagram-fit .slidev-mermaid {
+  transform: scale(0.72);
+  transform-origin: center top;
+  margin: 0 !important;
+}
+.slide-diagram-fit .mermaid svg,
+.slide-diagram-fit .slidev-mermaid svg {
+  max-height: none !important;
+}
+.slide-diagram-fit .mermaid .nodeLabel,
+.slide-diagram-fit .mermaid .edgeLabel,
+.slide-diagram-fit .mermaid text {
+  font-size: 14px !important;
+}
+.slide-diagram-fit {
+  position: relative;
+}
+.slide-diagram-fit blockquote {
+  font-size: 0.7em;
+  position: absolute;
+  bottom: 0.9em;
+  left: 2em;
+  right: 2em;
+  margin: 0;
+  text-align: center;
+  border-left: none;
+  font-style: normal;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tikal-deck extensions — preserved across the 2026-06-09 sync
+   from ~/tech-lead/slidev-template/.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Hide Slidev's goto-dialog autocomplete overlay; the custom
+   .deck-menu (global-top.vue) is the slide navigator. */
 #slidev-goto-dialog {
   display: none !important;
 }
 
-/* ─────────────────────────────────────────────────────────
-   Kid-art accent images (slides 2–29) — promoted to background wash
-   Each accent JPG was generated with a baked grey-checker "fake transparency"
-   and originally placed as a small corner sticker via inline `<div>` style.
-   We override both wrapper + image so the art fills the slide as a
-   subject-related background, sitting behind GlassCard / bullets / diagrams.
-   Per-slide art stays meaningful (alarm bell on Current State, globe on
-   Context, etc.) but reads as atmosphere, not foreground.
-
-   Layering on each slide:
-       z-index   element
-       0         kid-art wrapper (full-bleed, ~22% opacity)
-       1         body copy, headings
-       2         GlassCard / Card3D / CardGrid (content surfaces)
-       5         FloatingIcon (existing)
-       6         tikal-mark (existing)
-   ───────────────────────────────────────────────────────── */
-
-/* Wrapper fills the slide; kid-art is anchored to the bottom-right zone
-   so it sits off the GlassCard / diagram / bullets, not behind them.
-   On section slides we re-center because there's no body content to dodge. */
-div:has(> img[alt^="kids-book accent"]) {
-  position: absolute !important;
-  inset: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  top: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  z-index: 0 !important;
+/* Thank-you slide hero overlay — cover layout + dim gradient */
+.slidev-layout.thanks-slide {
+  position: relative;
+}
+.slidev-layout.thanks-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 45%,
+    rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.65) 100%);
   pointer-events: none;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  overflow: hidden;
-  padding: 0 2.5% 2.5% 0;
+  z-index: 0;
 }
-
-/* Content slides — chalk art anchored bottom-right, recognizable but
-   stepped back so data owns the centre. New images have solid #0a0a0a bg
-   so we no longer need aggressive blur/mask to hide checker artifacts —
-   just a soft radial fade and warm glow for depth. */
-img[alt^="kids-book accent"] {
-  width: auto !important;
-  height: auto !important;
-  max-width: 38%;
-  max-height: 64%;
-  object-fit: contain;
-  opacity: 0.85;
-  -webkit-mask-image: radial-gradient(
-    ellipse 75% 80% at 50% 50%,
-    #000 70%,
-    rgba(0, 0, 0, 0.6) 88%,
-    rgba(0, 0, 0, 0) 100%
-  );
-          mask-image: radial-gradient(
-    ellipse 75% 80% at 50% 50%,
-    #000 70%,
-    rgba(0, 0, 0, 0.6) 88%,
-    rgba(0, 0, 0, 0) 100%
-  );
-  filter:
-    saturate(1.15)
-    contrast(1.02)
-    drop-shadow(0 4px 18px rgba(0, 0, 0, 0.55))
-    drop-shadow(0 0 26px rgba(255, 107, 26, 0.18));
-  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.6s ease;
-}
-
-/* Section slides — recenter and let the art carry the slide. */
-.slidev-layout.section img[alt^="kids-book accent"],
-.slidev-layout[class*="section"] img[alt^="kids-book accent"] {
-  max-width: 60%;
-  max-height: 82%;
-  opacity: 0.95;
-  filter:
-    saturate(1.18)
-    contrast(1.04)
-    drop-shadow(0 6px 24px rgba(0, 0, 0, 0.55))
-    drop-shadow(0 0 50px rgba(255, 107, 26, 0.22));
-}
-.slidev-layout.section > div:has(> img[alt^="kids-book accent"]),
-.slidev-layout[class*="section"] > div:has(> img[alt^="kids-book accent"]) {
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-/* Cover (slide 1) and thank-you (slide 30) — full-bleed hero treatment.
-   These images are the slide's entire backdrop. */
-.slidev-layout.cover img[alt^="kids-book accent"],
-.slidev-layout[class*="cover"] img[alt^="kids-book accent"],
-.slidev-layout[class*="end"] img[alt^="kids-book accent"] {
-  max-width: 100%;
-  max-height: 100%;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover;
-  opacity: 0.6;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.7) 60%,
-    rgba(0, 0, 0, 0.25) 100%
-  );
-          mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.7) 60%,
-    rgba(0, 0, 0, 0.25) 100%
-  );
-  filter: saturate(1.2) contrast(1.05);
-}
-.slidev-layout.cover > div:has(> img[alt^="kids-book accent"]),
-.slidev-layout[class*="cover"] > div:has(> img[alt^="kids-book accent"]),
-.slidev-layout[class*="end"] > div:has(> img[alt^="kids-book accent"]) {
-  align-items: stretch;
-  justify-content: stretch;
-  padding: 0;
-}
-
-/* Make sure foreground content sits above the kid-art bg */
-.slidev-layout .glass-card,
-.slidev-layout .card-grid,
-.slidev-layout .card3d,
-.slidev-layout h1,
-.slidev-layout h2,
-.slidev-layout h3,
-.slidev-layout > p,
-.slidev-layout > ul,
-.slidev-layout > ol,
-.slidev-layout > blockquote {
+.slidev-layout.thanks-slide h1,
+.slidev-layout.thanks-slide h2,
+.slidev-layout.thanks-slide p {
   position: relative;
   z-index: 2;
 }
 
-/* Tiny breath animation so the bg art has life without being distracting */
-@keyframes kidArtBreathe {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50%      { transform: scale(1.015) translateY(-4px); }
-}
-img[alt^="kids-book accent"] {
-  animation: kidArtBreathe 11s ease-in-out infinite;
-}
-
-.slidev-layout .neon {
-  color: var(--neon);
-  text-shadow: 0 0 12px rgba(126, 232, 255, 0.55);
-}
-
-.slidev-layout h1,
-.slidev-layout h2 {
-  letter-spacing: -0.01em;
-}
-
-.slidev-layout blockquote {
-  border-left: 3px solid var(--neon);
-  background: rgba(126, 232, 255, 0.06);
-  padding: 0.6rem 1rem;
-  border-radius: 0 8px 8px 0;
-}
-
-.slidev-layout code {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.05em 0.35em;
-  border-radius: 4px;
-}
-
-/* ─────────────────────────────────────────────────────────
-   About-Me slide (Tikal card)
-   ───────────────────────────────────────────────────────── */
+/* ── About-Me slide (Tikal card) — slide 2 (injected) ── */
 .slidev-layout.about-me-slide {
+  --tikal-orange: #ff6b1a;
+  --tikal-orange-soft: #ff8a3d;
   padding: 0;
   background: #0a0a0a;
   color: #fff;
@@ -191,22 +683,17 @@ img[alt^="kids-book accent"] {
   position: relative;
   height: 100%;
 }
-
 .about-grid {
   display: grid;
   grid-template-columns: 1fr 1.15fr;
   height: 100%;
   gap: 0;
 }
-
-/* Left column — bio */
 .about-left {
   padding: 2.6rem 2rem 2rem 3rem;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
 }
-
 .about-title {
   color: var(--tikal-orange);
   font-size: 2.6rem;
@@ -218,7 +705,6 @@ img[alt^="kids-book accent"] {
   width: max-content;
   max-width: 100%;
 }
-
 .about-name {
   color: #fff;
   font-size: 2.2rem;
@@ -226,14 +712,12 @@ img[alt^="kids-book accent"] {
   margin: 0 0 0.3rem 0;
   line-height: 1.1;
 }
-
 .about-role {
   color: var(--tikal-orange);
   font-weight: 700;
   font-size: 1rem;
   margin: 0 0 1.2rem 0;
 }
-
 .about-bio,
 .about-tikal,
 .about-focus {
@@ -242,19 +726,20 @@ img[alt^="kids-book accent"] {
   line-height: 1.55;
   margin: 0 0 1rem 0;
 }
-
-.about-bio strong {
-  color: var(--tikal-orange-soft);
+.about-bio strong { color: var(--tikal-orange-soft); }
+.orange { color: var(--tikal-orange); font-weight: 700; }
+.about-right {
+  padding: 2.6rem 3rem 2rem 2.4rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
 }
-
-.orange,
-.about-tikal .orange {
-  color: var(--tikal-orange);
-  font-weight: 700;
+.about-right > *:not(.about-right-bgphoto) {
+  position: relative;
+  z-index: 1;
 }
-
-/* Right column owns the faded portrait as a background. Bio sits on top of
-   a darkened, feathered photo so the column reads as "Oren + specialties". */
 .about-right-bgphoto {
   position: absolute;
   inset: 0;
@@ -265,41 +750,14 @@ img[alt^="kids-book accent"] {
   z-index: 0;
   opacity: 0.32;
   filter: grayscale(0.15) contrast(0.95) brightness(0.85);
-  -webkit-mask-image: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.85) 18%,
-    rgba(0, 0, 0, 1) 50%,
-    rgba(0, 0, 0, 0.6) 90%,
-    rgba(0, 0, 0, 0) 100%
-  );
-          mask-image: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.85) 18%,
-    rgba(0, 0, 0, 1) 50%,
-    rgba(0, 0, 0, 0.6) 90%,
-    rgba(0, 0, 0, 0) 100%
-  );
+  -webkit-mask-image: linear-gradient(to right,
+    rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 18%, rgba(0,0,0,1) 50%,
+    rgba(0,0,0,0.6) 90%, rgba(0,0,0,0) 100%);
+          mask-image: linear-gradient(to right,
+    rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 18%, rgba(0,0,0,1) 50%,
+    rgba(0,0,0,0.6) 90%, rgba(0,0,0,0) 100%);
   pointer-events: none;
 }
-
-/* Right column — specialties + projects, with faded portrait background */
-.about-right {
-  padding: 2.6rem 3rem 2rem 2.4rem;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-/* Lift all the foreground content above the bg photo */
-.about-right > *:not(.about-right-bgphoto) {
-  position: relative;
-  z-index: 1;
-}
-
 .about-section {
   color: var(--tikal-orange);
   text-transform: uppercase;
@@ -308,19 +766,12 @@ img[alt^="kids-book accent"] {
   font-size: 0.95rem;
   margin: 0 0 0.8rem 0;
 }
-
 .about-section-projects {
   margin-top: 1.6rem;
   text-transform: none;
   font-size: 0.95rem;
 }
-
-.about-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
+.about-list { list-style: none; margin: 0; padding: 0; }
 .about-list li {
   color: #f1f1f1;
   font-size: 0.95rem;
@@ -328,7 +779,6 @@ img[alt^="kids-book accent"] {
   position: relative;
   padding-left: 1.1rem;
 }
-
 .about-list li::before {
   content: "▸";
   color: var(--tikal-orange);
@@ -337,11 +787,7 @@ img[alt^="kids-book accent"] {
   top: 0;
   font-size: 0.9rem;
 }
-
-.about-list-projects li {
-  line-height: 1.55;
-}
-
+.about-list-projects li { line-height: 1.55; }
 .tikal-mark {
   position: absolute;
   right: 1.8rem;
@@ -351,7 +797,7 @@ img[alt^="kids-book accent"] {
   align-items: center;
   gap: 0.6rem;
   opacity: 0.96;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.55));
 }
 .tikal-mark-octopus {
   height: 38px;
