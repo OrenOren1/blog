@@ -163,6 +163,18 @@ transition: fade-out
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-03.jpg" alt="kids-book accent — smiling anchor character" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+חמישה עקרונות נעולים — להציג כקווי שופט, לא העדפות. לעצור על "split
+source-of-truth" — Okta הוא הסמכות לבני אדם, IaC הוא הסמכות לשירותים. זו
+ההפנמה הקשה ביותר. "Three-layer IaC" זה ADR-008: Pulumi לאתחול (Tier 1)
++ Crossplane בסיס מנהל ב-platform-tools (Tier 2a) + Crossplane self-service
+לכל אזור (Tier 2b).
+
+</div>
+-->
+
 ---
 layout: default
 transition: fade
@@ -216,6 +228,18 @@ graph TD
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-04.jpg" alt="kids-book accent — sealed black box peeking eyes" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+הפלטפורמה היא קופסה שחורה — כל מה שמסביב הוא או actor (שירותים / מהנדסים
+/ מנהלים) או תלות קשה (Okta, PagerDuty, Twingate, ה-DBs). הגבול המרכזי —
+בני אדם לעולם לא מקלידים סיסמת DB, שירותים לעולם לא שומרים סיסמה. לחזק:
+התלויות משרתות רק את מסלול בני האדם — שירותים עוקפים את Okta / PD /
+Twingate לחלוטין דרך Workload OIDC.
+
+</div>
+-->
+
 ---
 layout: section
 transition: fade
@@ -226,6 +250,15 @@ transition: fade
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-05.jpg" alt="kids-book accent — gear character mid-turn" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+מעבר view. ה-Functional view עונה על "מה המערכת עושה" — אחריות, לא מוצרים.
+~10 שניות; השקף הבא הוא העיקרון.
+
+</div>
+-->
 
 ---
 layout: default
@@ -284,6 +317,18 @@ graph TD
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-06.jpg" alt="kids-book accent — interlocking puzzle pieces" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+עשרה אלמנטים, כל אחד אחריות. הזוג Eligibility Manager + Trust-Binding
+Manager הוא מימוש ה-split-SoT. Service Role Reconciler + Workload
+Identity Verifier מטפלים במסלול השירותים. Identity Federator + JIT Role
+Materializer נושאים את מסלול בני האדם — מנגנון ה-JIT עדיין פתוח (D-1).
+Audit Aggregator → Access Review Aggregator סוגרים את לולאת הביקורת.
+
+</div>
+-->
+
 ---
 layout: default
 transition: zoom-out
@@ -333,6 +378,16 @@ Converts Okta eligibility + trigger into time-bound group membership (mechanism 
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-07.jpg" alt="kids-book accent — row of tiny mascots" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+שישה כרטיסים — האחריות שתמיד פעילה. האלמנט "open per D-1" הוא JIT Role
+Materializer; המימוש שלו (Path A: בנייה מעל Okta API · Path B: ספק חיצוני
+· Path C: היברידי) הוא החתיכה הארכיטקטונית היחידה שעוד לא הוחלטה ב-ADR-007.
+
+</div>
+-->
+
 ---
 layout: default
 transition: zoom-out
@@ -377,6 +432,17 @@ transition: zoom-out
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-08.jpg" alt="kids-book accent — three heads peering through magnifying glass" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+תבנית R&W ל-Functional view — להציג את שלוש הפרספקטיבות שחשובות לבעלי
+עניין שונים. אבטחה שואלת על blast radius. אבולוציה שואלת על עלות שינוי
+כשנכנס DB חדש. שימושיות שואלת מי-לומד-מה. להשאיר את השקף הזה דחוס; הוא
+מכין את ה-views שיבואו.
+
+</div>
+-->
+
 ---
 layout: two-cols-header
 transition: slide-left
@@ -411,6 +477,18 @@ transition: slide-left
 </div>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-09.jpg" alt="kids-book accent — robot and human shaking hands" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+המסגור החשוב ביותר בדק כולו. שני מסלולי זהות נפרדים: בני אדם דרך SAML
+backbone של Okta (3 וריאציות — standing RO מ-group attr · JIT Platform
+ל-RW + on-call admin · break-glass ל-admin / ORG_OWNER ישירות) ושירותים
+דרך Workload OIDC (אין סוד משותף, אין Okta, אין Twingate). לחזק: שירותים
+לעולם לא נוגעים ב-Okta.
+
+</div>
+-->
 
 ---
 layout: default
@@ -450,6 +528,17 @@ sequenceDiagram
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-10.jpg" alt="kids-book accent — robot handing envelope to server" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+לעבור על הרצף: K8s ServiceAccount → EKS OIDC → AWS IAM trust → DB. TTL
+של 15 דקות, חידוש אוטומטי בצד ה-pod. אין אדם, אין Okta, אין Twingate
+במסלול החם. RDS משתמש ב-IRSA + IAM DB auth; Atlas משתמש ב-Workload OIDC
+ישירות. זה מחזור החיים של ה-credential ב-steady state עבור שירותים.
+
+</div>
+-->
+
 ---
 layout: default
 transition: fade
@@ -481,6 +570,17 @@ sequenceDiagram
 > **Manager-approved, TTL-bound.** No platform team in the loop — developer + manager only. Grant + revoke both audited.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-11.jpg" alt="kids-book accent — big key with mini-keys dangling" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+המקרה היחיד עם שער אישור אנושי. מפתח מבקש דרך הפלטפורמה (פקודת Slack /
+טופס web), מאשר (עמית או ראש צוות) מאשר, חברות זמנית ב-Okta group נכתבת
+ל-TTL חסום, federation מטמיע את ה-role החדש. תתי-וריאציות תלויות ב-D-1
+(טיימר Path A, ספק וכו').
+
+</div>
+-->
 
 ---
 layout: default
@@ -515,6 +615,17 @@ sequenceDiagram
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-12.jpg" alt="kids-book accent — pager with on-call bandana" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+ה-on-call מקבל הרשאת admin אוטומטית — בלי כרטיס, בלי מאשר. מנוי PagerDuty
+דוחף את חברות ה-Okta group הזמנית. ה-latency תלוי-טריגר: שעתית בתת-וריאציה
+של GHA-cron; שניות בתת-וריאציה של PD webhook → Lambda או Slack command.
+המשתמש חייב להתחבר מחדש ל-DB כדי לקלוט את group attribute החדש.
+
+</div>
+-->
+
 ---
 layout: section
 transition: slide-up
@@ -525,6 +636,15 @@ transition: slide-up
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-13.jpg" alt="kids-book accent — open ledger book character" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+מעבר view. Information view = ישויות והכללים שמגנים עליהן. השקף הבא הוא
+מודל הישויות + invariants.
+
+</div>
+-->
 
 ---
 layout: default
@@ -577,6 +697,17 @@ erDiagram
 </CardGrid>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-14.jpg" alt="kids-book accent — stack of folders with padlocks" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+ארבע ישויות ליבה. להדגיש את ארבעת ה-invariants — אין standing RW/admin
+לבני אדם (הכל חסום בזמן), אין סיסמאות DB שמורות לשירותים, כל DB role
+מגושם נובע מ-Gate או Binding (מקור), Trust Binding write = grant
+(עוגן ביקורת). שמירת ביקורת 18 חודשים; Audit Event הוא append-only.
+
+</div>
+-->
 
 ---
 layout: default
@@ -689,6 +820,17 @@ graph LR
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-15.jpg" alt="kids-book accent — treasure map with winding path" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+ה-mermaid עוקב אחר כל מסלול גישה. שני backbones לאימות, שלוש וריאציות
+לבני אדם, מסלול אחד לשירותים. "R&D group → SAML attr" זה standing-RO
+(אין JIT). JIT Platform מודגש — שם יושבים ה-TTL והאישור. Break-glass
+גם מודגש — עוקף JIT ומפעיל page בכל שימוש.
+
+</div>
+-->
+
 ---
 layout: section
 transition: zoom-out
@@ -699,6 +841,15 @@ transition: zoom-out
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-16.jpg" alt="kids-book accent — friendly cargo ship" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+מעבר view. Deployment view = איפה האלמנטים רצים בפועל. הבא: פרספקטיבות
+R&W על ה-deployment, ואז המפה הרב-אזורית.
+
+</div>
+-->
 
 ---
 layout: default
@@ -745,6 +896,16 @@ transition: slide-left
 </CardGrid>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-17.jpg" alt="kids-book accent — two binoculars characters" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+שלוש פרספקטיבות בעלי עניין על ה-deployment. SRE / on-call: איפה זה רץ,
+מי מקבל page. אבטחה: גבולות אמון בין clusters (בעיקר בידוד prod-us מול
+prod-eu). פלטפורמה: בעלות תפעולית על מישור המנהל מול המישורים האזוריים.
+
+</div>
+-->
 
 ---
 layout: default
@@ -838,6 +999,19 @@ flowchart TB
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-18.jpg" alt="kids-book accent — two globes holding hands across bridge" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+מפת ה-deployment. cluster platform-tools (eu-central-1) מחזיק את מישור
+המנהל — Eligibility Manager, PD-Sync, Audit Aggregator, וגם בקרי Tier
+2a (בסיס מנהל חוצה-אזורים). prod-us ו-prod-eu מחזיקים בקרי Tier 2b
+משלהם (self-service מוגבל-אזור). Blast radius: בקרי prod-us לא יכולים
+להגיע ל-prod-eu — region-bounded בעיצוב. כל hop של אדם ל-DB עובר
+דרך Twingate.
+
+</div>
+-->
+
 ---
 layout: section
 transition: fade
@@ -848,6 +1022,15 @@ transition: fade
 ## <span class="neon">View</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-19.jpg" alt="kids-book accent — friendly hammer and wrench" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+מעבר view. Development view = איך ה-IaC + הבקרים מאורגנים בקוד. הבא:
+פרספקטיבות R&W, ואז ההשוואה המנוקדת בין Pulumi ל-Crossplane.
+
+</div>
+-->
 
 ---
 layout: default
@@ -898,6 +1081,17 @@ transition: slide-left
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-20.jpg" alt="kids-book accent — brick wall character with protective arms" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+שלוש פרספקטיבות על development. צוותי שירות: איך אני מוסיף DB role לשירות
+שלי היום (תשובה: PR אחד ל-chart המעטפת). צוות פלטפורמה: איך אני שומר
+על עקביות לרוחב 5 מערכות upstream. אופרטורים: איפה אני מסתכל כש-CRD
+נתקע. מכין את הסיבה למה Crossplane מנצח ב-Tier 2.
+
+</div>
+-->
+
 ---
 layout: default
 transition: slide-left
@@ -934,6 +1128,19 @@ class: slide-tools-selection
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-21.jpg" alt="kids-book accent — three big eyes peering at scroll" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+ההשוואה המנוקדת — Pulumi 17/40, Crossplane 39/40. השוויון היחיד הוא
+ב-State management (היסטוריה מפורשת של Pulumi מול etcd חי של Crossplane).
+שורה קריטית: Infra↔code alignment — Pulumi צריך שני PRs במאגרים נפרדים
+ופריסה תלוית-סדר; Crossplane שולח role + binding CRD אטומית עם helm
+release של השירות. Pulumi נשאר ל-Tier 1 (VPCs, EKS, חשבונות AWS);
+Crossplane בבעלות מ-Tier 2 והלאה.
+
+</div>
+-->
+
 ---
 layout: default
 transition: fade-out
@@ -953,6 +1160,17 @@ transition: fade-out
 > **One chart, six target-system folders, one access-matrix.** The whole platform fits in one Helm release per cluster.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-22.jpg" alt="kids-book accent — tree with file-folder leaves" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+helm chart מעטפת אחד, sub-charts מקובעים (Crossplane 1.18, Atlas Operator
+2.5). שש תיקיות templates/, אחת לכל מערכת יעד — crossplane, iam-ic,
+mongodb, rds, okta, observe. צוותי שירות תורמים דרך PR;
+access-matrix.md הוא צומת הביקורת הקריא לאדם שמחבר את הכל.
+
+</div>
+-->
 
 ---
 layout: default
@@ -1017,6 +1235,18 @@ graph TD
 > **One Helm chart, two reconciliation backends.** **Crossplane** owns everything that lands in AWS / Okta / PagerDuty / PostgreSQL (4 providers, 4 upstream APIs). **MongoDB Atlas Operator** owns everything that lands in Atlas (3 CRDs, 1 upstream API). The chart routes each `templates/{system}/` folder to its matching backend — *one PR adds a role across all five upstream systems consistently*.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-23.jpg" alt="kids-book accent — robot conductor with baton" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+chart helm אחד, שני backends להתיישבות. Crossplane מטפל ב-AWS / Okta /
+PagerDuty / PostgreSQL (4 providers, 4 APIs upstream). MongoDB Atlas
+Operator מטפל ב-Atlas (3 CRDs, API upstream אחד). ה-chart מנתב כל תיקיית
+templates/{system}/ ל-backend המתאים — PR אחד מוסיף role לרוחב כל 5
+מערכות ה-upstream באופן עקבי.
+
+</div>
+-->
 
 ---
 layout: default
@@ -1096,6 +1326,18 @@ graph LR
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-24.jpg" alt="kids-book accent — owl in cyan glasses with log scroll" style="width:100%;height:auto;display:block;" /></div>
 
+<!--
+<div dir="rtl">
+
+G-4 זה פער ייחוס הביקורת — רגע ה-"pasha_boss ב-03:17" שלא ניתן לענות
+עליו היום. Audit Event הוא הנושא; invariant של append-only. יעד שמירה
+של 18 חודשים (מינימום SOC 2 + lookback לתקריות תוך-שנתיות). יעד כיסוי:
+100% מחיבורי ה-DB ניתנים לייחוס זהותי. פעילות reconciler (Crossplane +
+Atlas Op) מוזרמת לאותו צינור ביקורת.
+
+</div>
+-->
+
 ---
 layout: section
 transition: slide-up
@@ -1106,6 +1348,14 @@ transition: slide-up
 ## <span class="neon">& What's Open</span>
 
 <div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-25.jpg" alt="kids-book accent — scales of justice character" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+חלק סיום. החלטות = מה נעול ומה עוד פתוח. השקף הבא הוא תקציר ה-takeaway.
+
+</div>
+-->
 
 ---
 layout: default
@@ -1150,6 +1400,20 @@ class: slide-dense
 </CardGrid>
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-26.jpg" alt="kids-book accent — locked + open padlock friends" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+שלוש עמודות. נעול — Group→Role (group של Okta → roles מוגבלים ב-IAM
+ובאטלס, לא per-user) · Break-Glass (admin + ORG_OWNER → 2–3 אנשים,
+תקרה של שעה) · Okta+JIT = SoT (standing דרך Okta, מוגבל-זמן דרך JIT,
+לא DB-as-truth). פתוח — D-1 JIT Path (A בנייה מותאמת מעל Okta · B ספק
+כמו Britive · C היברידי) — לבחור ב-ADR review הבא. D-2 Vendor — נכנס
+לפעולה רק אם D-1 → Path B. IaC *לא* פתוח — ADR-008 נועל את מבנה השכבות
+של Pulumi + Crossplane.
+
+</div>
+-->
 
 ---
 layout: cover
