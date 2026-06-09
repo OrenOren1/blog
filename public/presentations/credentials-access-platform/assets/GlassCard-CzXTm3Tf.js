@@ -1,0 +1,1 @@
+import{o as s,e as o,i as t}from"./modules/vue-CxZ4EqSx.js";import{u as r}from"./slidev/context-DCAPqs8f.js";import{_}from"./index-BnYkh9BQ.js";const a={class:"glass-card"},n={__name:"GlassCard",setup(c){return r(),(e,d)=>(s(),o("div",a,[t(e.$slots,"default",{},void 0,!0)]))}},m=_(n,[["__scopeId","data-v-52ffe8de"]]);export{m as _};

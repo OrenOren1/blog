@@ -46,7 +46,7 @@ transition: fade-out
 
 > Compromised on-call laptop + one stale K8s Secret = **persistent full-org write on all customer data** — and we are weeks from shipping this same model into a second region. *Below: the 🔒 **non-negotiable** principles that constrain every fix.*
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/CgQX4SM/img-2.jpg" alt="kids-book accent — rabbit with broken key" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-02.jpg" alt="kids-book accent — rabbit with broken key" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -65,7 +65,7 @@ transition: fade-out
 
 </GlassCard>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/PXTNmVt/img-4.jpg" alt="kids-book accent — smiling anchor character" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-03.jpg" alt="kids-book accent — smiling anchor character" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -118,7 +118,7 @@ graph TD
 
 > **Key boundary:** platform owns the credential lifecycle — humans never type a DB password, services never store one. Dependencies serve the **human path only**; services authenticate via Workload OIDC.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/HfvH9MCY/img-6.jpg" alt="kids-book accent — sealed black box peeking eyes" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-04.jpg" alt="kids-book accent — sealed black box peeking eyes" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: section
@@ -129,7 +129,7 @@ transition: fade
 
 ## <span class="neon">View</span>
 
-<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/LXbVHhSh/img-8.jpg" alt="kids-book accent — gear character mid-turn" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-05.jpg" alt="kids-book accent — gear character mid-turn" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -186,7 +186,7 @@ graph TD
 
 > **Naming discipline:** elements are responsibilities, not products. Product mapping shows up only in the Deployment view.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/pBmRCWM2/img-9.jpg" alt="kids-book accent — interlocking puzzle pieces" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-06.jpg" alt="kids-book accent — interlocking puzzle pieces" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -235,7 +235,7 @@ Converts Okta eligibility + trigger into time-bound group membership (mechanism 
 
 </CardGrid>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/0pHnggYm/img-10.jpg" alt="kids-book accent — row of tiny mascots" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-07.jpg" alt="kids-book accent — row of tiny mascots" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -279,7 +279,7 @@ transition: zoom-out
 
 > 🔍 **Observability hook:** Audit Aggregator is the spine · every element emits to it.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/zHsXwfRQ/img-15.jpg" alt="kids-book accent — three heads peering through magnifying glass" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-08.jpg" alt="kids-book accent — three heads peering through magnifying glass" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: two-cols-header
@@ -314,7 +314,7 @@ transition: slide-left
 
 </div>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/ZpDBbLrc/img-11.jpg" alt="kids-book accent — robot and human shaking hands" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-09.jpg" alt="kids-book accent — robot and human shaking hands" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -352,7 +352,7 @@ sequenceDiagram
 
 > **No stored passwords.** Identity flows K8s SA → EKS OIDC → cloud IAM trust → DB · TTL 15 min · auto-refresh on the pod side · no human, no Okta, no Twingate.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/BVG6R8bZ/img-12.jpg" alt="kids-book accent — robot handing envelope to server" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-10.jpg" alt="kids-book accent — robot handing envelope to server" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -384,7 +384,7 @@ sequenceDiagram
 
 > **Manager-approved, TTL-bound.** No platform team in the loop — developer + manager only. Grant + revoke both audited.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/93rWdw1Q/img-13.jpg" alt="kids-book accent — big key with mini-keys dangling" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-11.jpg" alt="kids-book accent — big key with mini-keys dangling" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -417,7 +417,7 @@ sequenceDiagram
 
 > **Latency depends on D-1.** Hourly under GHA-cron sub-variant · seconds under PD-webhook sub-variant.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/Q3tM1yWv/img-14.jpg" alt="kids-book accent — pager with on-call bandana" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-12.jpg" alt="kids-book accent — pager with on-call bandana" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: section
@@ -428,7 +428,7 @@ transition: slide-up
 
 ## <span class="neon">View</span>
 
-<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/1tDRcvh0/img-16.jpg" alt="kids-book accent — open ledger book character" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-13.jpg" alt="kids-book accent — open ledger book character" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -480,7 +480,7 @@ erDiagram
 
 </CardGrid>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/rjtBdwL/img-17.jpg" alt="kids-book accent — stack of folders with padlocks" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-14.jpg" alt="kids-book accent — stack of folders with padlocks" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -591,7 +591,7 @@ graph LR
 </div>
 </div>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/JjBpgHct/img-18.jpg" alt="kids-book accent — treasure map with winding path" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-15.jpg" alt="kids-book accent — treasure map with winding path" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: section
@@ -602,7 +602,7 @@ transition: zoom-out
 
 ## <span class="neon">View</span>
 
-<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/HTbjjzSz/img-19.jpg" alt="kids-book accent — friendly cargo ship" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-16.jpg" alt="kids-book accent — friendly cargo ship" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -648,7 +648,7 @@ transition: slide-left
 
 </CardGrid>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/0ygM48WC/img-22.jpg" alt="kids-book accent — two binoculars characters" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-17.jpg" alt="kids-book accent — two binoculars characters" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -740,7 +740,7 @@ flowchart TB
 
 > **Blast radius:** `prod-us` controllers cannot reach `prod-eu` resources · region-bounded by design.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/gLfGzDdC/img-20.jpg" alt="kids-book accent — two globes holding hands across bridge" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-18.jpg" alt="kids-book accent — two globes holding hands across bridge" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: section
@@ -751,7 +751,7 @@ transition: fade
 
 ## <span class="neon">View</span>
 
-<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/9my0X7Lp/img-23.jpg" alt="kids-book accent — friendly hammer and wrench" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-19.jpg" alt="kids-book accent — friendly hammer and wrench" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -800,7 +800,7 @@ transition: slide-left
 
 > 🔍 **Observability hook:** `git log` of the chart **is** the human-readable change-audit timeline · `access-matrix.md` is the queryable summary.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/Kj6scXWf/img-21.jpg" alt="kids-book accent — brick wall character with protective arms" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-20.jpg" alt="kids-book accent — brick wall character with protective arms" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -836,7 +836,7 @@ class: slide-tools-selection
 
 </div>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/HTPpzCd0/img-26.jpg" alt="kids-book accent — three big eyes peering at scroll" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-21.jpg" alt="kids-book accent — three big eyes peering at scroll" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -856,7 +856,7 @@ transition: fade-out
 
 > **One chart, six target-system folders, one access-matrix.** The whole platform fits in one Helm release per cluster.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/KcJrcNTK/img-24.jpg" alt="kids-book accent — tree with file-folder leaves" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-22.jpg" alt="kids-book accent — tree with file-folder leaves" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -920,7 +920,7 @@ graph TD
 
 > **One Helm chart, two reconciliation backends.** **Crossplane** owns everything that lands in AWS / Okta / PagerDuty / PostgreSQL (4 providers, 4 upstream APIs). **MongoDB Atlas Operator** owns everything that lands in Atlas (3 CRDs, 1 upstream API). The chart routes each `templates/{system}/` folder to its matching backend — *one PR adds a role across all five upstream systems consistently*.
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/Mx6hTmhV/img-25.jpg" alt="kids-book accent — robot conductor with baton" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-23.jpg" alt="kids-book accent — robot conductor with baton" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -998,7 +998,7 @@ graph LR
 | **Identity attribution coverage** | **100%** of DB connects | Closes G-4 — no `pasha_boss` mystery left |
 | **Audit retention** | **18 months** (target) | SOC2 minimum + intra-year incident lookback |
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/tMRMfnGj/img-27.jpg" alt="kids-book accent — owl in cyan glasses with log scroll" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-24.jpg" alt="kids-book accent — owl in cyan glasses with log scroll" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: section
@@ -1009,7 +1009,7 @@ transition: slide-up
 
 ## <span class="neon">& What's Open</span>
 
-<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/gM3J75fT/img-28.jpg" alt="kids-book accent — scales of justice character" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:3rem;bottom:4rem;width:180px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-25.jpg" alt="kids-book accent — scales of justice character" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: default
@@ -1053,7 +1053,7 @@ class: slide-dense
 
 </CardGrid>
 
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="https://i.ibb.co/mV9SnGFH/img-29.jpg" alt="kids-book accent — locked + open padlock friends" style="width:100%;height:auto;display:block;" /></div>
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-26.jpg" alt="kids-book accent — locked + open padlock friends" style="width:100%;height:auto;display:block;" /></div>
 
 ---
 layout: cover
