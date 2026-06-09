@@ -815,3 +815,96 @@ blockquote {
   0%, 100% { transform: translateY(0) rotate(-2deg); }
   50%      { transform: translateY(-4px) rotate(2deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Kid-art chalk accents — non-interfering corner watermark
+   Overrides the inline `<div style="position:absolute;...">` wrapper
+   from slides.md so each chalk accent renders as a subtle, safely-
+   placed watermark that never collides with GlassCard, mermaid,
+   or CardGrid content.
+
+   Strategy:
+   - Tiny size (66px default, 110px section).
+   - Opacity ~0.55, soft radial mask, no mix-blend-mode mess.
+   - Bottom-right, far enough from edges to avoid blockquotes.
+   - z-index 0 so foreground content (GlassCard z=1+) sits ON TOP.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Override the inline wrapper div positioning + size */
+.slidev-layout div:has(> img[alt^="kids-book accent"]) {
+  position: absolute !important;
+  right: 1rem !important;
+  bottom: 0.7rem !important;
+  top: auto !important;
+  left: auto !important;
+  width: 72px !important;
+  height: auto !important;
+  opacity: 1 !important;
+  z-index: 0 !important;
+  pointer-events: none;
+  transform: none !important;
+}
+
+/* Section slides have empty space — accent can be larger */
+.slidev-layout.section div:has(> img[alt^="kids-book accent"]),
+.slidev-layout[class*="section"] div:has(> img[alt^="kids-book accent"]) {
+  right: 2rem !important;
+  bottom: 2rem !important;
+  width: 120px !important;
+}
+
+/* The accent image itself — soft radial mask, low opacity watermark feel */
+img[alt^="kids-book accent"] {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    #000 60%,
+    rgba(0, 0, 0, 0.55) 80%,
+    rgba(0, 0, 0, 0) 100%
+  );
+          mask-image: radial-gradient(
+    circle at 50% 50%,
+    #000 60%,
+    rgba(0, 0, 0, 0.55) 80%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  filter:
+    saturate(1.1)
+    contrast(0.98)
+    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+/* Section-slide accents are larger so let them be slightly more opaque */
+.slidev-layout.section img[alt^="kids-book accent"],
+.slidev-layout[class*="section"] img[alt^="kids-book accent"] {
+  opacity: 0.72;
+}
+
+/* Make sure GlassCard / Card3D / CardGrid / mermaid all sit ABOVE the
+   kid-art (their z-index becomes >= 1) */
+.slidev-layout .glass-card,
+.slidev-layout .glass,
+.slidev-layout .card3d,
+.slidev-layout .card-3d,
+.slidev-layout .card-grid,
+.slidev-layout .mermaid,
+.slidev-layout .slidev-mermaid,
+.slidev-layout h1,
+.slidev-layout h2,
+.slidev-layout h3,
+.slidev-layout > p,
+.slidev-layout > ul,
+.slidev-layout > ol,
+.slidev-layout > blockquote,
+.slidev-layout .fn-grid,
+.slidev-layout .tools-table,
+.slidev-layout .tools-conclusion,
+.slidev-layout .tier-explainer,
+.slidev-layout .multi-region-diagram,
+.slidev-layout .ctx-foot {
+  position: relative;
+  z-index: 1;
+}
