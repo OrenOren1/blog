@@ -43,16 +43,29 @@ transition: fade-out
 
 ## 🚨 Current State Is Not Acceptable
 
-<GlassCard>
+<CardGrid :cols="2">
 
-- **One shared SCRAM secret** for every workload **and** every human — across 3× RDS + 1× MongoDB (mid-split) in `prod-us`
-- **27 K8s Secrets · ages 87–291 days · no rotation in practice** — RDS Secrets Manager Lambda exists, but downstream `kubectl` roll is manual ⇒ never done
-- **No rotation-compatible path** — rotating the shared secret = coordinated **restart across 27 workloads + every human session** · zero-downtime rotation is impossible by design
-- **16 Atlas `ORG_OWNER`s + 9 `ORG_OWNER` API keys + 18 dormant accounts ≥12 months** — verified 2026-06-07
-- **G-4 audit attribution gap** — `pasha_boss` at 03:17 unanswerable · 3 of 16 RDS still without IAM DB auth
-- **About to multiply** — `prod-eu` going live · MongoDB splitting per-tenant · more RDS incoming → debt compounds per **region × database**
+<Card3D title="📋 What we have today">
 
-</GlassCard>
+- **1** shared SCRAM secret
+- **27** K8s Secrets
+- **16** Atlas `ORG_OWNER`s + **9** API keys
+- **5 / 16** RDS still on password auth
+
+</Card3D>
+
+<Card3D title="⚠️ Why it's not acceptable">
+
+- **Rotation is a project, not a task** — 27 workloads + every human session in lockstep
+- **DB creds on dev laptops** — shared via Slack · live in `.env` files
+- **No DB-access standard** — every DB onboarded ad-hoc · same trap for the next one
+- **`prod-eu` expands the debt** — 2nd region · per-tenant Mongo + more SaaS incoming
+- **Platform = executors only** — no governance policy · no security gate · just runs the request
+- **No per-user audit trail** — prod actions attribute to the shared secret, not the human
+
+</Card3D>
+
+</CardGrid>
 
 > Compromised on-call laptop + one stale K8s Secret = **persistent full-org write on all customer data** — and we are weeks from shipping this same model into a second region. *Below: the 🔒 **non-negotiable** principles that constrain every fix.*
 
@@ -144,7 +157,7 @@ graph TD
 <div class="ctx-foot">
 
 - **Dependencies (human path only · services bypass all three):** 🪪 Okta · 📟 PagerDuty · 🛡️ Twingate · 📊 SIEM / Datadog *(D-6)*
-- **🐘 RDS PostgreSQL** — 16 instances · 5 AWS accounts · 13 IAM-DB-auth on / 3 off
+- **🐘 RDS PostgreSQL** — 16 instances · 4 AWS accounts · 11 IAM-DB-auth on / 5 off
 - **🍃 MongoDB Atlas** — 3 projects · 4 clusters · 23 DB users
 - **🌍 Regions** — `prod-us` · `prod-eu` · `platform-tools`
 
@@ -233,7 +246,7 @@ graph TD
 - **🔗 Trust-Binding Manager** — workload-identity → DB-role bindings as IaC (services side of SoT)
 - **🛠️ Service Role Reconciler** — produces DB roles + cloud-IAM trust artefacts
 - **🪪 Workload Identity Verifier** — verifies workload assertion at connect-time → short-lived DB cred
-- **🌉 Identity Federator** — carries Okta identity into DB auth path (SAML now · OIDC future)
+- **🌉 Identity Federator** — carries Okta identity into DB auth path (SAML now · OIDC validated POC #70489, deferred by choice)
 - **⏱️ JIT Role Materializer** — Okta eligibility + trigger → time-bound membership *(open — D-1)*
 
 </div>
@@ -290,7 +303,7 @@ Verifies workload assertion at connect-time → issues short-lived DB-bound cred
 
 <Card3D title="🌉 Identity Federator">
 
-Carries Okta identity into the downstream DB auth path via SAML (active) / OIDC (future)
+Carries Okta identity into the downstream DB auth path via SAML (active) / OIDC (validated POC #70489, deferred by choice)
 
 </Card3D>
 
@@ -597,26 +610,26 @@ erDiagram
 
 <Card3D title="🔒 Security lens">
 
-**Four invariants:**
-- No **standing** RW/admin for humans
-- No **stored** DB passwords for services → **no rotation, no service restart**
-- Audit Events **append-only**
-- Every materialized DB Role traces to a **Gate** or **Binding**
+**Four invariants**
+- No standing RW/admin for humans
+- No stored DB passwords — no rotation, no restart
+- Audit Events are append-only
+- Every DB Role traces to a Gate or Binding
 
-**Sensitive entities — guard tight:**
-- **Trust Binding** — write access *is* effectively granting access
-- **Audit Event** — points to **who did what**
-- **Group Membership** — **continuous reconciliation** avoids permission drift
+**Guard tight**
+- Trust Binding — write access *is* granting access
+- Audit Event — who did what
+- Group Membership — reconciled continuously
 
 </Card3D>
 
 <Card3D title="🔍 Observability hook">
 
-- All **role + permission associations** managed by code — **single source of truth**
-- Every change captured in **git commits** + **Audit Events**
-- `Audit Event` is the **observability carrier** · **append-only** (no Update / no Delete)
-- **Retention:** 18 months target
-- **Read access** limited to `Auditor` + `Security Reviewer` roles
+- Role + permission associations live in code — single source of truth
+- Every change → git commit + Audit Event
+- 18-month retention
+- Audit Events append-only
+- Read access scoped to Auditor + Security Reviewer
 
 </Card3D>
 
@@ -631,6 +644,185 @@ erDiagram
 לבני אדם (הכל חסום בזמן), אין סיסמאות DB שמורות לשירותים, כל DB role
 מגושם נובע מ-Gate או Binding (מקור), Trust Binding write = grant
 (עוגן ביקורת). שמירת ביקורת 18 חודשים; Audit Event הוא append-only.
+
+</div>
+-->
+
+---
+layout: default
+transition: fade
+class: slide-dense
+---
+
+## 🔬 Workforce OIDC — POC #70489 validated
+
+<GlassCard>
+
+**Assumption** — Atlas Workforce OIDC needs Okta's paid Custom Auth Server (Org Auth Server can't put `groups[]` in access tokens). **Reality** — one flag flips it: `mongosh` sends the **ID token**, not the access token.
+
+```bash
+mongosh --oidcIdTokenAsAccessToken "mongodb+srv://<cluster>/?authMechanism=MONGODB-OIDC"
+```
+
+| Token sent             | `aud`                 | `groups[]` | Atlas | | | Finding | Evidence |
+|------------------------|-----------------------|------------|-------|---|---|---|---|
+| access token (default) | `<org-auth-server>`   | ❌         | ❌    | | ① | **OIDC chain valid** | ID token resolves `<idp>/<group>` → custom roles |
+| **ID token** (w/ flag) | `<client_id>`         | ✅         | ✅    | | ② | **1 app → N identities** | 1 token · 2 groups · 2 fed users · 2 roles |
+|                        |                       |            |       | | ③ | **Per-group differentiation** | Delete fed user → role gone · recreate → returns |
+|                        |                       |            |       | | ④ | **Per-action enforcement** | `insert` ✅ · `drop` ❌ (not in role) |
+
+✅ Free Org Auth Server — no paid SKU.  &nbsp;&nbsp; ⚠️ Federated-user changes are **eventually-consistent** (~min) — revoke SLAs must account.
+
+</GlassCard>
+
+<!--
+<div dir="rtl">
+
+ההוכחה הטכנית הצרה — חלק מ-Information View כי זו דרך לבטא איך
+זהות חיצונית (Okta group) הופכת לזהות פנימית (DB role). ההנחה
+שרווחת בתעשייה: כדי להפעיל Atlas Workforce OIDC עם מיפוי קבוצות
+צריך Custom Authorization Server של Okta, שדורש רישיון בתשלום
+של API Access Management. ה-POC הוכיח שזה שגוי.
+
+ה-flag `--oidcIdTokenAsAccessToken` גורם ל-mongosh לשלוח את ה-ID
+token במקום ה-access token. ה-ID token: (א) audience שלו הוא
+ה-client_id של אפליקציית ה-OIDC ב-Okta; (ב) הוא נושא `groups[]`
+דרך Token Claim expression של Okta Identity Engine. השרשרת
+עובדת קצה לקצה ב-Org Auth Server החינמי.
+
+הוכח אמפירית ב-staging ב-2026-06-10: Atlas IdP מזהה
+`6a0c477886c8942fe3e99d6d`, audience של אפליקציית OIDC
+`0oa136bic0ys7y6bh698`. הקבוצות `poc-mdb-staging-readonly`
+ו-`poc-mdb-staging-rw-org1` קושרו ל-custom DB roles
+`poc_readonly_org` ו-`poc_rw_org1`. גם positive וגם negative
+tests עברו — קבוצת readonly לא יכלה לכתוב, קבוצת rw לא יכלה
+לחרוג מ-org1 שלה.
+
+ארבעה ממצאים אמפיריים — לעבור עליהם בסליידr:
+
+(1) השרשרת תקפה — ID token עובר, federated user מתרזולב, custom role נקשר.
+
+(2) **app אחד → N זהויות**. token יחיד הפעיל בו-זמנית את `poc-mdb-staging-readonly`
+ו-`poc-mdb-staging-rw-org1`. ב-connectionStatus רואים 2× federated users + 2×
+custom roles. *אין צורך באפליקציית Okta נפרדת לכל זהות.* זה הממצא הכי
+משמעותי לעיצוב — את הניתוק בין tiers (dev/prod/breakglass) אפשר להשיג
+ב-app אחד עם N קבוצות, או ב-N apps לבידוד audience. לבחור.
+
+(3) **differentiation לפי קבוצה**. מחקנו את ה-federated user של group-B
+(בלי לגעת בחברוּת בקבוצה ב-Okta) — ה-role נעלם מ-connectionStatus. שיחזרנו
+— ה-role חזר. אותו token, אותן קבוצות ב-payload. אז ה-gating האמיתי הוא
+ברשומת ה-federated user, לא בחברוּת ב-Okta. חברוּת = תנאי הכרחי, רשומה
+ב-Atlas = תנאי מספיק.
+
+(4) **per-action enforcement**. ה-role `poc_rw_org1` מתיר insert/update/remove/find
+אבל *לא* dropCollection. אימתנו: insert עבר, deleteMany עבר, drop נחסם
+עם Unauthorized. Atlas אוכף ברמת ה-action הבודד, לא רק ברמת ה-role.
+
+(5) **caveat תפעולי** — שינויים ב-federated users הם eventually-consistent.
+תצפינו על pause של ~דקות בין הקריאה ל-API לבין כניסה לתוקף בחיבורים
+חדשים. ה-SLA של revoke חייב להכיל את זה.
+
+הסליידr הבא: ה-flow המלא צעד-צעד.
+
+</div>
+-->
+
+---
+layout: default
+transition: fade
+---
+
+## 🛂 End-to-end auth flow (Atlas OIDC)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User<br/>∈ Okta group<br/>rw-org1
+    participant M as mongosh<br/>(--oidcIdTokenAsAccessToken)
+    participant O as Okta<br/>OIDC app
+    participant A as Atlas IdP
+    participant C as MongoDB cluster<br/>(role: poc_rw_org1)
+
+    U->>O: 1. SSO via OIDC app
+    O-->>M: 2. ID token<br/>(aud=client_id · groups=[rw-org1])
+    M->>A: 3. connect + ID token
+    A->>A: 4. validate aud · signature · groups present
+    A->>A: 5. map ⟨idp⟩/rw-org1 → poc_rw_org1
+    A->>C: 6. authenticate as DB role poc_rw_org1
+    C-->>U: 7. connection authorized
+```
+
+> **Group membership → ID-token claim → federated-user mapping → DB role.** No personal user objects; no static credentials in mongosh config.
+
+<!--
+<div dir="rtl">
+
+זרימת ה-auth מקצה לקצה — איך זהות חיצונית הופכת לתפקיד פנימי
+(זה למה השקופית כאן ב-Information View, ליד Access Topology):
+
+(1) המשתמש ניגש לאפליקציית ה-OIDC ב-Okta — SSO רגיל. (2) Okta
+מנפיק ID token שה-audience שלו הוא client_id של האפליקציה והוא
+נושא את ה-claim `groups[]` עם הקבוצות שהמשתמש שייך אליהן. (3)
+mongosh, עם ה-flag `--oidcIdTokenAsAccessToken`, מצמיד את ה-ID
+token לחיבור ל-Atlas. (4) Atlas מאמת audience, חתימה, ושה-groups
+קיימים ב-claim. (5) Atlas מבצע lookup של federated user בפורמט
+`<idp>/<group>` — זה ה-**join key** בין הזהות החיצונית לתפקיד
+הפנימי. (6) המיפוי מחזיר custom DB role, ו-Atlas מאמת את המשתמש
+ככזה. (7) החיבור מאושר עם הרשאות התפקיד.
+
+הנקודות החשובות מבחינת Information View: אין user objects
+אישיים ב-Atlas — רק federated bindings; אין credentials סטטיים
+ב-mongosh — ה-token לטווח קצר; כל החיבור ניתן ל-audit דרך
+ה-`sub` של ה-token + ה-federated user.
+
+</div>
+-->
+
+---
+layout: default
+transition: fade
+---
+
+## 🔭 Atlas OIDC mirrors AWS-IC — same group → role pattern
+
+<GlassCard>
+
+| Property             | **AWS** (IAM IC · SAML)        | **Atlas** (OIDC · validated)                  |
+|----------------------|--------------------------------|-----------------------------------------------|
+| Role lives on        | AWS account · Permission Set   | Atlas cluster · custom DB role                |
+| Okta-app model       | 1 app : N groups : N roles     | **1 app per identity** (or 1 app : N groups)  |
+| Group → role binding | inside AWS IAM IC              | inside Atlas IdP (`<idp>/<group>`)            |
+| Token carrier        | SAML assertion (`groups[]`)    | OIDC ID token (`groups[]`)                    |
+| User assumes via     | Okta group membership          | Okta group membership                         |
+| User experience      | "assume role X in account Y"   | "connect as role X on cluster Y"              |
+
+**Still SAML today — operational only:** driver tax + protocol homogeneity with RDS. **Reopen if** driver-level browser SSO becomes a hard requirement.
+
+</GlassCard>
+
+<!--
+<div dir="rtl">
+
+המודל — לא על ה-flag, על הסימטריה. לאף אחד אין חשבון אישי בענן.
+כל זהות היא **תפקיד** מחובר לאפליקציית Okta, ומשתמש "מתכנס"
+לתוך התפקיד דרך חברות ב-Okta group. זה בדיוק האופן שבו AWS
+IAM Identity Center עובד אצלנו היום (group → Permission Set →
+assume role בחשבון). ה-POC הוכיח ש-Atlas OIDC מתיישב על אותו
+המודל בדיוק.
+
+ב-Information View ההבחנה הזו חשובה כי היא משפיעה על אבחנת
+הישויות: לא "משתמש Atlas" כישות, אלא "תפקיד" כישות + מיפוי
+חיצוני. הטבלה מציגה את ההתאמה צד-בצד.
+
+אותו מודל, שני carriers שונים: SAML assertion מול OIDC ID token,
+שניהם נושאים `groups[]`. למה עדיין SAML היום? **לא** סיבה
+ארכיטקטונית — סיבות תפעוליות בלבד:
+(1) **מס דרייברים** — כל קליינט Mongo בחברה חייב להפעיל את ה-flag
+(mongosh, Compass, pymongo, Node), ניהול fleet-wide זה מטרד;
+(2) **הומוגניות פרוטוקול** — Atlas console ו-RDS שניהם SAML,
+מנגנון ביקורת ו-break-glass יחיד. אם בעתיד SSO ברמת הדרייבר
+יהפוך לדרישה קשה — הראיה האמפירית מוכנה, צריך רק ADR חדש;
+המודל זהה, רק ה-protocol מתחלף.
 
 </div>
 -->
@@ -753,6 +945,181 @@ graph LR
 לבני אדם, מסלול אחד לשירותים. "R&D group → SAML attr" זה standing-RO
 (אין JIT). JIT Platform מודגש — שם יושבים ה-TTL והאישור. Break-glass
 גם מודגש — עוקף JIT ומפעיל page בכל שימוש.
+
+</div>
+-->
+
+---
+layout: default
+transition: fade
+---
+
+## ⚖️ JIT Build vs Buy — Britive · BeyondTrust *(Entitle)* · Self-hosted
+
+<div style="font-size: 0.72em; line-height: 1.35;">
+
+| Perspective       | **Britive**                            | **BT** *(Entitle)*                                  | **Self-hosted** *(this deck)*       |
+|-------------------|----------------------------------------|-----------------------------------------------------|-------------------------------------|
+| Integrations      | PD ✓ Okta ✓ Slack ✓ AWS ✓ Atlas ✓       | PD ✓ Okta ✓ AWS ✓ Atlas ✓ · **Slack ⚠**             | PD ✓ Okta ✓ AWS ✓ Atlas ✓ · **Slack ❓** |
+| UI                | Modern SaaS portal                     | Modern SaaS portal *(Entitle)*                      | None — DIY (open)                   |
+| How user asks     | Slack app · Web portal · CLI           | Web portal · *(Slack = target only 🚩)*             | **Open question** — Slack / UI / PR |
+| Okta integration  | **Duplicates** users + groups → Britive<br/>Britive UI = user focal point | **Reads Okta directly** — no duplication<br/>UI for configurable approver chains | **Okta = direct IdP** — no duplication<br/>Group → role in Crossplane chart |
+| Maintenance       | **Changes:** UI clicks *(one-time)*<br/>**Role-change:** Britive sync interval ⚠ | **Changes:** UI workflow *(one-time)*<br/>**Role-change:** live — reads Okta | **Changes:** PR to chart *(one-time, code)*<br/>**Role-change:** PR merge → ~minutes |
+| Prerequisites     | **Tool identity:** Okta + Atlas + AWS-IC admin *(Britive holds)*<br/>**Grant:** on-demand API provisioning | **Tool identity:** Okta + Atlas + AWS-IC admin *(Entitle holds)*<br/>**Grant:** on-demand API provisioning | **Tool identity: none — Okta federates directly**<br/>**Grant:** declarative — no API call at grant-time |
+| Pricing           | Per-user SaaS                          | Per-user SaaS · *quote pending (300-500 users)*     | **License-free**                    |
+| GTM effort        | Weeks                                  | Weeks — *trial kickoff next Wed*                    | Days–weeks *(arch ready)*           |
+
+</div>
+
+<div style="font-size: 0.5em; opacity: 0.65; margin-top: 0.4rem;">BT/Entitle docs verified 2026-06-11 — <a href="https://docs.beyondtrust.com/entitle/docs/entitle-integration-pagerduty">PagerDuty</a> · <a href="https://docs.beyondtrust.com/entitle/docs/okta-directory-connection">Okta IdP</a> · <a href="https://docs.beyondtrust.com/entitle/docs/entitle-integration-slack">Slack</a>. 🚩 sales rep framed Slack as "ChatOps" but docs describe Slack as a target resource only. · PD = PagerDuty.</div>
+
+<!--
+<div dir="rtl">
+
+השוואת build-vs-buy אחרי דמואים של אתמול + אימייל summary
+מ-Jonathan (BT). הבהרה חשובה: מוצר BT שדמואו אינו Password
+Safe/PRA הישן — אלא **Entitle** (מוצר ה-JIT הענני שלהם, רכישה),
+שדומה במודל ל-Britive (SaaS, cloud-native, integrations ענניים).
+
+(1) **Integrations** — חמשת השמות שחשובים לנו: PagerDuty, Okta,
+Slack, AWS, Atlas. **Britive**: כל החמישה native. **BT/Entitle**:
+PagerDuty ✓ (משיכת on-call schedule כל 30 דק, הענקת גישה
+אוטומטית — חזק!), Okta ✓ (IdP + directory source), AWS ✓,
+Atlas ✓ (docs פנימיים מאמתים). **Slack** ⚠ — כאן יש פער חמור:
+האימייל מציג את Slack כ-"chat ops", אבל ה-docs מבהירים שזה
+**ניהול Slack כ-target resource** (channels, user-groups, workspaces),
+**לא** ChatOps לבקשת הרשאות. שווה לעמת את Jonathan בטריאל.
+**Self-hosted**: PagerDuty ✓ (Case C), Okta ✓, AWS ✓ (IAM IC),
+Atlas ✓ (POC) — Slack פתוח.
+
+(2) **UI** — Britive ו-Entitle שניהם portal SaaS מודרני (שינוי
+מהדמיון שלי הקודם של BT כ-PAM ישן). Self-hosted אין UI היום.
+
+(3) **How user asks for permission** — חוויית הבקשה בפועל
+מצד המשתמש הסופי: **Britive** מציע **שלושה ערוצים** —
+אפליקציית Slack native (request → approve → notify), web portal,
+ו-CLI. **Entitle**: web portal הוא הערוץ המרכזי; ה-Slack integration
+שלהם מנהל את Slack כיעד הרשאות, לא כתעלת בקשה (🚩 בשקופית —
+הסוכן Jonathan כינה זאת "ChatOps" באימייל אבל ה-docs מבהירים
+שזה לא ChatOps). **Self-hosted**: שאלה פתוחה — Slack bot
+ייעודי, UI portal, או PR ישיר. ההכרעה הזו תיקבע לפי
+ה-Usability — Human Path (שקופית 24).
+
+**(3.5) Okta integration — איך הכלי משתמש ב-Okta כ-IdP**
+(הבחנה ארכיטקטונית חדה בין שלושת הפתרונות):
+
+- **Britive**: **משכפל** את המשתמשים והקבוצות מ-Okta אל הפלטפורמה
+שלו (SCIM-based provisioning). זה אומר שיש state כפול:
+ב-Okta וב-Britive. ה-Britive UI הופך ל-focal point של המשתמש
+(שם הוא מבקש profiles ומקבל אישורים), אבל בדמו לא היה ברור
+איך עובד ה-sync בפועל ואם משתמש יכול להחזיק profile שיעניק
+הרשאות SaaS צד-שלישי on-demand. ⚠ נקודה לאמת בטריאל הבא.
+
+- **Entitle**: **קורא ישירות מ-Okta** — לא מחזיק עותק. כשמשתמש
+מבקש access, Entitle ניגש ל-Okta בזמן אמת לאמת חברות בקבוצה,
+ואז משתמש בזהות ה-bot שלו כדי לבצע assume role במערכת היעד
+(Atlas, AWS, וכו'). יש UI לניהול **workflow** של בקשות
+ומאשרים (configurable approval chains), ויש integration
+מתועד עם Slack (גם אם הוא בעיקר לניהול הרשאות בתוך Slack
+ולא כ-ChatOps לבקשות — ראה הערה 🚩).
+
+- **Self-hosted**: Okta הוא ה-IdP הישיר וה-**source of truth**
+היחיד. אין שכפול, אין state כפול, אין UI ניהול נפרד.
+המיפוי group → DB-role מוצהר ב-Crossplane chart (GitOps),
+ובקשת approval = code review של ה-PR. כל שינוי בקבוצה
+ב-Okta משפיע מיידית — אין race condition בין שתי מערכות.
+
+ההשלכה: ה"state explosion" של מודל Britive (Okta + Britive)
+מול ה"single source of truth" של Entitle ושל self-hosted —
+זה מהווה שיקול drift / consistency שכדאי לבחון בטריאל.
+
+(4) **Auth method** — שלושתם תומכים ב-Okta. Britive: SAML/OIDC + SCIM.
+Entitle: Okta כ-IdP + directory source. Self-hosted: Okta OIDC/SAML
+ישיר ל-Atlas + AWS-IC. אין הבדל מהותי.
+
+(5) **Maintenance — code vs UI, ו-role-change propagation**:
+
+חשוב להבדיל בין **שינויים חד-פעמיים** (setup ראשוני) לבין
+**propagation time** של שינויי תפקידים שוטפים:
+
+- **Britive**: שינויים נעשים ב-UI (point-and-click ב-profiles
+ו-policies). זה one-time effort בעיקרון, אבל יש לזכור שכל
+שינוי חי ב-state של Britive, לא ב-Okta. **Propagation:**
+תלוי ב-sync interval של Britive עם Okta — אם משתמש מוסר מקבוצה
+ב-Okta, ייתכן delay עד שזה משתקף ב-Britive ולא ייתן לו checkout
+profile. ⚠ נקודה לבחון בטריאל.
+
+- **Entitle**: שינויים נעשים ב-UI עם **workflow editor** מובנה
+(approval chains, conditions). גם זה one-time setup. **Propagation:**
+מיידי — Entitle קורא Okta בזמן בקשה, אז כל שינוי בקבוצה ב-Okta
+תקף ב-request הבא.
+
+- **Self-hosted**: שינויים נעשים **ב-code** (PR ל-Crossplane
+chart). זה דורש code-review וכלי-עזר Git, אבל הוא **versioned,
+auditable, reproducible**. גם one-time setup. **Propagation:**
+PR merge → Crossplane reconciler מתעדכן → IdP config מתעדכן →
+ה-request הבא של המשתמש כבר רואה את השינוי. כ-2-5 דקות
+בפועל בהינתן reconciliation rate סטנדרטי.
+
+**Trade-off**: UI = מהיר ל-onboarding מהיר של אדמין לא-מפתח,
+אבל פחות auditable; Code = יותר מסורבל בתחילה אבל
+ה-source-of-truth ב-git נותן history מלאה, blast-radius
+תחום, ו-rollback פשוט.
+
+(6) **Pricing** — Britive: per-user SaaS. Entitle: per-user SaaS,
+quote pending ל-300-500 users (לפי האימייל). Self-hosted: ללא
+רישיון.
+
+(7) **GTM effort** — Britive ו-Entitle שניהם שבועות. Entitle:
+trial kickoff נקבע לרביעי הבא. Self-hosted: ימים-שבועות (הארכיטקטורה
+כבר פרושה).
+
+(8) **Prerequisites — trust primitives** (השורה החשובה ביותר
+ארכיטקטונית): לכל פתרון, שלוש שאלות:
+
+**(א) Tool identity — איפה הכלי "חי" במערכות היעד?**
+- Britive ו-Entitle: שניהם צריכים **שלושה bot identities**:
+(1) ב-**Okta** — SCIM provisioning / Okta API token לסנכרון
+משתמשים, קבוצות, ומנהלים; (2) ב-**Atlas** — Project Owner-level
+API key; (3) ב-**AWS IAM Identity Center** — admin permission set
+או IAM user עם sts:AssumeRole רחב. ה-SaaS מחזיק את שלושת
+ה-API keys האלה, מה שהופך אותם לזהויות high-value: הם יכולים
+להנפיק כל credential בענן + לשנות חברויות בקבוצות Okta.
+- Self-hosted: **אין זהות של כלי במערכות היעד**. Okta הוא ה-IdP
+הישיר; AWS סומך עליו דרך IAM-IC SAML, ו-Atlas סומך עליו דרך
+OIDC. אין bot account לרשום, לרוטט, או להגן עליו.
+
+**(ב) Group → DB-role mapping — איפה מגדירים אותו?**
+- Britive/Entitle: בדרך כלל **ב-UI של הכלי** (יש למצב הזה
+flow ייעודי לגדר מי מקבל איזה role). אופציה חלופית: לסנכרן
+את ההגדרות **ממערכות צד-שלישי** (IAM-IC permission sets,
+Atlas custom DB roles) — הכלי מייבא אותן ומאפשר לקשר
+ל-Okta groups בתוכו.
+- Self-hosted: ה-mapping מוצהר **ב-Crossplane chart** —
+GitOps source of truth, כל שינוי הוא PR, היסטוריה מלאה
+ב-git. אין UI ניהול נפרד; ה-templates folder הוא הזירה.
+
+**(ג) Grant mechanism — איך בפועל המשתמש מקבל גישה?**
+- Britive/Entitle: **on-demand provisioning דרך API**.
+המשתמש מבקש profile/policy → הכלי משתמש בזהות שלו כדי
+ליצור/לקשור federated user ב-Atlas + לקשר ל-Permission
+Set ב-IAM-IC. כל grant הוא קריאת API חיה.
+- Self-hosted: **declarative — ללא קריאת API בזמן ריצה**.
+הקישור Okta group → role כבר קיים ב-IdP config. כשהמשתמש
+מבקש, הוא פשוט מתחבר עם ID token, ו-Atlas/AWS עושים
+lookup. ה-control plane נפרד מ-data path.
+
+ההשלכה: ה-blast radius במודל SaaS מתרכז ב-API key של
+הכלי. במודל self-hosted אין נקודת ריכוז כזו — ה-trust
+chain ישיר.
+
+🎯 נקודות לטריאל של Entitle (רביעי הבא):
+- ללחוץ את Jonathan על Slack ChatOps — האם זה fr באמת או רק מילה?
+- לאמת PagerDuty on-call → DB role flow — האם זה Atlas-native?
+- pricing concrete ל-300-500 users
+- האם ה-policy design באמת "Medium complexity" או יותר?
+
+📹 Walkthrough recording (Gong, 7 דקות): https://us-17350.app.gong.io/e/c-share/?tkn=fa4n77kiee0k1u566dntrwtfc
 
 </div>
 -->
@@ -975,27 +1342,26 @@ transition: slide-left
 - Adding a 3rd DB technology = one new `templates/{tech}/` folder
 - **No chart restructure** required
 - Sub-chart routing is the abstraction line
+- **Every new SaaS = one API key** to provision into the controller
 
 </Card3D>
 
-<Card3D title="⚖️ Regulation">
+<Card3D title="🙋 Usability — Human Path">
 
-*Compliance & auditability of access changes*
+*Developer experience for JIT access (Case B / Case C)*
 
-- All access changes flow through **Git PRs** — auditable · reviewable · signed
-- Sub-chart **versions pinned** (crossplane 1.18 · atlas-operator 2.5)
-- `access-matrix.md` is the **human-readable audit joint**
-- **CI lints** block out-of-band grants (e.g. `psql GRANT` outside `templates/`)
+- **Request channel — open question:** UI portal vs Slack bot vs raw PR?
+- **Self-service JIT** — no platform-team in the hot path
+- **Visible state** — where does the dev see *requested · approved · active · expired*?
 
 </Card3D>
 
-<Card3D title="🧑‍💻 Usability">
+<Card3D title="🤖 Usability — Service Path">
 
-*Ease of adoption for service teams*
+*Onboarding experience for service teams (Case A)*
 
 - `examples/*.yaml` are **runnable snippets** per use-case
 - First PR copies **one file**, not the whole chart
-- **Onboarding measured in minutes**
 - Teams **own their workload permissions** — no platform-team dependency (velocity win)
 - **CODEOWNERS** gates access-PR review — clear ownership
 
@@ -1010,10 +1376,16 @@ transition: slide-left
 <!--
 <div dir="rtl">
 
-שלוש פרספקטיבות על development. צוותי שירות: איך אני מוסיף DB role לשירות
-שלי היום (תשובה: PR אחד ל-chart המעטפת). צוות פלטפורמה: איך אני שומר
-על עקביות לרוחב 5 מערכות upstream. אופרטורים: איפה אני מסתכל כש-CRD
-נתקע. מכין את הסיבה למה Crossplane מנצח ב-Tier 2.
+שלוש פרספקטיבות: Evolution, ו-Usability מפוצלת לשני מסלולים — Human ו-Service.
+Evolution: templates ממפה מערכות upstream ולא שירותים, ולכן הוספת טכנולוגיית
+DB שלישית היא תיקייה אחת חדשה, בלי restructure. Usability Human (Cases B/C):
+השאלה הפתוחה היא ערוץ הבקשה — UI ייעודי, בוט Slack, או PR ישיר? סביב
+זה צריך גם נראות סטטוס (requested/approved/active/expired) וזמן עד גישה
+שנמדד בדקות. Usability Service (Case A): צוותי שירות לא רואים בוט ולא UI —
+הם עורכים YAML מתוך examples runnable, PR ראשון בקובץ אחד, ו-CODEOWNERS
+שומר על שער הביקורת. הפיצול חשוב כי חוויית-המשתמש של Case A שונה לחלוטין
+מ-B ו-C, ובאיחוד אחד היא נראית סותרת. (פרספקטיבת Regulation הוסרה —
+הביקורתיות מכוסה ב-Git history וב-access-matrix.md.)
 
 </div>
 -->
