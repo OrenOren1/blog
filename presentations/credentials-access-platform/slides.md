@@ -1116,7 +1116,7 @@ transition: slide-left
 *Latency & operational friction at runtime*
 
 - **Region-local auth** — no cross-region SAML or DB hops
-- **One Twingate session** per human · zero per-connect cost
+- **Immediate role + permission updates** — no restart, no rotation
 - **15-min IAM tokens** auto-refresh · no manual rotation
 - **Services skip Okta entirely** — connect-time OIDC only
 
