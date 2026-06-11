@@ -347,30 +347,27 @@ transition: zoom-out
 
 <Card3D title="🔒 Security — Blast radius?">
 
-- Only **two trust gates** (Workload Identity Verifier · Twingate)
-- Compromise bounded to **one binding** — no shared secret
-- No element holds **both audiences'** credentials
-- **Coding agents** inherit only their owner's permissions
-- Audit Aggregator = single attribution point
+- **2 trust gates** — Workload Identity Verifier · Twingate
+- **1 binding compromised ≠ all** — no shared secret
+- **Audit Aggregator** — single attribution point
 
 </Card3D>
 
 <Card3D title="🔮 Evolution — New DB next year?">
 
-- Element graph **unchanged** — same 10 responsibilities
-- One new **adapter** inside the Service Role Reconciler
-- **D-1** lives below this layer — decide later
-- Region split (`prod-us` → `prod-eu`) doesn't change the model
+- **Graph unchanged** — same 10 responsibilities
+- **New DB** — +1 adapter in Service Role Reconciler
+- **New service** — +1 Workload OIDC + Trust Binding
+- **Region split / multi-DB per env** — invisible to the model
 
 </Card3D>
 
 <Card3D title="🧑‍💻 Usability — Who learns what?">
 
-- **Engineers** — standing RO for daily reads · JIT only when needed
-- **Security Officers** — IaC PRs · `git log` is the audit
-- **On-call** — PagerDuty drives admin grants · no extra workflow
-- **Permission expansion** — dev + approver only · no platform team
-- **Auditors** — one Audit Aggregator covers everything
+- **Engineers** — RO by default · JIT when needed
+- **Security + Auditors** — `git log` + Audit Aggregator
+- **On-call** — PagerDuty drives grants · no extra UI
+- **Maintainers** — IaC PRs only · no runtime access tickets
 
 </Card3D>
 
