@@ -123,31 +123,42 @@ class: slide-context-combined
 ## 🌐 Context View — Black Box & External Dependencies
 
 ```mermaid
-graph LR
-    Services["Service Workloads"]
-    Humans["Engineers / On-call /<br/>Analysts"]
-    Admins["Platform<br/>Administrators"]
+graph TD
+    subgraph Actors[" "]
+        direction LR
+        Services["Service Workloads"]
+        Humans["Engineers /<br/>On-call / Analysts"]
+        Admins["Platform<br/>Administrators"]
+    end
+
     System["🔐 Credentials &<br/>Access Platform"]
-    Twingate["🛡️ Twingate<br/>(ZTNA gate)"]
-    Okta["🪪 Okta<br/>(IdP)"]
-    PD["📟 PagerDuty<br/>(on-call schedule)"]
-    Atlas["🍃 MongoDB Atlas"]
-    AWS["☁️ AWS<br/>(RDS / IAM / STS)"]
-    EKS["⎈ EKS OIDC Provider"]
+    Twingate["🛡️ Twingate (ZTNA gate)"]
 
-    Services -->|"assume DB role"| System
-    Humans -->|"DB access (4-case model)"| System
-    Admins -->|"manage roles + bindings"| System
+    subgraph External[" "]
+        direction LR
+        Okta["🪪 Okta"]
+        PD["📟 PagerDuty"]
+        Atlas["🍃 MongoDB Atlas"]
+        AWS["☁️ AWS<br/>(RDS · IAM · STS)"]
+        EKS["⎈ EKS OIDC"]
+    end
 
-    Humans -.->|"always-on session"| Twingate
-    Twingate -.->|"gates network"| Atlas
-    Twingate -.->|"gates network"| AWS
+    Services -->|"assume role"| System
+    Humans -->|"DB access"| System
+    Admins -->|"manage"| System
 
-    System <-->|"groups in · admin out"| Okta
+    Humans -.->|"session"| Twingate
+    Twingate -.-> Atlas
+    Twingate -.-> AWS
+
+    System <-->|"groups + admin"| Okta
     System -->|"on-call roster"| PD
-    System <-->|"auth + admin · audit log"| Atlas
-    System <-->|"auth + admin · CloudTrail"| AWS
+    System <-->|"auth + audit"| Atlas
+    System <-->|"auth + CloudTrail"| AWS
     System -->|"verify workload"| EKS
+
+    style Actors fill:transparent,stroke:transparent
+    style External fill:transparent,stroke:transparent
 ```
 
 <div class="ctx-foot">
