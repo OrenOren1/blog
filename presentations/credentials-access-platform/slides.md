@@ -41,6 +41,39 @@ layout: default
 transition: fade-out
 ---
 
+<p class="handwritten-kicker">Agenda:<strong> least-privilege</strong> solution for system entities — the Credentials &amp; Access Platform.</p>
+
+## ⚓ Locked Architectural Principles
+
+<GlassCard>
+
+- **Decompose by audience** — services vs humans
+- **Workload-native identity** — no stored DB passwords
+- **JIT-first privilege** — no standing access
+- **4-case human model** — RO · JIT RW · JIT admin · break-glass
+- **Layered IaC** — bootstrap · baseline · self-service
+
+</GlassCard>
+
+<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-03.jpg" alt="kids-book accent — smiling anchor character" style="width:100%;height:auto;display:block;" /></div>
+
+<!--
+<div dir="rtl">
+
+חמישה עקרונות נעולים — להציג כקווי שופט, לא העדפות. לעצור על "split
+source-of-truth" — Okta הוא הסמכות לבני אדם, IaC הוא הסמכות לשירותים. זו
+ההפנמה הקשה ביותר. "Three-layer IaC" זה ADR-008: Pulumi לאתחול (Tier 1)
++ Crossplane בסיס מנהל ב-platform-tools (Tier 2a) + Crossplane self-service
+לכל אזור (Tier 2b).
+
+</div>
+-->
+
+---
+layout: default
+transition: fade-out
+---
+
 ## 🚨 Critical Problems in Current State
 
 <CardGrid :cols="2">
@@ -67,7 +100,7 @@ transition: fade-out
 
 </CardGrid>
 
-> Compromised on-call laptop + one stale K8s Secret = **persistent full-org write on all customer data** — and we are weeks from shipping this same model into a second region. *Below: the 🔒 **non-negotiable** principles that constrain every fix.*
+> Compromised on-call laptop + one stale K8s Secret = **persistent full-org write on all customer data** — and we are weeks from shipping this same model into a second region.
 
 <div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-02.jpg" alt="kids-book accent — rabbit with broken key" style="width:100%;height:auto;display:block;" /></div>
 
@@ -79,37 +112,6 @@ transition: fade-out
 27 K8s Secrets בגילאים 87–291 ימים, 16 ORG_OWNERs באטלס, 18 חשבונות לא
 פעילים מעל 12 חודש. הוק: "עומד להכפיל את עצמו" — prod-eu עולה והחוב גדל
 לפי region × DB.
-
-</div>
--->
-
----
-layout: default
-transition: fade-out
----
-
-## ⚓ Locked Architectural Principles
-
-<GlassCard>
-
-- **Decompose by audience** — services vs humans, *not* by DB technology 
-- **Split source-of-truth** — Okta authoritative for humans · IaC authoritative for services 
-- **Workload-native identity** — no stored DB passwords for services in steady state 
-- **4-case human model** — standing RO · JIT RW · JIT admin · break-glass 
-- **Three-layer IaC** — Pulumi bootstrap · admin-baseline (Tier 2a) · per-region self-service (Tier 2b)
-
-</GlassCard>
-
-<div style="position:absolute;right:1.5rem;bottom:1.5rem;width:120px;opacity:0.95;pointer-events:none;z-index:5;"><img src="/chalk-03.jpg" alt="kids-book accent — smiling anchor character" style="width:100%;height:auto;display:block;" /></div>
-
-<!--
-<div dir="rtl">
-
-חמישה עקרונות נעולים — להציג כקווי שופט, לא העדפות. לעצור על "split
-source-of-truth" — Okta הוא הסמכות לבני אדם, IaC הוא הסמכות לשירותים. זו
-ההפנמה הקשה ביותר. "Three-layer IaC" זה ADR-008: Pulumi לאתחול (Tier 1)
-+ Crossplane בסיס מנהל ב-platform-tools (Tier 2a) + Crossplane self-service
-לכל אזור (Tier 2b).
 
 </div>
 -->
