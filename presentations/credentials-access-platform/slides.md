@@ -41,7 +41,7 @@ layout: default
 transition: fade-out
 ---
 
-## 🚨 Current State Is Not Acceptable
+## 🚨 Critical Problems in Current State
 
 <CardGrid :cols="2">
 
