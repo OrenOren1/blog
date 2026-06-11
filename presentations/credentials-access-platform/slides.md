@@ -123,7 +123,7 @@ class: slide-context-combined
 ## 🌐 Context View — Black Box & External Dependencies
 
 ```mermaid
-graph TD
+graph LR
     Services["Service Workloads"]
     Humans["Engineers / On-call /<br/>Analysts"]
     Admins["Platform<br/>Administrators"]
@@ -137,21 +137,17 @@ graph TD
 
     Services -->|"assume DB role"| System
     Humans -->|"DB access (4-case model)"| System
-    Admins -->|"manage roles, groups, bindings"| System
+    Admins -->|"manage roles + bindings"| System
 
     Humans -.->|"always-on session"| Twingate
-    Twingate -.->|"gates network reach"| Atlas
-    Twingate -.->|"gates network reach"| AWS
+    Twingate -.->|"gates network"| Atlas
+    Twingate -.->|"gates network"| AWS
 
-    System -->|"read groups · admin writes"| Okta
-    System -->|"on-call events · roster"| PD
-    System -->|"auth · admin ops"| Atlas
-    System -->|"auth · admin ops"| AWS
-    System -->|"verify workload identity"| EKS
-
-    Okta -->|"SAML group attributes"| System
-    Atlas -->|"DB audit log"| System
-    AWS -->|"CloudTrail · pgaudit"| System
+    System <-->|"groups in · admin out"| Okta
+    System -->|"on-call roster"| PD
+    System <-->|"auth + admin · audit log"| Atlas
+    System <-->|"auth + admin · CloudTrail"| AWS
+    System -->|"verify workload"| EKS
 ```
 
 <div class="ctx-foot">
