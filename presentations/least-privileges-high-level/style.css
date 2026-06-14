@@ -86,3 +86,13 @@ blockquote {
 }
 
 .mermaid { max-width: 100%; }
+
+/* ── Hide the slide-overview button in audience view ── */
+/* The "Show slide overview" button in the bottom nav opens a sidebar
+   listing every slide title. Production decks usually keep this off so
+   the audience cannot jump ahead. Presenter view (/presenter/) has its
+   own dedicated navigation and is unaffected. */
+.slidev-icon-btn[title="Show slide overview"],
+button[title="Show slide overview"] {
+  display: none !important;
+}
