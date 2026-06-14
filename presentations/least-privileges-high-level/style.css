@@ -102,18 +102,22 @@ blockquote {
 
 .mermaid { max-width: 100%; }
 
-/* ── Hide slide-overview button + QuickOverview popover ── */
-/* Two layers — the button in the bottom nav AND the floating slide-list
-   panel it opens. Hiding the button alone leaves the panel reachable via
-   keyboard shortcut (O), so we also kill the panel container itself. */
+/* ── Slide-overview UI: hidden in audience, toggleable in presenter ── */
+/* Audience view (/): hide both the toolbar button and the popover so
+   viewers can't pop open the slide-jump list. */
 .slidev-icon-btn[title="Show slide overview"],
 button[title="Show slide overview"] {
   display: none !important;
 }
-
-/* The QuickOverview popover (fixed top-right slide-jump list).
-   Targets both its hidden default state (-top-20) and any active state. */
-.fixed.right-5.transition-all,
-.slidev-presenter .fixed.right-5.transition-all {
+body:not(:has(.slidev-presenter)) .fixed.right-5.transition-all {
   display: none !important;
+}
+
+/* Presenter view (/presenter/): restore the toolbar button. Slidev's
+   own handler toggles the popover (.fixed.right-5.transition-all)
+   between its hidden state (top: -5rem) and visible — this acts as the
+   minimize / expand toggle the user asked for. */
+.slidev-presenter .slidev-icon-btn[title="Show slide overview"],
+.slidev-presenter button[title="Show slide overview"] {
+  display: inline-flex !important;
 }
