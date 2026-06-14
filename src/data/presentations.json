@@ -1,6 +1,15 @@
 {
   "decks": [
     {
+      "slug": "least-privileges-high-level",
+      "title": "Least-Privilege DB Access",
+      "subtitle": "CTO brief — current shared-admin reality, why it has to move, the JIT-humans + IaC-services design",
+      "date": "2026-06-14",
+      "audience": "CTO · Platform engineering · Security",
+      "tags": ["platform", "security", "least-privilege", "rds", "mongodb-atlas", "okta", "jit"],
+      "source": "presentations/least-privileges-high-level/slides.md"
+    },
+    {
       "slug": "credentials-access-platform",
       "title": "Credentials & Access Platform",
       "subtitle": "Workforce + workload identity federation across RDS, MongoDB Atlas, and Okta",
