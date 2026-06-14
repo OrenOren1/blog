@@ -2,9 +2,9 @@
   "name": "least-privileges-high-level",
   "private": true,
   "scripts": {
-    "dev": "slidev slides.md",
-    "build": "slidev build slides.md --base /presentations/least-privileges-high-level/ --out ../../public/presentations/least-privileges-high-level",
-    "export": "slidev export slides.md"
+    "dev": "node build.mjs --dev",
+    "build": "node build.mjs",
+    "export": "node build.mjs --export"
   },
   "dependencies": {
     "@slidev/cli": "^0.49.0",
