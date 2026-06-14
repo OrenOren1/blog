@@ -102,22 +102,11 @@ blockquote {
 
 .mermaid { max-width: 100%; }
 
-/* ── Slide-overview UI: hidden in audience, toggleable in presenter ── */
-/* Audience view (/): hide both the toolbar button and the popover so
-   viewers can't pop open the slide-jump list. */
+/* ── Slidev's native slide-jump UI is hidden everywhere ── */
+/* The custom <DeckMenu> chip in global-top.vue replaces it with a
+   reliable toggle (visible in presenter view, hidden in audience). */
 .slidev-icon-btn[title="Show slide overview"],
-button[title="Show slide overview"] {
+button[title="Show slide overview"],
+.fixed.right-5.transition-all {
   display: none !important;
-}
-body:not(:has(.slidev-presenter)) .fixed.right-5.transition-all {
-  display: none !important;
-}
-
-/* Presenter view (/presenter/): restore the toolbar button. Slidev's
-   own handler toggles the popover (.fixed.right-5.transition-all)
-   between its hidden state (top: -5rem) and visible — this acts as the
-   minimize / expand toggle the user asked for. */
-.slidev-presenter .slidev-icon-btn[title="Show slide overview"],
-.slidev-presenter button[title="Show slide overview"] {
-  display: inline-flex !important;
 }

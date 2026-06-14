@@ -1,0 +1,1 @@
+import{o as e,e as o,i as t}from"./modules/vue-1NmG-2Mc.js";import{u as a}from"./slidev/context-BrMVHwo2.js";const r={class:"glass"},i={__name:"GlassCard",setup(l){return a(),(s,n)=>(e(),o("div",r,[t(s.$slots,"default")]))}};export{i as _};
