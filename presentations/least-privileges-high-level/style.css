@@ -12,6 +12,21 @@
   color: #e6edf3;
 }
 
+/* Override seriph's default cover/section background. The theme references
+   source.unsplash.com which was shut down in 2024 — the image 404s and the
+   dark gradient sits on flat #0d1117, looking pure black. Replace with a
+   subtle local gradient so the dark surface has some depth. */
+.slidev-layout,
+.slidev-layout.default,
+.slidev-layout.cover,
+.slidev-layout.section,
+.slidev-layout.end {
+  background-image:
+    radial-gradient(circle at 18% 82%, rgba(126, 255, 245, 0.10), transparent 55%),
+    radial-gradient(circle at 82% 18%, rgba(167, 139, 250, 0.08), transparent 55%),
+    linear-gradient(135deg, #0d1117 0%, #161b22 55%, #1f2937 100%) !important;
+}
+
 .neon {
   color: var(--color-primary);
   text-shadow: 0 0 8px var(--color-primary), 0 0 20px var(--color-primary);
