@@ -1,0 +1,88 @@
+:root {
+  --slidev-theme-primary: #7efff5;
+  --slidev-theme-background: #0d1117;
+  --color-primary: #7efff5;
+  --color-accent: #a78bfa;
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-border: rgba(255, 255, 255, 0.1);
+}
+
+.slidev-layout {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+.neon {
+  color: var(--color-primary);
+  text-shadow: 0 0 8px var(--color-primary), 0 0 20px var(--color-primary);
+}
+
+.glass {
+  background: var(--color-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.4em 1.8em;
+  margin: 1em 0;
+}
+
+.card-3d {
+  background: linear-gradient(135deg, rgba(126, 255, 245, 0.08), rgba(167, 139, 250, 0.06));
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1em 1.4em;
+  margin: 0.6em 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: transform 0.2s ease;
+}
+
+.gradient-line {
+  height: 2px;
+  background: linear-gradient(to right, var(--color-primary), transparent);
+  border-radius: 2px;
+  margin: 1em 0;
+}
+
+.floating-icon {
+  font-size: 4em;
+  display: block;
+  text-align: center;
+  filter: drop-shadow(0 0 12px var(--color-primary));
+}
+
+.two-cols-header .highlight-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 1em 1.4em;
+}
+
+h1, h2, h3 { color: #e6edf3; }
+h1 { font-size: 2.4em; }
+h2 { font-size: 1.8em; margin-bottom: 0.6em; }
+h3 { font-size: 1.2em; color: var(--color-primary); margin-bottom: 0.3em; }
+
+li { margin: 0.4em 0; line-height: 1.6; }
+li strong { color: var(--color-primary); }
+
+blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1em;
+  color: rgba(230, 237, 243, 0.75);
+  font-style: italic;
+  margin-top: 0.8em;
+}
+
+.slidev-layout.section h2 {
+  font-size: 2em;
+  color: var(--color-primary);
+  text-shadow: 0 0 8px var(--color-primary);
+}
+
+.slidev-layout.cover h1 {
+  font-size: 3em;
+  line-height: 1.15;
+}
+
+.mermaid { max-width: 100%; }
