@@ -102,12 +102,18 @@ blockquote {
 
 .mermaid { max-width: 100%; }
 
-/* ── Hide the slide-overview button in audience view ── */
-/* The "Show slide overview" button in the bottom nav opens a sidebar
-   listing every slide title. Production decks usually keep this off so
-   the audience cannot jump ahead. Presenter view (/presenter/) has its
-   own dedicated navigation and is unaffected. */
+/* ── Hide slide-overview button + QuickOverview popover ── */
+/* Two layers — the button in the bottom nav AND the floating slide-list
+   panel it opens. Hiding the button alone leaves the panel reachable via
+   keyboard shortcut (O), so we also kill the panel container itself. */
 .slidev-icon-btn[title="Show slide overview"],
 button[title="Show slide overview"] {
+  display: none !important;
+}
+
+/* The QuickOverview popover (fixed top-right slide-jump list).
+   Targets both its hidden default state (-top-20) and any active state. */
+.fixed.right-5.transition-all,
+.slidev-presenter .fixed.right-5.transition-all {
   display: none !important;
 }
