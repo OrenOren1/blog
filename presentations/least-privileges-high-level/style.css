@@ -102,6 +102,32 @@ blockquote {
 
 .mermaid { max-width: 100%; }
 
+/* ── Constrain generated images so they don't overflow the slide ── */
+/* About-Me slide has its own class (.about-me-slide) and is unaffected. */
+
+/* Cover + end slides have minimal content — bigger image budget. */
+.slidev-layout.cover img,
+.slidev-layout.end img {
+  max-height: 38vh;
+  width: auto;
+  max-width: 90%;
+  object-fit: contain;
+  display: block;
+  margin: 1.2em auto 0;
+  border-radius: 10px;
+}
+
+/* Content slides — image fills the available column / panel. */
+.slidev-layout:not(.cover):not(.end):not(.about-me-slide) img {
+  max-height: 70vh;
+  width: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+
 /* ── Three-perspective pain grid (slide 3) ── */
 .perspectives-pain {
   display: grid;
