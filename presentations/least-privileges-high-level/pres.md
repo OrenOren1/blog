@@ -60,22 +60,31 @@ speaker: This is the value-side slide — the same architectural design, viewed 
 -->
 
 
-<!-- SLIDE: cards-3 -->
-## 🧭 High-Level Approach
+<!-- SLIDE: cards-6 -->
+## 🧭 High-Level Approach + JIT Lifecycle
 
 ### 🎯 Scoped Roles
-Per-service — or shared per RDS / Atlas database
+Per-service or shared per database
 
 ### 📜 Declarative as Code
-Roles + grants in Git, peer-reviewed, full audit
+Roles + grants in Git, peer-reviewed
 
 ### ⏱️ Ephemeral Identity
-Okta group grants role; every session carries a TTL
+Okta group → role with TTL session
+
+### 📝 Request
+Developer files scoped access PR
+
+### ✅ Approve
+Peer / security signs; group added
+
+### ⏳ Auto-Expire
+Session ends on shift end or TTL
 
 > Four tiers: 🔍 read-only · ✍️ read-write · 🛠️ admin · 🚨 break-glass
 
 <!--
-speaker: Three moves, each one resolving a class of problem on the prior slide. "Scoped roles" replaces the two shared admin principals with named roles, each carrying only the grants its service actually exercises today — `connectors_prod_rw` on `organization_*` databases, `debezium_prod_cdc` with `read + changeStream`, and so on. We do not blindly mint one role per service: where multiple services share an identical access pattern on the same database — for example `luxus-service`, `classifications`, and `galio` all hitting the same org databases the same way — they share a role; where independent revocation matters (a CDC connector vs. an application service) they get separate roles. The grouping is a design call per database, not a mechanical rule. "Declarative as code" means every role, grant, and role-binding lands as a Git PR through CODEOWNERS — no out-of-band changes, full audit trail, and SOC2 CC6.2 evidence is produced as a byproduct. "Ephemeral identity" is the load-bearing one and applies to humans and workloads alike: access is never granted directly to a person or a service — it is granted to an Okta group, and group membership is what unlocks the database role. For humans this means SSO login → group claim → SAML session into Atlas or IAM Identity Center permission set into RDS, with the session itself carrying a hard TTL; for workloads on RDS this means IRSA-minted IAM tokens with a 15-minute TTL refreshed transparently by RDS Proxy, so no password ever lives in pod memory. On Atlas, where workload IAM-token auth is not yet on our path, per-service users rotate on a 90-day cycle managed by the Atlas Operator. The point for the CTO: no standing access exists in either database — every connection is a time-bound lease tied to a current Okta group membership. The blockquote names the four privilege tiers that every role falls into: 🔍 **read-only** for analytics, monitoring, and investigation (the human default via `human_analytics_ro`); ✍️ **read-write** for service runtime data planes, scoped to the specific databases the service owns; 🛠️ **admin** for schema migrations only — ships as `NOLOGIN` by default, enabled only during the deploy window so it does not sit in the steady-state attack surface; 🚨 **break-glass** is the bypass-JIT path for sub-hour incidents (paired approver, 24h follow-up PR, P1 PagerDuty alert on every grant). The rejected alternative was "scoped roles but keep the shared SM password" — rejected because it still leaves a long-lived secret on disk and gains nothing on rotation. Tell the CTO: same database surfaces, same developer workflow, dramatically smaller blast radius and attributable audit trail, with four well-defined privilege tiers that map cleanly to the actual jobs.
+speaker: Three moves, each one resolving a class of problem on the prior slide. "Scoped roles" replaces the two shared admin principals with named roles, each carrying only the grants its service actually exercises today — `connectors_prod_rw` on `organization_*` databases, `debezium_prod_cdc` with `read + changeStream`, and so on. We do not blindly mint one role per service: where multiple services share an identical access pattern on the same database — for example `luxus-service`, `classifications`, and `galio` all hitting the same org databases the same way — they share a role; where independent revocation matters (a CDC connector vs. an application service) they get separate roles. The grouping is a design call per database, not a mechanical rule. "Declarative as code" means every role, grant, and role-binding lands as a Git PR through CODEOWNERS — no out-of-band changes, full audit trail, and SOC2 CC6.2 evidence is produced as a byproduct. "Ephemeral identity" is the load-bearing one and applies to humans and workloads alike: access is never granted directly to a person or a service — it is granted to an Okta group, and group membership is what unlocks the database role. For humans this means SSO login → group claim → SAML session into Atlas or IAM Identity Center permission set into RDS, with the session itself carrying a hard TTL; for workloads on RDS this means IRSA-minted IAM tokens with a 15-minute TTL refreshed transparently by RDS Proxy, so no password ever lives in pod memory. On Atlas, where workload IAM-token auth is not yet on our path, per-service users rotate on a 90-day cycle managed by the Atlas Operator. The point for the CTO: no standing access exists in either database — every connection is a time-bound lease tied to a current Okta group membership. The blockquote names the four privilege tiers that every role falls into: 🔍 **read-only** for analytics, monitoring, and investigation (the human default via `human_analytics_ro`); ✍️ **read-write** for service runtime data planes, scoped to the specific databases the service owns; 🛠️ **admin** for schema migrations only — ships as `NOLOGIN` by default, enabled only during the deploy window so it does not sit in the steady-state attack surface; 🚨 **break-glass** is the bypass-JIT path for sub-hour incidents (paired approver, 24h follow-up PR, P1 PagerDuty alert on every grant). The rejected alternative was "scoped roles but keep the shared SM password" — rejected because it still leaves a long-lived secret on disk and gains nothing on rotation. Tell the CTO: same database surfaces, same developer workflow, dramatically smaller blast radius and attributable audit trail, with four well-defined privilege tiers that map cleanly to the actual jobs. The bottom row of the slide expands the §4.2 Access Governance flow in the AD — the normal JIT lifecycle a developer goes through when they need privileged access for a real task. Step one: the developer files a scoped request — either a PR adding them to the appropriate Okta group manifest, or a Slack-bot / UI invocation that captures reason, target scope, and duration. Step two: a peer or security approver signs the request; on approval, the Identity-to-Role Mapper adds the developer to the workforce-identity group that carries the scoped role grant, and the Session Broker issues the time-bounded JIT Role. Step three: the session is time-bounded by design — group membership is removed at shift end or TTL expiry, in-flight statements finish naturally, and the next authentication attempt fails. The rejected alternative for the JIT half was "standing scoped roles for every developer who might need them" — rejected because it puts us back in long-lived grants that drift from job function and fail CC6.2. The whole slide compressed to one line: scoped roles, declared in Git, leased via Okta with TTL — requested, approved, expired.
 -->
 
 <!-- SLIDE: diagram type=context -->
@@ -109,22 +118,6 @@ flowchart LR
 
 <!--
 speaker: This is the Context-view picture of the target state at CTO altitude — two parallel paths converge on the same scoped-role databases, and the key insight the CTO needs is that humans and services do not share a path. The JIT Platform is the humans-only path: developers request scoped access on demand through a Slack bot or a self-service UI, the platform translates the request into a time-bounded Okta group membership, and SSO / SAML / IAM Identity Center carry that membership into Atlas or RDS as a TTL-bounded session. Service identities and service-role bindings never touch the JIT platform — they are managed entirely as IaC: Service Teams own the role-binding PR for their own service (or service-group, when multiple services share an access pattern), Pulumi provisions the RDS role + IRSA workload identity, and the Atlas Operator provisions the per-service Atlas user + 90-day-rotated credential. PagerDuty is the fourth input on the human side: the on-call schedule is the source of truth for break-glass admin eligibility — the JIT platform reconciles PD `prod-db-admin` against the Okta `sentra-db-admins` group hourly (per ADR-009), so on-call rotation automatically grants and revokes admin access without anyone running a script or filing a ticket. Platform Team maintains both rails — the JIT machinery (Okta manifests, reconcile cron, request UI, audit pipeline) and the IaC plumbing (Pulumi modules, Atlas Operator deployment, GitOps reconciliation) — but is not in the per-request or per-service approval critical path on either side. Both paths terminate at the same property: scoped roles on both databases, no shared admin, every connection attributable to a unique principal. The rejected alternative was a unified "everything through the JIT platform" model — rejected because services need declarative, durable bindings that an IaC pipeline gives cleanly and a JIT request flow does not. Land the caption: humans go through JIT, services go through IaC, both land in scoped roles — that is the entire least-privilege story in one frame.
--->
-
-<!-- SLIDE: cards-3 -->
-## 🎟️ JIT Access — Scoped, Approved, Time-Bound
-
-### 📝 Request
-Developer files scoped access request via PR or task
-
-### ✅ Approve
-Peer / security approver signs; group membership added
-
-### ⏳ Auto-Expire
-Session ends; role revokes on shift end or TTL
-
-<!--
-speaker: This slide expands the §4.2 Access Governance flow in the AD — the normal path a developer takes when they need privileged database access for a real task, distinct from the break-glass bypass shown on the prior slide. Step one: the developer files a scoped request — either a PR adding them to the appropriate Okta group manifest, or a `task` invocation that captures reason, target scope, and duration. Step two: a peer or security approver signs the request; on approval, the Identity-to-Role Mapper adds the developer to the workforce-identity group that carries the scoped role grant, and the Session Broker issues the time-bounded JIT Role. Step three: the session is time-bounded by design — group membership is removed at shift end or TTL expiry, in-flight statements finish naturally, and the next authentication attempt fails. The rejected alternative was "standing scoped roles for every developer who might need them" — rejected because it puts us back in the world of long-lived grants that drift from actual job function and fail CC6.2 (access by job function). The point to land: privileged access exists, but it is always requested, always approved, always logged, and always expires.
 -->
 
 <!-- SLIDE: thank-you -->
