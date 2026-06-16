@@ -138,3 +138,147 @@ button[title="Show slide overview"],
 .fixed.right-5.transition-all {
   display: none !important;
 }
+
+/* ── About-Me slide (Tikal card) ── */
+.slidev-layout.about-me-slide {
+  --tikal-orange: #ff6b1a;
+  --tikal-orange-soft: #ff8a3d;
+  padding: 0;
+  background: #0a0a0a;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  height: 100%;
+  gap: 0;
+}
+.about-left {
+  padding: 2.6rem 2rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+}
+.about-title {
+  color: var(--tikal-orange);
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin: 0 0 1.6rem 0;
+  border-bottom: 4px solid var(--tikal-orange);
+  padding-bottom: 0.35rem;
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+}
+.about-name {
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0 0 0.3rem 0;
+  line-height: 1.1;
+}
+.about-role {
+  color: var(--tikal-orange);
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0 0 1.2rem 0;
+}
+.about-bio,
+.about-tikal,
+.about-focus {
+  color: #e6e6e6;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 1rem 0;
+}
+.about-bio strong { color: var(--tikal-orange-soft); }
+.orange { color: var(--tikal-orange); font-weight: 700; }
+.about-right {
+  padding: 2.6rem 3rem 2rem 2.4rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.about-right > *:not(.about-right-bgphoto) {
+  position: relative;
+  z-index: 1;
+}
+.about-right-bgphoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+  z-index: 0;
+  opacity: 0.32;
+  filter: grayscale(0.15) contrast(0.95) brightness(0.85);
+  -webkit-mask-image: linear-gradient(to right,
+    rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 18%, rgba(0,0,0,1) 50%,
+    rgba(0,0,0,0.6) 90%, rgba(0,0,0,0) 100%);
+          mask-image: linear-gradient(to right,
+    rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 18%, rgba(0,0,0,1) 50%,
+    rgba(0,0,0,0.6) 90%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+}
+.about-section {
+  color: var(--tikal-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0 0 0.8rem 0;
+}
+.about-section-projects {
+  margin-top: 1.6rem;
+  text-transform: none;
+  font-size: 0.95rem;
+}
+.about-list { list-style: none; margin: 0; padding: 0; }
+.about-list li {
+  color: #f1f1f1;
+  font-size: 0.95rem;
+  line-height: 1.9;
+  position: relative;
+  padding-left: 1.1rem;
+}
+.about-list li::before {
+  content: "▸";
+  color: var(--tikal-orange);
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.9rem;
+}
+.about-list-projects li { line-height: 1.55; }
+.tikal-mark {
+  position: absolute;
+  right: 1.8rem;
+  bottom: 1.2rem;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 0.96;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.55));
+}
+.tikal-mark-octopus {
+  height: 38px;
+  width: auto;
+  display: block;
+  animation: octoFloat 5s ease-in-out infinite;
+}
+.tikal-mark-word {
+  height: 22px;
+  width: auto;
+  display: block;
+  opacity: 0.92;
+}
+@keyframes octoFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-4px) rotate(2deg); }
+}
