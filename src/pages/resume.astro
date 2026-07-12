@@ -1,0 +1,598 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { SITE } from "@lib/site";
+---
+
+<BaseLayout
+  title="Résumé"
+  description="Oren Sultan — Senior DevOps & Platform Engineer. One-page résumé."
+  canonicalPath="/resume/"
+>
+  <div class="resume-shell">
+    <div class="toolbar" role="toolbar" aria-label="Résumé actions">
+      <span class="tb-status" data-status>Read-only</span>
+      <button type="button" class="tb-btn" data-action="edit" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4"/></svg>
+        <span data-edit-label>Edit</span>
+      </button>
+      <button type="button" class="tb-btn" data-action="reset" title="Discard local edits">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M20 12a8 8 0 11-2.34-5.66L20 9M20 4v5h-5"/></svg>
+        Reset
+      </button>
+      <button type="button" class="tb-btn tb-btn--primary" data-action="pdf">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        Download PDF
+      </button>
+    </div>
+
+    <article class="sheet" id="resume-sheet">
+
+      <aside class="rail">
+        <div class="avatar" aria-hidden="true" data-key="avatar">
+          <img src="/images/oren-avatar.jpg" alt="" width="480" height="480" loading="eager" />
+        </div>
+
+        <div class="rail-sec">
+          <h2>CONTACT</h2>
+          <div class="rail-rule"></div>
+          <ul class="contact-list">
+            <li>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>
+              <span data-key="phone">+972 506-590746</span>
+            </li>
+            <li>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+              <span data-key="email">orensu1210@gmail.com</span>
+            </li>
+            <li>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+              <span data-key="site">app.sultano.blog</span>
+            </li>
+            <li>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h.01M8 13h8M8 17h6"/></svg>
+              <span data-key="linkedin">linkedin.com/in/oren-sultan-0527bab6</span>
+            </li>
+            <li>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 0-4-2-6-2v-1a7 7 0 0114 0v1c-2 0-2 2-6 2M12 15a5 5 0 000-10 5 5 0 000 10z"/></svg>
+              <span data-key="github">github.com/OrenOren1</span>
+            </li>
+            <li>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.5 7-13a7 7 0 10-14 0c0 6.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              <span data-key="location">Arugot, Israel</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="rail-sec">
+          <h2>SKILLS</h2>
+          <div class="rail-rule"></div>
+          <ul class="skills-list" data-key="skills">
+            <li>Kubernetes / EKS / GKE / AKS</li>
+            <li>Helm / ArgoCD / ApplicationSets</li>
+            <li>Pulumi / Terraform / Terragrunt</li>
+            <li>Crossplane / Karpenter / KEDA</li>
+            <li>AWS / GCP / Azure</li>
+            <li>GitHub Actions / GitLab CI / Jenkins (JCasC)</li>
+            <li>Datadog / Prometheus / VictoriaMetrics / Grafana / Loki / Coralogix</li>
+            <li>Langfuse (LLM tracing)</li>
+            <li>Kafka / RabbitMQ / CDC pipelines</li>
+            <li>MongoDB Atlas / PostgreSQL / Redis / BigQuery</li>
+            <li>ESO / Akeyless / AWS &amp; GCP Secrets Mgr</li>
+            <li>OIDC / IRSA / IAM / RBAC / SOC 2</li>
+            <li>Tailscale / Twingate / Cloudflare Tunnel</li>
+            <li>Python / Go / Bash / TypeScript / HCL</li>
+            <li>AI-driven SDLC (spec → plan → tasks → implement)</li>
+          </ul>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="name" data-key="name">Oren Sultan</div>
+        <div class="subtitle" data-key="subtitle">Hands-on &nbsp;·&nbsp; Senior DevOps &amp; Platform Engineer</div>
+
+        <div class="section">
+          <div class="section-head">PROFILE SUMMARY</div>
+          <div class="section-rule"></div>
+          <p class="profile-text" data-key="profile">
+            Senior DevOps &amp; Platform Engineer with 10+ years across enterprise networking and cloud-native infrastructure. Deliver production platforms with GitOps, Kubernetes, and IaC across AWS, GCP, and Azure — cloud and on-prem. Intelligence unit graduate. Work close to the product, get into the details that matter, and build things that hold up in production. <span class="accent">Hard challenges are most welcome.</span>
+          </p>
+        </div>
+
+        <div class="section">
+          <div class="section-head">WORK EXPERIENCE</div>
+          <div class="section-rule"></div>
+
+          <div class="exp-row">
+            <div class="exp-dates" data-key="tikal-dates">2021 –<br>Present</div>
+            <div class="exp-body">
+              <span class="co" data-key="tikal-co">Tikal Knowledge</span>
+              <span class="role" data-key="tikal-role">Senior DevOps &amp; Platform Engineer · Fullstack as a Service</span>
+              <p data-key="tikal-body">Boutique fullstack-as-a-service consultancy — embedded with customer teams end-to-end. Internal: DevOps Group Routine Leader (2026–), Roadmap Circle Manager (2025–2026) — quarterly Tech Radar topics, tech talks, sessions.</p>
+              <ul class="client-list" data-key="clients">
+                <li><b>Sentra</b> <em>(2026–)</em> — DSPM startup. Led EU (eu-central-1) rollout; least-privilege DB RFC (25+ services → per-service roles on Atlas &amp; RDS). <em>Pulumi · EKS · ArgoCD · MongoDB Atlas.</em></li>
+                <li><b>LinearB</b> <em>(2026–)</em> — Hardened on-prem agent for enterprise K8s/OpenShift: non-root SCCs, deploy-time TLS trust, GitOps-safe Helm values.</li>
+                <li><b>Terra Security</b> <em>(2025–2026)</em> — AI pentesting platform. Monolithic Pulumi installers → modular ArgoCD GitOps; Langfuse LLM tracing; org-wide Coralogix.</li>
+                <li><b>ZoomInfo</b> <em>(2024–2025)</em> — Refactored change-management-v2 (Backstage/Jira/GitHub); Jenkins → GitHub Actions migration across Gradle/Node/Nx/Python/Go.</li>
+                <li><b>Beti Tech</b> <em>(2023–2024)</em> — Con-tech startup. ArgoCD/GitOps; Terraform/Terragrunt; Crossplane, Karpenter, Tailscale; JumpCloud ↔ AWS SSO.</li>
+                <li><b>Capitolis</b> <em>(2022–2023)</em> — Fin-services SaaS. Umbrella Helm across R&amp;D; Terraform-driven ArgoCD; ApplicationSet GitOps.</li>
+                <li><b>GigaSpaces</b> <em>(2022)</em> — Migrated UI Jenkins → JCasC + shared library; Nexus artifacts; umbrella Helm on ArgoCD.</li>
+                <li><b>Hallo Digital</b> <em>(2022)</em> — Full CI/CD; Terraform/Terragrunt; EKS; ArgoCD.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="exp-row">
+            <div class="exp-dates" data-key="mot-dates">2016 –<br>2021</div>
+            <div class="exp-body">
+              <span class="co" data-key="mot-co">Motorola Solutions</span>
+              <span class="role" data-key="mot-role">Integration Engineer</span>
+              <p data-key="mot-body">Integration engineering for Motorola's worldwide Wi-Fi network — switching, internal routing, TCP/IP troubleshooting across enterprise WAN/WLAN deployments. Built monitoring and control dashboards on Nsight, SolarWinds, LibreNMS. Automated daily network operations in Python and shell.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">EDUCATION</div>
+          <div class="section-rule"></div>
+          <div class="edu-row">
+            <div class="edu-yr" data-key="edu1-yr">2013 – 2017</div>
+            <div class="edu-body" data-key="edu1-body">
+              <b>B.Sc. Electrical &amp; Communications Engineering</b>
+              <span>SCE — Shamoon College of Engineering</span>
+            </div>
+          </div>
+          <div class="edu-row">
+            <div class="edu-yr" data-key="edu2-yr">2020 – 2026</div>
+            <div class="edu-body" data-key="edu2-body">
+              <b>DevOps Experts Academy · Tikal DevOps Bootcamp · Tikal Python · Tikal TechLead (AI-driven, ongoing)</b>
+            </div>
+          </div>
+        </div>
+      </main>
+    </article>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  @media print {
+    .site-header, .site-footer, .toolbar { display: none !important; }
+    body { background: #fff !important; }
+    main.wrap, main { padding: 0 !important; margin: 0 !important; }
+    .resume-shell { padding: 0 !important; background: #fff !important; }
+  }
+</style>
+
+<style>
+  .resume-shell {
+    --paper: #ffffff;
+    --ink: #1c1d21;
+    --ink-soft: #6b7280;
+    --rule: #d9dbe0;
+    --rail-bg: #1c1d21;
+    --rail-fg: #ffffff;
+    --rail-muted: #b5b8c1;
+    --rail-rule: #3a3b40;
+    --accent: #14524e;
+    background: #eceef2;
+    padding: 32px 16px 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    position: sticky;
+    top: 16px;
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(28, 29, 33, 0.92);
+    color: #eceef2;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    backdrop-filter: blur(6px);
+    margin-bottom: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12.5px;
+  }
+  .tb-status {
+    color: #b5b8c1;
+    padding: 4px 8px;
+    margin-right: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 10.5px;
+  }
+  .tb-status[data-status="editing"] { color: #7cc9c4; }
+  .tb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    color: inherit;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 7px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  .tb-btn:hover { background: rgba(255,255,255,0.12); }
+  .tb-btn[aria-pressed="true"] {
+    background: #7cc9c4;
+    color: #0d1211;
+    border-color: transparent;
+  }
+  .tb-btn--primary {
+    background: #7cc9c4;
+    color: #0d1211;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .tb-btn--primary:hover { background: #6ec4be; }
+
+  /* Sheet — A4 aspect */
+  .sheet {
+    width: min(210mm, calc(100vw - 32px));
+    aspect-ratio: 210 / 297;
+    background: var(--paper);
+    color: var(--ink);
+    display: grid;
+    grid-template-columns: 68mm 1fr;
+    box-shadow: 0 8px 40px rgba(15, 17, 21, 0.25);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 9pt;
+    line-height: 1.35;
+    overflow: hidden;
+  }
+
+  /* Rail */
+  .rail {
+    background: var(--rail-bg);
+    color: var(--rail-fg);
+    padding: 10mm 7mm;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .avatar {
+    width: 38mm;
+    height: 38mm;
+    margin: 2mm auto 0;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2a3a3a 0%, #14524e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #eafcf9;
+    font-weight: 700;
+    font-size: 26pt;
+    letter-spacing: 0.02em;
+    border: 2px solid #2a2b30;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .rail h2 {
+    font-size: 11.5pt;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+    color: #fff;
+  }
+  .rail-rule {
+    height: 1px;
+    background: var(--rail-rule);
+    margin: 4px 0 8px;
+  }
+  .rail-sec { display: flex; flex-direction: column; }
+
+  .contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 8.5pt;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .contact-list li {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    align-items: center;
+    gap: 8px;
+    color: var(--rail-fg);
+    word-break: break-word;
+  }
+  .ico {
+    width: 14px; height: 14px;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 8pt;
+    padding-left: 4px;
+    list-style: none;
+    margin: 0;
+  }
+  .skills-list li {
+    list-style: none;
+    position: relative;
+    padding-left: 12px;
+    line-height: 1.35;
+  }
+  .skills-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--rail-fg);
+  }
+
+  /* Content */
+  .content {
+    padding: 10mm 9mm 8mm;
+    display: flex;
+    flex-direction: column;
+  }
+  .name {
+    font-size: 24pt;
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .subtitle {
+    margin-top: 4px;
+    font-size: 10.5pt;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  .section { margin-top: 10px; }
+  .section-head {
+    font-size: 10pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .section-rule {
+    height: 1px;
+    background: var(--rule);
+    margin-bottom: 8px;
+  }
+  .profile-text {
+    font-size: 8.5pt;
+    color: var(--ink-soft);
+    line-height: 1.4;
+    margin: 0;
+    max-width: 62ch;
+  }
+  .profile-text .accent {
+    color: var(--ink);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+
+  .exp-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    padding: 5px 0;
+    break-inside: avoid;
+  }
+  .exp-row + .exp-row { border-top: 1px dotted var(--rule); }
+  .exp-dates {
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+  .exp-body { font-size: 8.5pt; color: var(--ink-soft); line-height: 1.35; }
+  .exp-body .co {
+    display: block;
+    font-size: 9pt;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-transform: uppercase;
+    margin-bottom: 1px;
+  }
+  .exp-body .role {
+    display: block;
+    font-size: 8.5pt;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .exp-body p { margin: 0; font-size: 8.5pt; line-height: 1.35; }
+
+  .client-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-top: 4px;
+    padding-left: 0;
+    list-style: none;
+  }
+  .client-list li {
+    list-style: none;
+    font-size: 8pt;
+    color: var(--ink-soft);
+    line-height: 1.35;
+    padding-left: 12px;
+    position: relative;
+  }
+  .client-list li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--ink);
+    font-size: 7pt;
+    line-height: 1.6;
+  }
+  .client-list b { color: var(--ink); font-weight: 700; letter-spacing: 0.02em; }
+  .client-list em { font-style: normal; color: var(--ink); font-weight: 600; }
+
+  .edu-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    padding: 3px 0;
+    font-size: 8.5pt;
+  }
+  .edu-row + .edu-row { border-top: 1px dotted var(--rule); }
+  .edu-yr { font-size: 8pt; font-weight: 700; color: var(--ink); }
+  .edu-body { color: var(--ink); }
+  .edu-body b { display: block; font-weight: 700; font-size: 9pt; }
+  .edu-body span { color: var(--ink-soft); font-size: 8pt; }
+
+  /* Edit-mode affordance */
+  .sheet[data-editing="true"] [data-key] {
+    outline: 1px dashed rgba(124, 201, 196, 0.55);
+    outline-offset: 3px;
+    border-radius: 2px;
+    cursor: text;
+  }
+  .sheet[data-editing="true"] [data-key]:hover { outline-color: #7cc9c4; }
+  .sheet[data-editing="true"] [data-key]:focus {
+    outline: 1.5px solid #14524e;
+    background: rgba(20, 82, 78, 0.06);
+  }
+
+  /* Responsive fallback below A4 */
+  @media (max-width: 720px) {
+    .sheet {
+      width: 100%;
+      aspect-ratio: auto;
+      grid-template-columns: 1fr;
+    }
+    .rail { padding: 24px 20px; }
+    .content { padding: 24px 20px; }
+    .toolbar { flex-wrap: wrap; }
+  }
+
+  /* Print — A4 exact, no site chrome */
+  @media print {
+    :global(html), :global(body) { background: #fff !important; }
+    .resume-shell {
+      padding: 0;
+      background: #fff;
+      display: block;
+    }
+    .toolbar { display: none !important; }
+    .sheet {
+      width: 210mm;
+      height: 297mm;
+      aspect-ratio: auto;
+      box-shadow: none;
+      margin: 0;
+    }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+
+<script>
+  (() => {
+    const sheet = document.getElementById("resume-sheet");
+    if (!sheet) return;
+    const KEY = "orensultan.resume.v1";
+
+    const load = () => {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return;
+        const map = JSON.parse(raw) as Record<string, string>;
+        for (const [k, v] of Object.entries(map)) {
+          const el = sheet.querySelector<HTMLElement>(`[data-key="${CSS.escape(k)}"]`);
+          if (el) el.innerHTML = v;
+        }
+      } catch (err) {
+        console.warn("Résumé: failed to load local edits", err);
+      }
+    };
+
+    const save = () => {
+      const map: Record<string, string> = {};
+      sheet.querySelectorAll<HTMLElement>("[data-key]").forEach((el) => {
+        const k = el.dataset.key;
+        if (k) map[k] = el.innerHTML;
+      });
+      localStorage.setItem(KEY, JSON.stringify(map));
+    };
+
+    load();
+
+    const editBtn = document.querySelector<HTMLButtonElement>('[data-action="edit"]');
+    const resetBtn = document.querySelector<HTMLButtonElement>('[data-action="reset"]');
+    const pdfBtn = document.querySelector<HTMLButtonElement>('[data-action="pdf"]');
+    const status = document.querySelector<HTMLElement>('[data-status]');
+    const editLabel = document.querySelector<HTMLElement>('[data-edit-label]');
+
+    let editing = false;
+    const toggleEdit = (on: boolean) => {
+      editing = on;
+      sheet.dataset.editing = String(on);
+      sheet.querySelectorAll<HTMLElement>("[data-key]").forEach((el) => {
+        if (on) {
+          el.setAttribute("contenteditable", "true");
+          el.setAttribute("spellcheck", "true");
+        } else {
+          el.removeAttribute("contenteditable");
+        }
+      });
+      if (editBtn) editBtn.setAttribute("aria-pressed", String(on));
+      if (editLabel) editLabel.textContent = on ? "Done" : "Edit";
+      if (status) {
+        status.textContent = on ? "Editing — changes saved locally" : "Read-only";
+        status.dataset.status = on ? "editing" : "";
+      }
+      if (!on) save();
+    };
+
+    // Save on blur while editing
+    sheet.addEventListener("blur", (e) => {
+      if (editing && (e.target as HTMLElement)?.dataset?.key) save();
+    }, true);
+
+    // Save on ⌘/Ctrl+S while editing
+    document.addEventListener("keydown", (e) => {
+      if (!editing) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        save();
+        if (status) status.textContent = "Saved ✓";
+        setTimeout(() => {
+          if (status && editing) status.textContent = "Editing — changes saved locally";
+        }, 900);
+      }
+    });
+
+    editBtn?.addEventListener("click", () => toggleEdit(!editing));
+
+    resetBtn?.addEventListener("click", () => {
+      if (!confirm("Discard local edits and restore the original résumé?")) return;
+      localStorage.removeItem(KEY);
+      location.reload();
+    });
+
+    pdfBtn?.addEventListener("click", () => {
+      if (editing) toggleEdit(false);
+      window.print();
+    });
+  })();
+</script>

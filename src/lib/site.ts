@@ -21,7 +21,7 @@ export const SITE = {
     medium: "https://medium.com/@orensito1",
     linkedin: "https://www.linkedin.com/in/oren-sultan-0527bab6/",
     email: "orensu1210@gmail.com",
-    resume: "https://gamma.app/docs/Oren-Sultan-ch7kfpf2d8xy3rh",
+    resume: "/resume/",
     rss: "/rss.xml",
   },
   /** `owner/repo` for GitHub “edit this page” links (blog source) */
