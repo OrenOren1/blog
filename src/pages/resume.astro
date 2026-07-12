@@ -155,10 +155,43 @@ import { SITE } from "@lib/site";
 
 <style is:global>
   @media print {
-    .site-header, .site-footer, .toolbar { display: none !important; }
-    body { background: #fff !important; }
-    main.wrap, main { padding: 0 !important; margin: 0 !important; }
-    .resume-shell { padding: 0 !important; background: #fff !important; }
+    @page { size: A4; margin: 0; }
+    .site-header, .site-footer, .toolbar,
+    .cb-mode-banner, .lightbox, astro-dev-toolbar { display: none !important; }
+    body > svg, body > script { display: none !important; }
+    html, body {
+      background: #fff !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 297mm !important;
+      overflow: hidden !important;
+    }
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+      height: 297mm !important;
+      overflow: hidden !important;
+    }
+    .resume-shell {
+      padding: 0 !important;
+      background: #fff !important;
+      min-height: 0 !important;
+      height: 297mm !important;
+      max-height: 297mm !important;
+      overflow: hidden !important;
+      display: block !important;
+    }
+    #resume-sheet {
+      width: 210mm !important;
+      height: 297mm !important;
+      max-height: 297mm !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      overflow: hidden !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      page-break-after: avoid !important;
+    }
   }
 </style>
 
