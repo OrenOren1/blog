@@ -27,7 +27,7 @@ import { SITE } from "@lib/site";
 
     <article class="sheet" id="resume-sheet">
 
-      <aside class="rail">
+      <aside class="r-rail">
         <div class="avatar" aria-hidden="true" data-key="avatar">
           <img src="/images/oren-avatar.jpg" alt="" width="480" height="480" loading="eager" />
         </div>
@@ -90,7 +90,7 @@ import { SITE } from "@lib/site";
         <div class="name" data-key="name">Oren Sultan</div>
         <div class="subtitle" data-key="subtitle">Hands-on &nbsp;·&nbsp; Senior DevOps &amp; Platform Engineer</div>
 
-        <div class="section">
+        <div class="r-section">
           <div class="section-head">PROFILE SUMMARY</div>
           <div class="section-rule"></div>
           <p class="profile-text" data-key="profile">
@@ -98,7 +98,7 @@ import { SITE } from "@lib/site";
           </p>
         </div>
 
-        <div class="section">
+        <div class="r-section">
           <div class="section-head">WORK EXPERIENCE</div>
           <div class="section-rule"></div>
 
@@ -131,7 +131,7 @@ import { SITE } from "@lib/site";
           </div>
         </div>
 
-        <div class="section">
+        <div class="r-section">
           <div class="section-head">EDUCATION</div>
           <div class="section-rule"></div>
           <div class="edu-row">
@@ -284,7 +284,7 @@ import { SITE } from "@lib/site";
   }
 
   /* Rail */
-  .rail {
+  .r-rail {
     background: var(--rail-bg);
     color: var(--rail-fg);
     padding: 10mm 7mm;
@@ -309,7 +309,7 @@ import { SITE } from "@lib/site";
     overflow: hidden;
   }
   .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-  .rail h2 {
+  .r-rail h2 {
     font-size: 11.5pt;
     font-weight: 800;
     letter-spacing: 0.06em;
@@ -392,7 +392,7 @@ import { SITE } from "@lib/site";
     color: var(--ink-soft);
     font-weight: 400;
   }
-  .section { margin-top: 10px; }
+  .r-section { margin-top: 10px; }
   .section-head {
     font-size: 10pt;
     font-weight: 800;
@@ -514,7 +514,7 @@ import { SITE } from "@lib/site";
       aspect-ratio: auto;
       grid-template-columns: 1fr;
     }
-    .rail { padding: 24px 20px; }
+    .r-rail { padding: 24px 20px; }
     .content { padding: 24px 20px; }
     .toolbar { flex-wrap: wrap; }
   }
