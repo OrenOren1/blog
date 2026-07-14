@@ -142,14 +142,11 @@ body {
   margin: 0;
   background-color: var(--bg-body);
   background-image:
-    radial-gradient(1200px 800px at 12% -10%, color-mix(in srgb, var(--c-accent) 16%, transparent), transparent 55%),
-    radial-gradient(900px 600px at 88% 0%, color-mix(in srgb, var(--c-brand) 12%, transparent), transparent 50%),
-    radial-gradient(1000px 700px at 50% 110%, color-mix(in srgb, var(--c-accent-deep) 12%, transparent), transparent 55%),
-    url("/images/bricks-dark.jpg");
-  background-blend-mode: normal, normal, normal, normal;
-  background-size: auto, auto, auto, 640px 640px;
-  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-  background-attachment: fixed, fixed, fixed, fixed;
+    radial-gradient(1200px 800px at 12% -10%, color-mix(in srgb, var(--c-accent) 8%, transparent), transparent 55%),
+    radial-gradient(900px 600px at 88% 0%, color-mix(in srgb, var(--c-brand) 6%, transparent), transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E");
+  background-blend-mode: normal, normal, soft-light;
+  background-size: auto, auto, 220px 220px;
   color: var(--c-text);
   font-family: var(--font-sans);
   font-size: 17px;
@@ -158,14 +155,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Dark-brick wall theme is now the default. The dark-mode override just
-   nudges the atmospheric glows slightly. */
+/* Dark theme swaps the noise SVG for the rustic brick tile. */
 :root[data-theme="dark"] body {
   background-image:
     radial-gradient(1200px 800px at 12% -10%, color-mix(in srgb, var(--c-accent) 20%, transparent), transparent 55%),
     radial-gradient(900px 600px at 88% 0%, color-mix(in srgb, var(--c-brand) 16%, transparent), transparent 50%),
     radial-gradient(1000px 700px at 50% 110%, color-mix(in srgb, var(--c-accent-deep) 16%, transparent), transparent 55%),
     url("/images/bricks-dark.jpg");
+  background-blend-mode: normal, normal, normal, normal;
   background-size: auto, auto, auto, 640px 640px;
   background-repeat: no-repeat, no-repeat, no-repeat, repeat;
   background-attachment: fixed, fixed, fixed, fixed;
