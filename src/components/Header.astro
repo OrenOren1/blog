@@ -6,6 +6,20 @@ import { SITE } from "@lib/site";
 
 <header class="site-header">
   <div class="wrap inner">
+    <div class="actions">
+      <nav>
+        <a href="/">Home</a>
+        <a href="/blog/">All posts</a>
+        <a href="/tags/">Tags</a>
+        <a href="/projects/">Projects</a>
+        <a href="/presentations/">Presentations</a>
+        <a href="/about/">About</a>
+        <a href={SITE.social.resume}>Résumé</a>
+        <a href="/contact/">Contact</a>
+      </nav>
+      <SocialLinks />
+      <ThemeToggle />
+    </div>
     <a
       href="/"
       class="brand brand--stamp"
@@ -23,19 +37,5 @@ import { SITE } from "@lib/site";
         />
       </span>
     </a>
-    <div class="actions">
-      <nav>
-        <a href="/">Home</a>
-        <a href="/blog/">All posts</a>
-        <a href="/tags/">Tags</a>
-        <a href="/projects/">Projects</a>
-        <a href="/presentations/">Presentations</a>
-        <a href="/about/">About</a>
-        <a href={SITE.social.resume}>Résumé</a>
-        <a href="/contact/">Contact</a>
-      </nav>
-      <SocialLinks />
-      <ThemeToggle />
-    </div>
   </div>
 </header>

@@ -365,10 +365,10 @@ main { position: relative; }
 .brand-stamp {
   position: absolute;
   top: calc(100% + 2.9rem);
-  left: 0.5rem;
+  right: 0.5rem;
   margin-top: 0;
-  transform: translateY(-55%) rotate(-9deg);
-  transform-origin: left center;
+  transform: translateY(-55%) rotate(9deg);
+  transform-origin: right center;
   pointer-events: none;
   user-select: none;
   z-index: 11;
@@ -408,7 +408,7 @@ html[data-theme="dark"] .brand-stamp__svg {
 
   .brand-stamp {
     margin-top: 0;
-    transform: translateY(-50%) rotate(-6deg);
+    transform: translateY(-55%) rotate(6deg);
   }
 }
 
