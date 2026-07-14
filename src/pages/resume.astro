@@ -38,23 +38,23 @@ import { SITE } from "@lib/site";
           <ul class="contact-list">
             <li>
               <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>
-              <span data-key="phone">+972 506-590746</span>
+              <a href="tel:+972506590746" data-key="phone">+972 506-590746</a>
             </li>
             <li>
               <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-              <span data-key="email">orensu1210@gmail.com</span>
+              <a href="mailto:orensu1210@gmail.com" data-key="email">orensu1210@gmail.com</a>
             </li>
             <li>
               <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-              <span data-key="site">app.sultano.blog</span>
+              <a href="https://app.sultano.blog" target="_blank" rel="noopener" data-key="site">app.sultano.blog</a>
             </li>
             <li>
               <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h.01M8 13h8M8 17h6"/></svg>
-              <span data-key="linkedin">linkedin.com/in/oren-sultan-0527bab6</span>
+              <a href="https://linkedin.com/in/oren-sultan-0527bab6" target="_blank" rel="noopener" data-key="linkedin">linkedin.com/in/oren-sultan-0527bab6</a>
             </li>
             <li>
               <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 0-4-2-6-2v-1a7 7 0 0114 0v1c-2 0-2 2-6 2M12 15a5 5 0 000-10 5 5 0 000 10z"/></svg>
-              <span data-key="github">github.com/OrenOren1</span>
+              <a href="https://github.com/OrenOren1" target="_blank" rel="noopener" data-key="github">github.com/OrenOren1</a>
             </li>
             <li>
               <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.5 7-13a7 7 0 10-14 0c0 6.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
@@ -364,6 +364,20 @@ import { SITE } from "@lib/site";
     color: var(--rail-fg);
     word-break: break-word;
   }
+  .contact-list a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.28);
+    transition: border-color 120ms, color 120ms;
+  }
+  .contact-list a:hover,
+  .contact-list a:focus-visible {
+    color: #7cc9c4;
+    border-bottom-color: #7cc9c4;
+  }
+  @media print {
+    .contact-list a { border-bottom: none !important; color: inherit !important; }
+  }
   .ico {
     width: 14px; height: 14px;
     stroke: currentColor;
@@ -584,6 +598,16 @@ import { SITE } from "@lib/site";
       box-shadow: none;
       margin: 0;
     }
+    /* Reduced vertical padding to fit exactly one A4 page (kept horizontal 9mm) */
+    .content { padding: 4mm 9mm 3mm !important; }
+    .r-rail { padding: 5mm 7mm !important; }
+    .r-section { margin-top: 6px !important; }
+    .section-rule { margin-bottom: 4px !important; }
+    .projects-grid { gap: 4px 10px !important; }
+    .project { padding: 3px 6px !important; }
+    .exp-row { padding: 3px 0 !important; }
+    .edu-row { padding: 1px 0 !important; }
+    .client-list { gap: 0 !important; }
     @page { size: A4; margin: 0; }
   }
 </style>
