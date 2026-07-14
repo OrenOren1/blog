@@ -12,83 +12,15 @@ import { SITE } from "@lib/site";
       aria-label={`Home — ${SITE.author}`}
     >
       <span class="brand-stamp" aria-hidden="true">
-        <svg
+        <img
           class="brand-stamp__svg"
-          viewBox="0 0 200 200"
-          width="200"
-          height="200"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <g class="brand-stamp__mark" filter="url(#stamp-distort-heavy)">
-            <g transform="translate(0, -12)">
-              <defs>
-                <path id="brand-stamp-arc-top" fill="none" d="M 36 100 A 64 64 0 0 0 164 100" />
-                <path id="brand-stamp-arc-bot" fill="none" d="M 164 100 A 64 64 0 0 1 36 100" />
-              </defs>
-            <circle
-              cx="100"
-              cy="100"
-              r="91"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="7.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"></circle>
-            <circle
-              cx="100"
-              cy="100"
-              r="73"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"></circle>
-            <text
-              class="brand-stamp__curve brand-stamp__curve--top"
-              fill="currentColor"
-              font-family="DM Sans, system-ui, sans-serif"
-              font-size="11"
-              font-weight="700"
-              letter-spacing="0.14em"
-            >
-              <textPath href="#brand-stamp-arc-top" startOffset="50%" text-anchor="middle">
-                — OFFICIAL —
-              </textPath>
-            </text>
-            <text
-              class="brand-stamp__curve brand-stamp__curve--bot"
-              fill="currentColor"
-              font-family="DM Sans, system-ui, sans-serif"
-              font-size="11"
-              font-weight="700"
-              letter-spacing="0.14em"
-            >
-              <textPath href="#brand-stamp-arc-bot" startOffset="50%" text-anchor="middle">
-                — BLOG —
-              </textPath>
-            </text>
-            <g class="brand-stamp__center" transform="rotate(-10 100 100)" fill="currentColor">
-              <text
-                x="100"
-                y="92"
-                text-anchor="middle"
-                font-family="'Oswald', 'Arial Narrow', system-ui, sans-serif"
-                font-size="16"
-                font-weight="700"
-                letter-spacing="0.22em">by</text>
-              <text
-                x="100"
-                y="118"
-                text-anchor="middle"
-                font-family="'Oswald', 'Arial Narrow', system-ui, sans-serif"
-                font-size="24"
-                font-weight="700"
-                letter-spacing="0.06em">{SITE.author}</text>
-            </g>
-            </g>
-          </g>
-        </svg>
+          src="/images/oren-seal.png"
+          width="384"
+          height="384"
+          alt=""
+          decoding="async"
+          fetchpriority="low"
+        />
       </span>
     </a>
     <div class="actions">

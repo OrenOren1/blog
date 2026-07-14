@@ -37,7 +37,7 @@
   --bg-body: #f5f2eb;
   --surface-veil: rgba(255, 252, 247, 0.88);
   --surface-veil-border: rgba(212, 207, 196, 0.95);
-  --brand-stamp-size: clamp(7.35rem, 13.5vw, 9.25rem);
+  --brand-stamp-size: clamp(4.4rem, 6.5vw, 5.4rem);
   --brand-stamp-ink: #8b4513;
   --brand-stamp-shadow-a: rgba(139, 69, 19, 0.22);
   --brand-stamp-shadow-b: rgba(20, 18, 16, 0.12);
@@ -66,7 +66,7 @@
   --bg-body: #f5f2eb;
   --surface-veil: rgba(255, 252, 247, 0.9);
   --surface-veil-border: rgba(212, 207, 196, 0.95);
-  --brand-stamp-size: clamp(7.35rem, 13.5vw, 9.25rem);
+  --brand-stamp-size: clamp(4.4rem, 6.5vw, 5.4rem);
   --brand-stamp-ink: #8b4513;
   --brand-stamp-shadow-a: rgba(139, 69, 19, 0.22);
   --brand-stamp-shadow-b: rgba(20, 18, 16, 0.12);
@@ -94,7 +94,7 @@
   --bg-body: #12110f;
   --surface-veil: rgba(18, 17, 15, 0.82);
   --surface-veil-border: rgba(61, 56, 52, 0.9);
-  --brand-stamp-size: clamp(7.35rem, 13.5vw, 9.25rem);
+  --brand-stamp-size: clamp(4.4rem, 6.5vw, 5.4rem);
   --brand-stamp-ink: #d4a574;
   --brand-stamp-shadow-a: rgba(0, 0, 0, 0.45);
   --brand-stamp-shadow-b: rgba(212, 165, 116, 0.18);
@@ -123,7 +123,7 @@
     --bg-body: #12110f;
     --surface-veil: rgba(18, 17, 15, 0.82);
     --surface-veil-border: rgba(61, 56, 52, 0.9);
-    --brand-stamp-size: clamp(7.35rem, 13.5vw, 9.25rem);
+    --brand-stamp-size: clamp(4.4rem, 6.5vw, 5.4rem);
     --brand-stamp-ink: #d4a574;
     --brand-stamp-shadow-a: rgba(0, 0, 0, 0.45);
     --brand-stamp-shadow-b: rgba(212, 165, 116, 0.18);
@@ -365,8 +365,8 @@ main { position: relative; }
 .brand-stamp {
   position: absolute;
   top: 50%;
-  left: 0.15rem;
-  margin-top: 3.15rem;
+  left: 0.35rem;
+  margin-top: 0;
   transform: translateY(-50%) rotate(-8deg);
   transform-origin: left center;
   pointer-events: none;
@@ -379,10 +379,9 @@ main { position: relative; }
   width: var(--brand-stamp-size);
   height: auto;
   aspect-ratio: 1;
-  color: var(--brand-stamp-ink);
   filter: drop-shadow(0 0.08em 0.15em var(--brand-stamp-shadow-b))
     drop-shadow(0 0.18em 0.4em var(--brand-stamp-shadow-a));
-  opacity: 0.97;
+  opacity: 1;
   transition: opacity 180ms ease, transform 180ms ease, filter 180ms ease;
 }
 
@@ -408,7 +407,7 @@ html[data-theme="dark"] .brand-stamp__svg {
   }
 
   .brand-stamp {
-    margin-top: 2.75rem;
+    margin-top: 0;
     transform: translateY(-50%) rotate(-6deg);
   }
 }
