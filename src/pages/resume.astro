@@ -132,6 +132,29 @@ import { SITE } from "@lib/site";
         </div>
 
         <div class="r-section">
+          <div class="section-head">PROJECTS</div>
+          <div class="section-rule"></div>
+          <div class="projects-grid" data-key="projects">
+            <div class="project">
+              <b>K-Agent</b> — AI-powered SRE agent. FastAPI + LiteLLM automates brownfield infra provisioning via context-aware, zero-conflict Merge Requests.
+              <span class="stack">Python · LiteLLM · Redis · Kubernetes · Crossplane · GitLab/GitHub APIs</span>
+            </div>
+            <div class="project">
+              <b>Enterprise Cloud-Native Platform (CNE)</b> — Helm-based multi-cloud GitOps across AWS, GCP, and Azure with ArgoCD and Crossplane.
+              <span class="stack">Kubernetes · ArgoCD · Crossplane · Helm · VictoriaMetrics</span>
+            </div>
+            <div class="project">
+              <b>Developer Environment as Code</b> — One-command macOS setup: 70+ dev tools, shells, and cloud CLIs, IaC-style.
+              <span class="stack">Taskfile · Bash · Homebrew · cloud CLIs · kubectl · helm · k9s</span>
+            </div>
+            <div class="project">
+              <b>Enterprise Data-Platform IAM</b> — Fine-grained BigQuery IAM, group-based access, SA key management via AWS Secrets Manager.
+              <span class="stack">BigQuery IAM · GCP SAs · External Secrets Operator · Cross-cloud secrets</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="r-section">
           <div class="section-head">EDUCATION</div>
           <div class="section-rule"></div>
           <div class="edu-row">
@@ -293,8 +316,8 @@ import { SITE } from "@lib/site";
     gap: 14px;
   }
   .avatar {
-    width: 38mm;
-    height: 38mm;
+    width: 44mm;
+    height: 44mm;
     margin: 2mm auto 0;
     border-radius: 50%;
     background: linear-gradient(145deg, #2a3a3a 0%, #14524e 100%);
@@ -303,7 +326,7 @@ import { SITE } from "@lib/site";
     justify-content: center;
     color: #eafcf9;
     font-weight: 700;
-    font-size: 26pt;
+    font-size: 30pt;
     letter-spacing: 0.02em;
     border: 2px solid #2a2b30;
     overflow: hidden;
@@ -380,10 +403,10 @@ import { SITE } from "@lib/site";
     flex-direction: column;
   }
   .name {
-    font-size: 24pt;
+    font-size: 27pt;
     font-weight: 800;
     line-height: 1.0;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     color: var(--ink);
   }
   .subtitle {
@@ -392,18 +415,18 @@ import { SITE } from "@lib/site";
     color: var(--ink-soft);
     font-weight: 400;
   }
-  .r-section { margin-top: 10px; }
+  .r-section { margin-top: 8px; }
   .section-head {
     font-size: 10pt;
     font-weight: 800;
     letter-spacing: 0.08em;
     color: var(--ink);
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
   .section-rule {
     height: 1px;
     background: var(--rule);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .profile-text {
     font-size: 8.5pt;
@@ -424,7 +447,7 @@ import { SITE } from "@lib/site";
     display: grid;
     grid-template-columns: 80px 1fr;
     gap: 16px;
-    padding: 5px 0;
+    padding: 4px 0;
     break-inside: avoid;
   }
   .exp-row + .exp-row { border-top: 1px dotted var(--rule); }
@@ -485,8 +508,34 @@ import { SITE } from "@lib/site";
     display: grid;
     grid-template-columns: 80px 1fr;
     gap: 16px;
-    padding: 3px 0;
+    padding: 2px 0;
     font-size: 8.5pt;
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+  }
+  .project {
+    font-size: 8pt;
+    line-height: 1.35;
+    color: var(--ink-soft);
+    padding: 4px 8px;
+    border-left: 2px solid var(--accent);
+    background: rgba(20, 82, 78, 0.03);
+  }
+  .project b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .project .stack {
+    display: block;
+    margin-top: 2px;
+    font-size: 7pt;
+    color: var(--ink-soft);
+    letter-spacing: 0.01em;
+    font-family: var(--mono, ui-monospace, monospace);
   }
   .edu-row + .edu-row { border-top: 1px dotted var(--rule); }
   .edu-yr { font-size: 8pt; font-weight: 700; color: var(--ink); }
