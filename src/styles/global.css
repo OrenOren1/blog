@@ -3,13 +3,13 @@
    Stamp: sepia/rust ink on both themes
 ---------------------------------------------------------- */
 :root {
-  --c-primary: #141210;
+  --c-primary: #0a2418;
   --c-body: #ebe6dc;
   --c-border: #d4cfc4;
   --c-theme-light: #fffcf7;
-  --c-text: #2c2825;
-  --c-text-dark: #141210;
-  --c-text-light: #6b6560;
+  --c-text: #1a3d2e;
+  --c-text-dark: #0a2418;
+  --c-text-light: #4a6b5c;
   --c-accent: #0f766e;
   --c-accent-hover: #0d9488;
   --c-accent-deep: #115e59;
@@ -46,13 +46,13 @@
 }
 
 :root[data-theme="light"] {
-  --c-primary: #141210;
+  --c-primary: #0a2418;
   --c-body: #ebe6dc;
   --c-border: #d4cfc4;
   --c-theme-light: #fffcf7;
-  --c-text: #2c2825;
-  --c-text-dark: #141210;
-  --c-text-light: #6b6560;
+  --c-text: #1a3d2e;
+  --c-text-dark: #0a2418;
+  --c-text-light: #4a6b5c;
   --c-accent: #0f766e;
   --c-accent-hover: #0d9488;
   --c-accent-deep: #115e59;
