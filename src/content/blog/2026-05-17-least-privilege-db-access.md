@@ -1,7 +1,7 @@
 ---
 title: "Least-Privilege Database Access at Scale: What I Actually Built (and What I Considered)"
 meta_title: "Least-Privilege DB Access: MongoDB Atlas & RDS at Scale"
-description: "How I replaced shared atlasAdmin and RDS master credentials across 25+ microservices with scoped roles, IRSA, and Atlas Operator — without downtime or new tooling."
+description: "How I replaced shared admin credentials for both services and humans — scoped roles via Atlas Operator and IRSA, plus JIT time-boxed access for engineers."
 date: 2026-05-17T00:00:00+00:00
 image: "https://i.ibb.co/39970dFh/least-privilege-db-cover.jpg"
 categories:
@@ -14,7 +14,8 @@ tags:
   - "least-privilege"
   - "atlas-operator"
   - "irsa"
-  - "eso"
+  - "jit-access"
+  - "okta"
   - "security"
   - "platform-engineering"
   - "soc2"
@@ -24,7 +25,7 @@ author: "Oren Sultan"
 
 ## TL;DR
 
-Every service in our platform was sharing one of two credentials: an `atlasAdmin` MongoDB user or the RDS master password. I replaced both with per-service scoped roles — MongoDB via Atlas Kubernetes Operator + ESO, RDS via IRSA + RDS Proxy — without touching application code and without a single minute of downtime. Along the way I considered Teleport and HashiCorp Boundary, and chose not to use either. Here's the full reasoning.
+Every service in our platform was sharing one of two credentials: an `atlasAdmin` MongoDB user or the RDS master password. And every engineer who needed to debug production was borrowing the same admin logins. I fixed both halves. Services got per-service scoped roles — MongoDB via Atlas Kubernetes Operator + ESO, RDS via IRSA + RDS Proxy — without touching application code. Humans got a two-tier model: a read-only baseline through SSO, and every write elevated just-in-time through an access broker with an approval trail and a hard TTL. Along the way I chose to manage the whole authorization model — permission sets, Atlas federation, JIT workflows — as one Terraform module instead of extending our GitOps operator stack. Here's the full reasoning.
 
 ---
 
@@ -36,7 +37,9 @@ In our case, it looked like this. MongoDB Atlas had a single user — `admin`, `
 
 <!-- image_prompt:archive index=1 role=cover id=least-privilege-db-cover b64=U3BsaXQgaWxsdXN0cmF0aW9uIOKAlCBsZWZ0IHNpZGUgc2hvd3MgbXVsdGlwbGUgbWljcm9zZXJ2aWNlIHBvZHMgYWxsIGNvbm5lY3RpbmcgdG8gYSBzaW5nbGUgZGF0YWJhc2Ugd2l0aCBhIGdpYW50IHNrZWxldG9uIGtleSBsYWJlbGVkICJhZG1pbiIsIHJpZ2h0IHNpZGUgc2hvd3MgZWFjaCBwb2Qgd2l0aCBpdHMgb3duIHNtYWxsIHVuaXF1ZSBrZXkgY29ubmVjdGluZyB0byBzY29wZWQgZGF0YWJhc2Ugcm9sZXMuIERhcmsgYmFja2dyb3VuZCwgbW9kZXJuIHRlY2ggYWVzdGhldGljLCAxNjo5Lg -->
 
-Why does this happen? Because it's zero friction. When you're moving fast and spinning up a new service, the path of least resistance is to hand it the credential that already works. The "we'll scope this properly later" decision accumulates across every team until you have a platform where any single compromised pod has full admin access to all customer data across all tenants. Credential rotation means coordinating a simultaneous restart of every service. There's no audit trail distinguishing which service dropped a collection versus which one just ran a query.
+The human side was no better — just quieter. When an engineer needed to inspect a production collection or run a migration query, the path was the same shared admin login everyone else used. No per-person attribution, no expiry, no record of who held write access at any given moment.
+
+Why does this happen? Because it's zero friction. When you're moving fast, the path of least resistance is to hand a new service — or a new engineer — the credential that already works. The "we'll scope this properly later" decision accumulates until any single compromised pod has full admin access to all customer data, and any laptop with the shared login is one phishing email away from the same. Credential rotation means coordinating a simultaneous restart of every service. There's no audit trail distinguishing which service — or which person — dropped a collection.
 
 That's the silent blast radius. And it's completely fixable — it just requires someone to sit down and actually design the access model before implementing it.
 
@@ -44,15 +47,16 @@ That's the silent blast radius. And it's completely fixable — it just requires
 
 ## Requirements Before Touching Code
 
-Before writing a single line of Pulumi or YAML, I wrote an RFC and an ADR. Not because I love documentation — because scoping DB access across 25+ services touches every team simultaneously, and you do not want to discover your assumptions were wrong mid-migration.
+Before writing a single line of Pulumi or Terraform, I wrote an RFC and an ADR. Not because I love documentation — because scoping DB access across 25+ services and every engineering team touches everyone simultaneously, and you do not want to discover your assumptions were wrong mid-migration.
 
 The non-negotiables I landed on:
 
 - **Per-service scoped roles** — a compromised pod may only reach its own schema
+- **No standing write access for humans** — read-only by default; every write is requested, approved, and time-boxed
 - **Automated rotation** — no human-coordinated rotation events, ever
 - **Zero-downtime migration** — parallel-role approach; old credential stays valid for 2 weeks post-cutover per service
-- **Developer experience must not degrade** — local dev runs identically; staging/prod access via `aws sso login` (already the daily habit)
-- **SOC2 CC6.x evidence** — per-operation audit trail to Datadog, quarterly access review runbook
+- **Developer experience must not degrade** — local dev runs identically; staging/prod access via `aws sso login` and browser SSO (already the daily habit)
+- **SOC2 CC6.x evidence** — per-operation audit trail, per-grant approval records, quarterly access review runbook
 
 <!-- image_prompt:archive index=2 b64=Q2xlYW4gY2hlY2tsaXN0IGdyYXBoaWMgd2l0aCA1IHJlcXVpcmVtZW50cyBhcyBjaGVja2JveGVzLCBlbmdpbmVlcmluZyBub3RlYm9vayBhZXN0aGV0aWMsIGdyZWVuIGNoZWNrbWFya3MsIGRhcmsgbW9kZS4 -->
 ![Clean checklist graphic with 5 requirements as checkboxes, engineering notebook aesthetic, green checkmarks, dark mode.](https://i.ibb.co/VWmyZCWh/img-2.jpg)
@@ -115,47 +119,97 @@ Centralized is the right answer. All `AtlasDatabaseUser` CRDs live in the infra/
 
 ---
 
-## Break-Glass Without New Tooling
+## Humans Are the Harder Half
 
-The hardest part of any least-privilege design is the break-glass path — how does the on-call engineer get full access during a production incident without undermining the entire security model?
+Service access is a solved-shape problem: a pod has one identity and one job, so you scope a role and you're done. Humans are messier. The same engineer who only reads dashboards on Monday needs to run a schema migration on Thursday. Grant for the worst case and you've recreated the shared-admin problem with extra steps.
 
-I looked at what was already running. There was a GitHub Actions workflow (`.github/workflows/on_callers.yaml`) that polls PagerDuty every hour and updates Slack usergroups with the current on-call person. The scripts were already calling both the PagerDuty API and the Okta API in separate scripts.
+The design that actually held up is a two-tier model, built on one principle: **directory groups describe who you are, never what you can do.** An Okta group like `platform-team` is identity. Capability — "can write to prod Postgres" — is a projection layered on top, and the projection is what gets time-boxed.
 
-The break-glass path turned out to be a third step in the existing workflow:
+[IMAGE_PROMPT: Two-tier access pyramid illustration — wide base layer labeled "Baseline: read-only via SSO, permanent" in cool blue, narrow top layer labeled "JIT: writes, approved, expires in hours" in warm amber, with a small clock icon on the top tier. Dark background, modern flat tech aesthetic, 16:9.]
 
+### Tier 1: a read-only baseline that's actually useful
+
+Every engineer's steady-state access comes through SSO and contains reads only — enough to debug 90% of incidents without asking anyone. On the RDS side this leans on the same IAM database authentication the services use. Pulumi provisions tiered PostgreSQL users (`db_readonly_*`, `db_migration_*`, `db_breakglass_*`) with their grants; the AWS-side gate is a single IAM statement deciding which of those users your SSO session may log in as:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "rds-db:connect",
+  "Resource": "arn:aws:rds-db:*:<account>:dbuser:*/db_readonly_*"
+}
 ```
-PagerDuty (prod-db-admin schedule) → polled hourly by GHA
-  step 1: get-pagerduty-on-callers  → on_callers.json  ✅ exists
-  step 2: set-slack-on-callers       → Slack groups     ✅ exists
-  step 3: set-okta-db-admins         → sentra-db-admins ← to build
+
+The baseline permission set carries only the `db_readonly_*` ARN. `aws sso login`, generate a 15-minute auth token, connect with `psql`. No password exists for humans at all — the load-bearing detail is that `rds-db:connect` is scoped to a *specific database user*, not to the instance. Miss that and IAM auth silently grants nothing.
+
+On the MongoDB side, Atlas Workforce Identity Federation handles login: `mongosh` and Compass open a browser, Okta authenticates, and Atlas maps the group claims on the token to a scoped role. The federation role mappings give every engineering group read-write on staging and read-only on production — mapped from standing identity groups, and nobody holds a Mongo password.
+
+### Tier 2: every write is a JIT grant
+
+If an action changes state — DDL, DML, dropping a collection, rotating a secret — it does not exist in the baseline. Period. Writes come from an access broker (we use BeyondTrust Entitle; ConductorOne and Opal play the same position) as **bundles**: pre-composed grant sets a developer requests with a justification, a team-lead approval, and a TTL measured in hours.
+
+The mechanics differ per plane but the shape is identical:
+
+- **AWS cloud writes:** approval creates an ephemeral IAM Identity Center assignment to a per-team "extended" permission set carrying that team's observed write actions — Athena, Glue, S3, whatever the usage data justified. On expiry the assignment is deleted. Sessions show up in CloudTrail under the extended role name, so attribution is free.
+- **RDS writes:** a separate migration-tier bundle attaches the permission set whose only meaningful statement is `rds-db:connect` on the `db_migration_*` PostgreSQL users — read plus DDL/DML, no superuser. The database-side grants never change; the JIT grant only decides who may log in as that user, and for how long.
+- **MongoDB:** approval flips the requester into a JIT group that Atlas's federation role-mapping resolves to read-write on the production projects. Same `mongosh` browser login as before — except now the token carries the write-capable claim. When the grant expires, the next login is read-only again.
+
+The part I underestimated: deciding *what goes in each team's write bundle*. Guessing produces either a useless bundle or a shadow admin role. Instead I queried three months of CloudTrail through Athena, attributed every write action to a team, and made the observed set the policy. Least privilege isn't a philosophy debate when you have the actual usage data — it's a `GROUP BY`.
+
+### Developer experience: wrap it in a Taskfile
+
+None of this survives contact with engineers if requesting access means archaeology in a web console. The whole flow is wrapped in `go-task` targets that live in the same repo as the Terraform:
+
+```bash
+task mongo:request:prod-rw     # opens the broker request for the prod RW bundle (1-6h)
+task mongo:mongosh:prod        # browser SSO → scoped mongosh session
+task mongo:whoami:prod         # prints your current effective Atlas roles
 ```
 
-The `slack_assign_on_call_groups.py` script is the exact template — same logic, same structure, just targeting the Okta groups API instead of the Slack SDK. One new script, one new GHA step. The on-call engineer gets `atlasAdmin` and `break_glass_admin` (RDS) automatically when their shift starts, and loses it when it ends. No commands to run. Every access fires a P1 Datadog alert.
-
-<!-- diagram_mermaid:archive index=2 id=break-glass b64=Zmxvd2NoYXJ0IFRECiAgUERbIlBhZ2VyRHV0eVxucHJvZC1kYi1hZG1pbiBzY2hlZHVsZSJdCiAgR0hBWyJHaXRIdWIgQWN0aW9uc1xuY3JvbjogZXZlcnkgaG91ciJdCiAgQ0FMTEVSU1sib25fY2FsbGVycy5qc29uXG5jdXJyZW50IG9uLWNhbGwgZW5naW5lZXIiXQogIFNMQUNLWyJTbGFjayBHcm91cHNcbnN0ZXAgMjogZXhpc3RpbmciXQogIE9LVEFbIk9rdGEgR3JvdXBcbnNlbnRyYS1kYi1hZG1pbnMiXQogIEFUTEFTWyJBdGxhcyBSb2xlXG5hdGxhc0FkbWluIl0KICBSRFNbIlJEUyBSb2xlXG5icmVha19nbGFzc19hZG1pbiJdCiAgQUxFUlRbIkRhdGFkb2cgUDEgQWxlcnRcbmV2ZXJ5IGFjY2VzcyJdCiAgUEQgLS0+fHBvbGx8IEdIQQogIEdIQSAtLT58c3RlcCAxOiBnZXQtcGFnZXJkdXR5LW9uLWNhbGxlcnN8IENBTExFUlMKICBDQUxMRVJTIC0tPnxzdGVwIDI6IHNldC1zbGFjay1vbi1jYWxsZXJzfCBTTEFDSwogIENBTExFUlMgLS0+fHN0ZXAgMzogc2V0LW9rdGEtZGItYWRtaW5zfCBPS1RBCiAgT0tUQSAtLT58Z3JhbnRzIGZvciBzaGlmdCBkdXJhdGlvbnwgQVRMQVMKICBPS1RBIC0tPnxncmFudHMgZm9yIHNoaWZ0IGR1cmF0aW9ufCBSRFMKICBBVExBUyAtLT58ZmlyZXN8IEFMRVJUCiAgUkRTIC0tPnxmaXJlc3wgQUxFUlQ= -->
-![Break-glass access — PagerDuty on-call schedule drives Okta group membership and Atlas/RDS admin grants](https://i.ibb.co/Pv9tpNjd/break-glass.jpg)
+Time from "I need prod write access" to an approved, scoped, expiring session: a few minutes. That's the bar — if JIT access is slower than asking a teammate for the shared password used to be, people will route around it.
 
 ---
 
-## Did I Consider Teleport and HashiCorp Boundary?
+## The Design That Died on a Licensing Line Item
 
-Yes. Both are purpose-built for privileged access management and worth evaluating seriously.
+The elegant version of the MongoDB human-access story wasn't supposed to involve a broker at all. The plan: an Okta Custom Authorization Server with a token claim expression projecting identity groups into capability claims (`db-prod-readonly`, `db-prod-readwrite`), consumed directly by Atlas federation. Pure static mapping, no moving parts, all declarative.
 
-**Teleport** handles database access natively — it issues short-lived certificates, provides session recording, and integrates with your IdP for MFA-gated access. The UX is genuinely good: `tsh db connect <db-name>` and you're in. Audit logs are first-class. If you're starting from scratch with no existing tooling, Teleport is a strong choice.
+It died in one `terraform apply`. Creating a Custom Authorization Server requires Okta's **API Access Management** add-on — a contract line item, not a permission. Our tenant didn't have it. Okta's org-level authorization server can't emit group claims where that design needed them, so no amount of Terraform was going to fix it. The error (`E0000015`) looks like a permissions problem; it's a procurement problem.
 
-**HashiCorp Boundary** takes a different approach — it's a network-layer proxy that brokers access to targets. You authenticate through Boundary and it proxies your connection. Clean separation of network access from credential management.
+I'd validated the infrastructure assumptions carefully — which Atlas features were configured, which RDS flags were enabled. I never thought to validate the *license* assumptions. An afternoon of reverting Terraform later, the JIT-broker path became the design instead of the fallback — and honestly it's the better model: the static-claims version would have given engineers *standing* write capability, just neatly labeled. The broker version time-boxes it.
 
-Why didn't I use either? Three reasons:
+---
 
-1. **We already had the pieces.** PagerDuty, Okta, GHA, Atlas Operator, ESO, Reloader — every component of the break-glass and credential delivery flow was already running. Adding Teleport or Boundary means operating one more system, training the team on one more tool, and creating a dependency on one more SLA.
+## Break-Glass Is Just Another Bundle
 
-2. **New tooling for an already-solved problem.** The actual security properties I needed — scoped credentials, automated rotation, JIT break-glass with audit trail — are achievable with what exists. Teleport would improve the UX of the break-glass path, but it wouldn't change the threat model meaningfully.
+The hardest part of any least-privilege design is the break-glass path — how does the on-call engineer get full access during a production incident without undermining the entire model?
 
-3. **Migration cost vs. incremental value.** Retrofitting Teleport into an existing Kubernetes platform isn't trivial. It requires deploying the Teleport operator, configuring database services for each RDS instance and Atlas cluster, and migrating the existing access patterns. That's months of work for a platform team that already has a defined migration path.
+My first instinct was to build plumbing: a scheduled job syncing the PagerDuty on-call schedule into an admin group. It would have worked, but once the JIT broker was in place for everything else, break-glass stopped being special. It's just one more bundle with a more permissive approval rule.
 
-> If I were designing a greenfield platform today, Teleport would be in the architecture conversation from day one. Retrofitting it into an existing system with working alternatives is a different calculation.
+The break-glass bundle carries the admin-tier grants on both planes — on RDS that's the `db_breakglass_*` superuser-tier PostgreSQL users, again gated purely by `rds-db:connect`. Its workflow is a single rule: auto-approve, no human in the loop at 3 AM, but only for requesters already in the trusted operator groups (on-call, platform, DevOps), and only up to a hard duration cap. Anyone outside those groups doesn't get a slower path through this bundle — they go through the normal approval workflows instead. Every grant is logged with requester, justification, and expiry, and fires a P1 alert to Datadog so an admin session is never silent.
 
-The honest principle: reach for existing tooling before introducing new dependencies. You can always add Teleport in v3 when the team has bandwidth and the ROI is clear.
+[IMAGE_PROMPT: Flowchart of break-glass access — on-call engineer requests admin bundle from access broker, broker checks membership in on-call group, auto-approves with hard TTL, grants admin roles on MongoDB Atlas and RDS, fires alert to monitoring, grant auto-expires. Dark background, clean flowchart style, 16:9.]
+
+The property that matters: **there is no standing admin credential anywhere.** Not for services, not for engineers, not for on-call. Admin access exists only as a time-boxed grant with a paper trail — and the quarterly SOC2 access review becomes "export the broker's grant log" instead of a spreadsheet safari.
+
+---
+
+## GitOps Operators or One Terraform Module?
+
+The services got their access through Kubernetes-native machinery — Atlas Operator CRDs, ESO, ArgoCD. So the obvious first instinct for the *human* access model was more of the same: a Helm chart rendering Atlas CRDs for the custom roles and federation role-mappings, Crossplane providers reconciling the PostgreSQL roles and Okta objects, everything synced by ArgoCD. Declarative, reconciled, self-healing — the platform aesthetic.
+
+I built a good chunk of that version before concluding it was the wrong shape, for three reasons:
+
+1. **The operators don't cover the model.** The Atlas Operator's federation CRD manages role mappings but can't create the identity providers themselves — that's Admin-API-only, so a second tool is required regardless. The Crossplane providers involved (SQL, Okta) were the least mature components in the stack. Access control is the one domain where I refuse to make an experimental controller the source of truth.
+
+2. **The model spans systems that have no operator at all.** IAM Identity Center permission sets, Entitle workflows and integrations, Okta groups — most of the human-access graph lives outside Kubernetes entirely. The chart could only ever own the MongoDB slice, fragmenting one access model across a Helm repo, a Terraform repo, and click-ops.
+
+3. **Reconciliation is the wrong property for access control.** A controller that continuously "heals" grants is a controller that can silently re-create an access path someone deliberately removed. For workload credentials I want self-healing; for human privilege I want every change to be a reviewed, point-in-time decision.
+
+So the human-access plane became **one Terraform root with a module per system**: `identity-center/` (base + extended permission sets), `entitle/` (workflows, integrations), `mongodb/` (federation config, role mappings, custom roles), `okta/` (groups, apps). The payoff is that cross-system references are literal graph edges in one plan — a bundle points at a permission-set ARN, a workflow rule points at a directory-group ID — and a single PR diff shows the full blast radius of an access change across every plane. One review covers the whole story; CODEOWNERS on one repo governs it.
+
+The honest trade-offs: Terraform doesn't reconcile, so drift is caught at the next plan rather than healed — which I just argued is a feature, but it does mean plans must actually run. And the Entitle Terraform provider is young; its bundle write-path drifted against reality persistently enough that I moved bundle definitions to the UI with `lifecycle.ignore_changes` guarding the boundary. Owning a model in Terraform only works when the provider is trustworthy — where it isn't, draw the line explicitly rather than fighting drift forever.
+
+> The delivery plane for services stayed GitOps. The authorization model for humans became Terraform. Same platform, different properties needed — reconciliation for credentials, deliberation for privilege.
 
 ---
 
@@ -209,11 +263,13 @@ The upgrade path is non-destructive: services migrate one at a time, the Atlas O
 
 A few things I'd tell myself at the start:
 
-**Write the ADR before the RFC.** I wrote the RFC first and iterated on it extensively. The ADR forced me to commit to specific decisions and document rejected alternatives — that discipline would have shortened the RFC process.
+**Validate license assumptions like infrastructure assumptions.** I checked which Atlas features were configured and which RDS flags were enabled before designing. I never checked which Okta add-ons were *licensed* — and an entire authorization design died on a procurement line item. "Does the API allow it" and "does the contract allow it" are separate questions.
 
-**Validate what actually exists before designing what you need.** I assumed Atlas Identity Federation was configured. It wasn't. I assumed RDS IAM auth needed to be enabled. It was already on. Checking the actual state of your infrastructure before writing the design doc saves you from building on false assumptions.
+**Derive policy from usage data, not intuition.** Three months of CloudTrail, attributed per team, told me exactly what belonged in each write bundle. Every least-privilege effort I've seen fail failed at the "what do people actually need" step — and that step is a query, not a workshop.
 
-**The management plane and delivery plane are separate problems.** MongoDB and RDS have different management tools — that's fine. What matters is that the delivery interface to services is identical. Uniform delivery enables uniform service configuration, which enables uniform operations.
+**Keep identity and capability in separate systems.** Directory groups say who you are; grants say what you can do, and only grants expire. The moment a group named `db-prod-admin` exists, someone will be added to it "temporarily" — and temporary standing access is just standing access with a guilty conscience.
+
+**The management plane and delivery plane are separate problems.** MongoDB and RDS have different management tools — that's fine. What matters is that the interface is uniform: services always get a K8s Secret; humans always get an SSO session plus, when needed, a time-boxed grant. Uniform interfaces enable uniform operations.
 
 The full RFC and ADR for this design are available at **[github.com/OrenOren1/db-access-least-privilege](https://github.com/OrenOren1/db-access-least-privilege)** — genericised for reuse.
 
@@ -221,7 +277,7 @@ The full RFC and ADR for this design are available at **[github.com/OrenOren1/db
 
 ## Conclusion
 
-Shared database admin credentials are a solved problem. The tooling to fix it — Kubernetes operators, ESO, IRSA, IAM DB auth — is mature, well-documented, and probably already running in your cluster. The work is in the design: defining the role taxonomy, tracing the credential delivery chain, building the migration strategy, and getting the governance model right.
+Shared database admin credentials are a solved problem — for services *and* for the people who operate them. The tooling is mature and probably already in your stack: Kubernetes operators, ESO, IRSA, IAM database auth, an IdP, and some form of JIT access broker. The work is in the design: defining the role taxonomy, tracing the credential delivery chain, measuring what each team actually does, and getting the governance model right.
 
 The hardest part isn't the technology. It's convincing your team to treat "the admin credential works fine" as the security debt it actually is — before something forces the conversation.
 
@@ -231,19 +287,17 @@ The hardest part isn't the technology. It's convincing your team to treat "the a
 
 ### LinkedIn (~1300 chars)
 
-Every service in our platform shared one credential: atlasAdmin on MongoDB, master password on RDS. ~25 microservices, zero isolation, zero audit trail.
+Every service in our platform shared one credential: atlasAdmin on MongoDB, master password on RDS. Every engineer debugging prod borrowed the same admin logins. ~25 microservices, one team, zero isolation, zero attribution.
 
-I just finished designing the fix — and the most interesting part wasn't the technology, it was all the things I considered and decided NOT to use.
+I finished designing the fix for both halves — services AND humans — and the most interesting lessons weren't about technology:
 
-Four things I learned:
+1. Humans are the harder half. Services get scoped roles (Atlas Operator + ESO, IRSA + RDS Proxy). Humans need a two-tier model: read-only baseline via SSO, and every write elevated just-in-time with an approval and a TTL. No standing admin anywhere — including on-call.
 
-1. Per-service Helm for DB user creation sounds elegant until you trace the dependency chain — it creates a chicken-and-egg problem that forces centralized provisioning anyway.
+2. Derive policy from data, not intuition. Three months of CloudTrail, attributed per team, defined exactly what belongs in each team's write bundle. Least privilege is a GROUP BY, not a workshop.
 
-2. Teleport and HashiCorp Boundary are excellent tools. I chose not to use them because the security properties I needed were achievable with tooling already running in the cluster. Reach for existing tooling before adding new dependencies.
+3. Validate license assumptions like infrastructure assumptions. My cleanest design — static Okta claim projection into Atlas federation — died on an unlicensed Okta add-on. The API said no; the contract was the reason.
 
-3. The management plane (how credentials are created) and the delivery plane (how they reach pods) are separate problems. MongoDB and RDS use different tools to manage credentials — that's fine. What matters is that the delivery interface to services is identical.
-
-4. IRSA works, but EKS Pod Identity is the cleaner model for new workloads — the role binding lives outside Kubernetes manifests, and trust policies don't need per-cluster OIDC conditions. If you're building from scratch, start there.
+4. Reconciliation is the wrong property for access control. Our services stayed GitOps, but the human authorization model became one Terraform module — permission sets, Atlas federation, JIT workflows in a single plan. A controller that self-heals grants can silently re-create an access path someone deliberately removed.
 
 Full design — RFC + ADR — is open-sourced: github.com/OrenOren1/db-access-least-privilege
 
@@ -253,20 +307,20 @@ Full design — RFC + ADR — is open-sourced: github.com/OrenOren1/db-access-le
 
 ### X / Twitter (≤280 chars)
 
-Replaced shared DB admin creds across 25 microservices with scoped roles, IRSA, and Atlas Operator. Considered Teleport. Chose not to use it. Here's why — and the full ADR: github.com/OrenOren1/db-access-least-privilege #PlatformEngineering #Security
+Killed shared DB admin creds for services AND humans: scoped roles + IRSA for pods, read-only SSO baseline + JIT time-boxed grants for engineers. No standing admin anywhere. Full ADR: github.com/OrenOren1/db-access-least-privilege #PlatformEngineering #Security
 
 ---
 
 ### Facebook (~450 chars)
 
-Just open-sourced the architecture design for something we've been working on: replacing shared database admin credentials across a microservice platform with proper least-privilege access.
+Just open-sourced the architecture design for replacing shared database admin credentials across a microservice platform — for the services and for the humans operating them.
 
-The post covers the full design decision — MongoDB via Atlas Operator, RDS via IRSA, break-glass via PagerDuty + Okta — and why I chose not to use Teleport or HashiCorp Boundary even though both are solid tools.
+The post covers per-service scoped roles (Atlas Operator, IRSA + RDS Proxy), a two-tier human access model where every prod write is a just-in-time expiring grant, break-glass without standing admin, and why the human authorization model ended up in one Terraform module instead of our GitOps operator stack.
 
-Full post + ADR on GitHub: github.com/OrenOren1/db-access-least-privilege
+Full post + ADR: github.com/OrenOren1/db-access-least-privilege
 
 ---
 
 ### Instagram (~180 chars)
 
-Replaced shared DB admin creds with scoped per-service roles across 25 microservices 🔐 Atlas Operator + IRSA + ESO. Full ADR open-sourced — link in bio. #DevOps #Security #Kubernetes #PlatformEngineering #MongoDB #AWS
+No standing admin. Anywhere. 🔐 Scoped service roles + JIT expiring grants for humans across MongoDB Atlas & RDS. Full ADR open-sourced — link in bio. #DevOps #Security #Kubernetes #PlatformEngineering #MongoDB #AWS
