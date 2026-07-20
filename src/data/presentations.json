@@ -1,13 +1,13 @@
 {
   "decks": [
     {
-      "slug": "least-privileges-high-level",
-      "title": "Least-Privilege DB Access",
-      "subtitle": "CTO brief — current shared-admin reality, why it has to move, the JIT-humans + IaC-services design",
-      "date": "2026-06-14",
-      "audience": "CTO · Platform engineering · Security",
-      "tags": ["platform", "security", "least-privilege", "rds", "mongodb-atlas", "okta", "jit"],
-      "source": "presentations/least-privileges-high-level/slides.md"
+      "slug": "least-privileges-implemented",
+      "title": "Least-Privilege Access — As Implemented",
+      "subtitle": "Platform-team deep dive — Okta groups, IdC permission sets, Entitle bundles & workflows, auth chains, migration state",
+      "date": "2026-07-20",
+      "audience": "Platform engineering · Security",
+      "tags": ["platform", "security", "least-privilege", "entitle", "identity-center", "mongodb-atlas", "okta", "jit", "pulumi"],
+      "source": "presentations/drafts/least-privileges-implemented/slides.md"
     },
     {
       "slug": "credentials-access-platform",
