@@ -25,7 +25,7 @@ author: "Oren Sultan"
 
 ## TL;DR
 
-Every service in our platform was sharing one of two credentials: an `atlasAdmin` MongoDB user or the RDS master password. And every engineer who needed to debug production was borrowing the same admin logins. I fixed both halves. Services got per-service scoped roles — MongoDB via Atlas Kubernetes Operator + ESO, RDS via IRSA + RDS Proxy — without touching application code. Humans got a two-tier model: a read-only baseline through SSO, and every write elevated just-in-time through an access broker with an approval trail and a hard TTL. Along the way I chose to manage the whole authorization model — permission sets, Atlas federation, JIT workflows — as one Terraform module instead of extending our GitOps operator stack. Here's the full reasoning.
+Every service in our platform was sharing one of two credentials: an `atlasAdmin` MongoDB user or the RDS master password. And every engineer who needed to debug production was borrowing the same admin logins. I fixed both halves. Services got per-service scoped roles — MongoDB via Atlas Kubernetes Operator + ESO, RDS via IRSA + RDS Proxy — without touching application code. Humans got a two-tier model: a read-only baseline through SSO, and every write elevated just-in-time through an access broker with an approval trail and a hard TTL. Along the way I chose to manage the whole authorization model — permission sets, Atlas federation, JIT workflows — as one IaC module (Terraform first, since migrated to Pulumi) instead of extending our GitOps operator stack. Here's the full reasoning.
 
 ---
 
@@ -141,7 +141,7 @@ Every engineer's steady-state access comes through SSO and contains reads only �
 
 The baseline permission set carries only the `db_readonly_*` ARN. `aws sso login`, generate a 15-minute auth token, connect with `psql`. No password exists for humans at all — the load-bearing detail is that `rds-db:connect` is scoped to a *specific database user*, not to the instance. Miss that and IAM auth silently grants nothing.
 
-On the MongoDB side, Atlas Workforce Identity Federation handles login: `mongosh` and Compass open a browser, Okta authenticates, and Atlas maps the group claims on the token to a scoped role. The federation role mappings give every engineering group read-write on staging and read-only on production — mapped from standing identity groups, and nobody holds a Mongo password.
+On the MongoDB side, the baseline is the Atlas **console** through SAML federation: Okta authenticates, and Atlas org role mappings translate each engineering group into project data-access roles — read-write on staging, read-only on production, Browse Collections in the UI. We prototyped Atlas Workforce Identity Federation (browser-SSO `mongosh`/Compass) and ultimately removed it — the console covers the read-mostly baseline, and standing shell access to prod data wasn't a capability we wanted to keep alive. Nobody holds a Mongo password.
 
 ### Tier 2: every write is a JIT grant
 
@@ -151,18 +151,18 @@ The mechanics differ per plane but the shape is identical:
 
 - **AWS cloud writes:** approval creates an ephemeral IAM Identity Center assignment to a per-team "extended" permission set carrying that team's observed write actions — Athena, Glue, S3, whatever the usage data justified. On expiry the assignment is deleted. Sessions show up in CloudTrail under the extended role name, so attribution is free.
 - **RDS writes:** a separate migration-tier bundle attaches the permission set whose only meaningful statement is `rds-db:connect` on the `db_migration_*` PostgreSQL users — read plus DDL/DML, no superuser. The database-side grants never change; the JIT grant only decides who may log in as that user, and for how long.
-- **MongoDB:** approval flips the requester into a JIT group that Atlas's federation role-mapping resolves to read-write on the production projects. Same `mongosh` browser login as before — except now the token carries the write-capable claim. When the grant expires, the next login is read-only again.
+- **MongoDB:** approval makes the broker mint a **temporary Atlas database user** with read-write on the production projects — real `mongosh`/Compass credentials, issued by the broker, destroyed at expiry. No standing DB users are ever created; the write path exists only inside the grant window.
 
 The part I underestimated: deciding *what goes in each team's write bundle*. Guessing produces either a useless bundle or a shadow admin role. Instead I queried three months of CloudTrail through Athena, attributed every write action to a team, and made the observed set the policy. Least privilege isn't a philosophy debate when you have the actual usage data — it's a `GROUP BY`.
 
 ### Developer experience: wrap it in a Taskfile
 
-None of this survives contact with engineers if requesting access means archaeology in a web console. The whole flow is wrapped in `go-task` targets that live in the same repo as the Terraform:
+None of this survives contact with engineers if requesting access means archaeology in a web console. The whole flow is wrapped in `go-task` targets that live in the same repo as the IaC:
 
 ```bash
-task mongo:request:prod-rw     # opens the broker request for the prod RW bundle (1-6h)
-task mongo:mongosh:prod        # browser SSO → scoped mongosh session
-task mongo:whoami:prod         # prints your current effective Atlas roles
+task bundles:request -- rnd-extended-myteam 3   # broker request: team write bundle, 3h
+task bundles:my-requests                        # my recent grants + their status
+task mongo:console                              # browser SSO → Atlas console session
 ```
 
 Time from "I need prod write access" to an approved, scoped, expiring session: a few minutes. That's the bar — if JIT access is slower than asking a teammate for the shared password used to be, people will route around it.
@@ -175,7 +175,7 @@ The elegant version of the MongoDB human-access story wasn't supposed to involve
 
 It died in one `terraform apply`. Creating a Custom Authorization Server requires Okta's **API Access Management** add-on — a contract line item, not a permission. Our tenant didn't have it. Okta's org-level authorization server can't emit group claims where that design needed them, so no amount of Terraform was going to fix it. The error (`E0000015`) looks like a permissions problem; it's a procurement problem.
 
-I'd validated the infrastructure assumptions carefully — which Atlas features were configured, which RDS flags were enabled. I never thought to validate the *license* assumptions. An afternoon of reverting Terraform later, the JIT-broker path became the design instead of the fallback — and honestly it's the better model: the static-claims version would have given engineers *standing* write capability, just neatly labeled. The broker version time-boxes it.
+I'd validated the infrastructure assumptions carefully — which Atlas features were configured, which RDS flags were enabled. I never thought to validate the *license* assumptions. An afternoon of reverting Terraform later, the JIT-broker path became the design instead of the fallback — and honestly it's the better model: the static-claims version would have given engineers *standing* write capability, just neatly labeled. The broker version time-boxes it. We eventually decommissioned the Workforce-OIDC human path altogether: the console covers baseline reads, and JIT write arrives as a broker-issued temporary database user rather than a token claim.
 
 ---
 
@@ -185,7 +185,7 @@ The hardest part of any least-privilege design is the break-glass path — how d
 
 My first instinct was to build plumbing: a scheduled job syncing the PagerDuty on-call schedule into an admin group. It would have worked, but once the JIT broker was in place for everything else, break-glass stopped being special. It's just one more bundle with a more permissive approval rule.
 
-The break-glass bundle carries the admin-tier grants on both planes — on RDS that's the `db_breakglass_*` superuser-tier PostgreSQL users, again gated purely by `rds-db:connect`. Its workflow is a single rule: auto-approve, no human in the loop at 3 AM, but only for requesters already in the trusted operator groups (on-call, platform, DevOps), and only up to a hard duration cap. Anyone outside those groups doesn't get a slower path through this bundle — they go through the normal approval workflows instead. Every grant is logged with requester, justification, and expiry, and fires a P1 alert to Datadog so an admin session is never silent.
+The break-glass bundle carries the admin-tier grants on both planes — on RDS that's the `db_breakglass_*` superuser-tier PostgreSQL users, again gated purely by `rds-db:connect`. Its workflow is a short ordered rule list: requesters in the trusted operator groups who are **actually on the on-call schedule** auto-approve — no human in the loop at 3 AM (the broker checks the PagerDuty schedule natively, so the sync job I almost built never existed); a tiny super-admin set auto-approves unconditionally; everyone else needs a platform-team human and gets a tighter duration cap. Every grant is logged with requester, justification, and expiry, and notifies the platform channel so an admin session is never silent.
 
 [IMAGE_PROMPT: Flowchart of break-glass access — on-call engineer requests admin bundle from access broker, broker checks membership in on-call group, auto-approves with hard TTL, grants admin roles on MongoDB Atlas and RDS, fires alert to monitoring, grant auto-expires. Dark background, clean flowchart style, 16:9.]
 
@@ -193,7 +193,7 @@ The property that matters: **there is no standing admin credential anywhere.** N
 
 ---
 
-## GitOps Operators or One Terraform Module?
+## GitOps Operators or One IaC Module?
 
 The services got their access through Kubernetes-native machinery — Atlas Operator CRDs, ESO, ArgoCD. So the obvious first instinct for the *human* access model was more of the same: a Helm chart rendering Atlas CRDs for the custom roles and federation role-mappings, Crossplane providers reconciling the PostgreSQL roles and Okta objects, everything synced by ArgoCD. Declarative, reconciled, self-healing — the platform aesthetic.
 
@@ -205,11 +205,13 @@ I built a good chunk of that version before concluding it was the wrong shape, f
 
 3. **Reconciliation is the wrong property for access control.** A controller that continuously "heals" grants is a controller that can silently re-create an access path someone deliberately removed. For workload credentials I want self-healing; for human privilege I want every change to be a reviewed, point-in-time decision.
 
-So the human-access plane became **one Terraform root with a module per system**: `identity-center/` (base + extended permission sets), `entitle/` (workflows, integrations), `mongodb/` (federation config, role mappings, custom roles), `okta/` (groups, apps). The payoff is that cross-system references are literal graph edges in one plan — a bundle points at a permission-set ARN, a workflow rule points at a directory-group ID — and a single PR diff shows the full blast radius of an access change across every plane. One review covers the whole story; CODEOWNERS on one repo governs it.
+So the human-access plane became **one IaC root spanning four providers**: identity-center (base + extended permission sets), the access broker (workflows, integrations, bundles), MongoDB Atlas (federation config, role mappings), and Okta (groups, service-app wiring). The payoff is that cross-system references are literal graph edges in one plan — a bundle points at a permission-set ARN, a workflow rule points at a directory-group ID — and a single PR diff shows the full blast radius of an access change across every plane. One review covers the whole story; CODEOWNERS on one repo governs it.
 
-The honest trade-offs: Terraform doesn't reconcile, so drift is caught at the next plan rather than healed — which I just argued is a feature, but it does mean plans must actually run. And the Entitle Terraform provider is young; its bundle write-path drifted against reality persistently enough that I moved bundle definitions to the UI with `lifecycle.ignore_changes` guarding the boundary. Owning a model in Terraform only works when the provider is trustworthy — where it isn't, draw the line explicitly rather than fighting drift forever.
+It started as a Terraform root with a module per system and later migrated — import, zero-diff — into a single **Pulumi** program living in the same repo as the rest of our infrastructure. Same shape, same properties; the migration was about consolidating on one IaC toolchain, not about the model.
 
-> The delivery plane for services stayed GitOps. The authorization model for humans became Terraform. Same platform, different properties needed — reconciliation for credentials, deliberation for privilege.
+The honest trade-offs: plan-based IaC doesn't reconcile, so drift is caught at the next plan rather than healed — which I just argued is a feature, but it does mean plans must actually run. And the broker's provider is young: bundle *renames* are destroy-and-recreate, role lists must match the API's ordering or every plan shows phantom drift, integration credentials and workflow assignment can only be managed out-of-band. For a while the bundle write-path drifted badly enough that bundle definitions lived in the UI behind `ignore_changes`; provider fixes and a stricter declaration style brought them back into code. Owning a model in IaC only works when you know exactly where the provider is trustworthy — draw that line explicitly rather than fighting drift forever.
+
+> The delivery plane for services stayed GitOps. The authorization model for humans became plan-based IaC. Same platform, different properties needed — reconciliation for credentials, deliberation for privilege.
 
 ---
 
@@ -297,7 +299,7 @@ I finished designing the fix for both halves — services AND humans — and the
 
 3. Validate license assumptions like infrastructure assumptions. My cleanest design — static Okta claim projection into Atlas federation — died on an unlicensed Okta add-on. The API said no; the contract was the reason.
 
-4. Reconciliation is the wrong property for access control. Our services stayed GitOps, but the human authorization model became one Terraform module — permission sets, Atlas federation, JIT workflows in a single plan. A controller that self-heals grants can silently re-create an access path someone deliberately removed.
+4. Reconciliation is the wrong property for access control. Our services stayed GitOps, but the human authorization model became one IaC module — permission sets, Atlas federation, JIT workflows in a single plan. A controller that self-heals grants can silently re-create an access path someone deliberately removed.
 
 Full design — RFC + ADR — is open-sourced: github.com/OrenOren1/db-access-least-privilege
 
@@ -315,7 +317,7 @@ Killed shared DB admin creds for services AND humans: scoped roles + IRSA for po
 
 Just open-sourced the architecture design for replacing shared database admin credentials across a microservice platform — for the services and for the humans operating them.
 
-The post covers per-service scoped roles (Atlas Operator, IRSA + RDS Proxy), a two-tier human access model where every prod write is a just-in-time expiring grant, break-glass without standing admin, and why the human authorization model ended up in one Terraform module instead of our GitOps operator stack.
+The post covers per-service scoped roles (Atlas Operator, IRSA + RDS Proxy), a two-tier human access model where every prod write is a just-in-time expiring grant, break-glass without standing admin, and why the human authorization model ended up in one IaC module instead of our GitOps operator stack.
 
 Full post + ADR: github.com/OrenOren1/db-access-least-privilege
 
