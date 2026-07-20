@@ -242,7 +242,7 @@ layout: default
 transition: fade
 ---
 
-## 🔗 Auth Chain 1 — AWS
+## 🔗 Auth Chains — AWS + MongoDB
 
 ```mermaid
 flowchart LR
@@ -250,20 +250,24 @@ flowchart LR
   OKTA["🔑 Okta"]
   ENT["🎫 Entitle"]
   IDC["🏛️ IdC ssoins-7223b0…"]
-  PROD[("☁️ prod 270743961673")]
+  PROD[("☁️ AWS prod")]
+  CONSOLE["🖥️ Atlas console<br/>(SAML federation)"]
+  MDB[("🍃 Atlas DBs<br/>prod + prod-eu")]
 
   DEV -->|SSO| OKTA
-  OKTA -->|"standing: 8 groups → RnDDeveloper"| IDC
-  OKTA -->|"R&D → RdsDbReadonly (prod+staging)"| IDC
-  DEV -->|"request bundle"| ENT
-  ENT -->|"grant window: create AccountAssignment Extended-PS"| IDC
+  OKTA -->|"standing: 8 groups → RnDDeveloper + RdsDbReadonly"| IDC
   IDC -->|"aws sso login"| PROD
+  OKTA -->|"standing: role mappings — staging RW / prod RO"| CONSOLE
+  DEV -->|"request bundle"| ENT
+  ENT -->|"JIT: attach Extended-PS AccountAssignment"| IDC
+  ENT -->|"JIT: mint temp DB user (readWriteAnyDatabase)"| MDB
+  MDB -.->|"mongosh / Compass, Entitle-issued creds"| DEV
 ```
 
-> JIT = a **temporary IdC account assignment**. Expiry deletes it; next `aws sso login` simply lacks the role.
+> AWS JIT = a **temporary IdC account assignment**. Mongo JIT = a **temporary Atlas DB user**. Both vanish at expiry.
 
 <!--
-The AWS chain in operational terms. Standing: the eight groups' account assignments to RnDDeveloper and the R&D umbrella's to RdsDbReadonly are permanent IdC resources declared in Pulumi. JIT: when rnd-tlms approves a bundle request, Entitle calls the IdC API and creates an account assignment binding the requester to the team's Extended PS on the prod account; at expiry it deletes that assignment. Nothing else changes — no group edits, no policy edits — which is why the Extended PSes must never have assignments in code: Pulumi would fight Entitle over them. Developer experience: aws sso login, and the extended role appears in the account/role picker during the window and disappears after. Note allow_changing_account_permissions=True on the aws-sentra integration is what permits Entitle to manage assignments on PSes it didn't create.
+Both chains in one frame, in operational terms. Standing AWS: the eight groups' account assignments to RnDDeveloper and the R&D umbrella's to RdsDbReadonly are permanent IdC resources declared in Pulumi. Standing Mongo: the Atlas-Okta SAML federation role mappings land every R&D group in the console with staging read-write and prod read-only — detail matrix on the next slide. JIT AWS: when rnd-tlms approves a bundle request, Entitle calls the IdC API and creates an account assignment binding the requester to the team's Extended PS on the prod account; at expiry it deletes that assignment — no group edits, no policy edits, which is why the Extended PSes must never have assignments in code (Pulumi would fight Entitle). JIT Mongo, in the same grant: Entitle mints a temporary Atlas DB user with readWriteAnyDatabase on prod and prod-eu through the mongodb-temp-dbuser integrations and hands the developer credentials that work in mongosh or Compass; the user is destroyed at expiry. Developer experience: aws sso login shows the extended role during the window, and the Mongo credential arrives from Entitle — both disappear on their own. allow_changing_account_permissions=True on aws-sentra and allow_creating_accounts=True on the temp-dbuser integrations are the flags that permit each mechanism.
 -->
 
 ---

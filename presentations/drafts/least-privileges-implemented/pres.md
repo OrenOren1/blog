@@ -48,23 +48,27 @@ SecretsProdRW, denies, PT4H, zero standing assignments)
 <!-- SLIDE: table title="🚨 Break-Glass" -->
 (see slides.md — 3 ordered rules: on-call auto 7d / SuperAdmins auto 7d / Platform-Team-approved 6h)
 
-<!-- SLIDE: diagram type=deployment title="🔗 Auth Chain 1 — AWS" -->
+<!-- SLIDE: diagram type=deployment title="🔗 Auth Chains — AWS + MongoDB" -->
 ```mermaid
 flowchart LR
   DEV["👷 Developer"]
   OKTA["🔑 Okta"]
   ENT["🎫 Entitle"]
   IDC["🏛️ IdC ssoins-7223b0…"]
-  PROD[("☁️ prod 270743961673")]
+  PROD[("☁️ AWS prod")]
+  CONSOLE["🖥️ Atlas console<br/>(SAML federation)"]
+  MDB[("🍃 Atlas DBs<br/>prod + prod-eu")]
 
   DEV -->|SSO| OKTA
-  OKTA -->|"standing: 8 groups → RnDDeveloper"| IDC
-  OKTA -->|"R&D → RdsDbReadonly (prod+staging)"| IDC
-  DEV -->|"request bundle"| ENT
-  ENT -->|"grant window: create AccountAssignment Extended-PS"| IDC
+  OKTA -->|"standing: 8 groups → RnDDeveloper + RdsDbReadonly"| IDC
   IDC -->|"aws sso login"| PROD
+  OKTA -->|"standing: role mappings — staging RW / prod RO"| CONSOLE
+  DEV -->|"request bundle"| ENT
+  ENT -->|"JIT: attach Extended-PS AccountAssignment"| IDC
+  ENT -->|"JIT: mint temp DB user (readWriteAnyDatabase)"| MDB
+  MDB -.->|"mongosh / Compass, Entitle-issued creds"| DEV
 ```
-> JIT = temporary IdC account assignment; expiry deletes it.
+> AWS JIT = temporary IdC account assignment; Mongo JIT = temporary Atlas DB user. Both vanish at expiry.
 
 <!-- SLIDE: table title="🔗 Auth Chain 2 — Atlas Console" -->
 (see slides.md — federation IDs, domain restriction, role-mapping matrix staging-RW/prod-RO,
