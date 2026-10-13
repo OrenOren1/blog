@@ -49,6 +49,14 @@ src/content/blog/
 - **TypeScript** — Type safety
 - **GitHub Pages** — Hosting
 
+## Certifications
+
+[![Codex Deployment Practitioner](https://img.shields.io/badge/OpenAI%20Partner%20Network-Codex%20Deployment%20Practitioner-412991?style=for-the-badge&logo=openai&logoColor=white)](https://oaipartnernetwork.credential.net/bcb685c4-f624-41b3-b57b-3bd064133139)
+
+**Codex Deployment Practitioner** — OpenAI Partner Network  
+Issued September 2026 · Expires September 2027  
+🔗 [Verify credential](https://oaipartnernetwork.credential.net/bcb685c4-f624-41b3-b57b-3bd064133139)
+
 ## Deployment
 
 Auto-deploys to GitHub Pages on push to `main` via GitHub Actions.
