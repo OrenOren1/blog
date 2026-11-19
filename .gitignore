@@ -27,3 +27,8 @@ scripts/image-prompt-archive-smoke.md
 # IDE
 .vscode/
 .idea/
+
+# /presentation.* working state — not committed
+presentations/**/.clarify-state.json
+presentations/**/slides.md.bak
+presentations/**/.preview/
