@@ -438,7 +438,7 @@ import { SITE } from "@lib/site";
 
   /* Content */
   .content {
-    padding: 4mm 9mm 3mm;
+    padding: 4mm 9mm 1mm;
     display: flex;
     flex-direction: column;
   }
@@ -455,7 +455,7 @@ import { SITE } from "@lib/site";
     color: var(--ink-soft);
     font-weight: 400;
   }
-  .r-section { margin-top: 6px; }
+  .r-section { margin-top: 3px; }
   .section-head {
     font-size: 10pt;
     font-weight: 800;
@@ -466,7 +466,7 @@ import { SITE } from "@lib/site";
   .section-rule {
     height: 1px;
     background: var(--rule);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
   .profile-text {
     font-size: 8.5pt;
@@ -487,7 +487,7 @@ import { SITE } from "@lib/site";
     display: grid;
     grid-template-columns: 80px 1fr;
     gap: 16px;
-    padding: 3px 0;
+    padding: 2px 0;
     break-inside: avoid;
   }
   .exp-row + .exp-row { border-top: 1px dotted var(--rule); }
@@ -497,7 +497,7 @@ import { SITE } from "@lib/site";
     color: var(--ink);
     line-height: 1.35;
   }
-  .exp-body { font-size: 8.5pt; color: var(--ink-soft); line-height: 1.35; }
+  .exp-body { font-size: 8.5pt; color: var(--ink-soft); line-height: 1.28; }
   .exp-body .co {
     display: block;
     font-size: 9pt;
@@ -514,7 +514,7 @@ import { SITE } from "@lib/site";
     font-weight: 500;
     margin-bottom: 2px;
   }
-  .exp-body p { margin: 0; font-size: 8.5pt; line-height: 1.35; }
+  .exp-body p { margin: 0; font-size: 8.5pt; line-height: 1.28; }
 
   .client-list {
     display: flex;
@@ -548,8 +548,9 @@ import { SITE } from "@lib/site";
     display: grid;
     grid-template-columns: 80px 1fr;
     gap: 16px;
-    padding: 1px 0;
+    padding: 0;
     font-size: 8.5pt;
+    line-height: 1.2;
   }
 
   .projects-grid {
@@ -561,7 +562,7 @@ import { SITE } from "@lib/site";
     font-size: 8pt;
     line-height: 1.28;
     color: var(--ink-soft);
-    padding: 2px 6px;
+    padding: 1px 6px;
     border-left: 2px solid var(--accent);
     background: rgba(20, 82, 78, 0.03);
   }
