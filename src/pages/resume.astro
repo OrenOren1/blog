@@ -190,42 +190,57 @@ import { SITE } from "@lib/site";
 <style is:global>
   @media print {
     @page { size: A4; margin: 0; }
-    .site-header, .site-footer, .toolbar,
-    .cb-mode-banner, .lightbox, astro-dev-toolbar { display: none !important; }
-    body > svg, body > script { display: none !important; }
-    html, body {
-      background: #fff !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      height: 297mm !important;
-      overflow: hidden !important;
-    }
-    main {
-      padding: 0 !important;
-      margin: 0 !important;
-      height: 297mm !important;
-      overflow: hidden !important;
-    }
-    .resume-shell {
-      padding: 0 !important;
-      background: #fff !important;
-      min-height: 0 !important;
-      height: 297mm !important;
-      max-height: 297mm !important;
-      overflow: hidden !important;
+
+    /* Nothing but the sheet exists on paper. */
+    body > *:not(main) { display: none !important; }
+    astro-dev-toolbar { display: none !important; }
+    .toolbar { display: none !important; }
+
+    /* No ancestor may declare a height. A box of exactly 297mm rounds up past
+       the printable area and spills a blank second page — that was the bug.
+       Everything above the sheet is auto-height with zero margin/padding. */
+    html, body, main, .resume-shell {
       display: block !important;
-    }
-    #resume-sheet {
-      width: 210mm !important;
-      height: 297mm !important;
-      max-height: 297mm !important;
+      background: #fff !important;
+      width: auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
       margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      overflow: visible !important;
+      float: none !important;
+    }
+
+    /* The sheet is the only sized box. In print, 1vh/1vw are 1% of the actual
+       page box — so this fits whatever paper the print dialog picks (A4 or
+       Letter), and the 4px shaved off absorbs sub-pixel rounding. */
+    #resume-sheet {
+      width: 100vw !important;
+      height: calc(100vh - 4px) !important;
+      max-height: calc(100vh - 4px) !important;
+      margin: 0 !important;
+      padding: 0 !important;
       box-shadow: none !important;
       overflow: hidden !important;
-      page-break-inside: avoid !important;
+      aspect-ratio: auto !important;
       break-inside: avoid !important;
+      break-after: avoid !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Nothing inside may request a break, and no trailing margin escapes. */
+    #resume-sheet * {
+      break-before: avoid !important;
+      break-after: avoid !important;
+      page-break-before: avoid !important;
       page-break-after: avoid !important;
     }
+    #resume-sheet > *:last-child { margin-bottom: 0 !important; }
   }
 </style>
 
@@ -603,13 +618,7 @@ import { SITE } from "@lib/site";
       display: block;
     }
     .toolbar { display: none !important; }
-    .sheet {
-      width: 210mm;
-      height: 297mm;
-      aspect-ratio: auto;
-      box-shadow: none;
-      margin: 0;
-    }
+    /* Sizing/positioning of the sheet lives in the global print block above. */
     /* Reduced vertical padding to fit exactly one A4 page (kept horizontal 9mm) */
     .content { padding: 4mm 9mm 3mm !important; }
     .r-rail { padding: 5mm 7mm !important; }
