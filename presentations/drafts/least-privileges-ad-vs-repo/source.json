@@ -1,0 +1,242 @@
+{
+  "source_type": "hybrid",
+  "slug": "least-privileges-ad-vs-repo",
+  "title_working": "Sentra Least-Privileges — Status & System Tour (5 SaaS systems)",
+  "systems": [
+    {
+      "name": "Okta",
+      "role": "Workforce identity provider (IdP). Authenticates humans; emits group claims downstream.",
+      "managed_by": "sentra-least-privileges TF · modules/okta/",
+      "tf_auth": "Okta service app `Crossplane` (OAuth client `0oa13mcky9z2aeC9m698`) + private JWK, scoped to apps/groups/policies/roles/appGrants/users.* manage",
+      "human_auth": "User → sentrasec.okta.com (SAML/SSO)",
+      "current_state": "shipped — 3 apps live (Atlas Workforce OIDC, Entitle SAML SSO, Entitle API Services); JIT group db-prod-readwrite-jit adopted by Entitle"
+    },
+    {
+      "name": "MongoDB Atlas",
+      "role": "Database access plane — provisions Workforce OIDC IdP + Okta-group → Atlas-role mappings for human mongosh OIDC.",
+      "managed_by": "sentra-least-privileges TF · modules/atlas/ (federation.tf, role_mappings.tf)",
+      "tf_auth": "Atlas Admin API key (ORG_OWNER, federation-scoped) — ~/sentra/.atlas-federation-apikey.json",
+      "human_auth": "mongosh OIDC via Okta group claim (no password)",
+      "current_state": "shipped — Workforce OIDC live in prod / prod-eu / demo; service-pod path (stored Atlas passwords + Reflector/ESO) still lives in sentra-infrastructure (out of this repo)"
+    },
+    {
+      "name": "AWS (IAM Identity Center)",
+      "role": "Cloud access plane — IdC PermissionSets that grant RDS IAM-auth (rds-db:connect) for humans and CI.",
+      "managed_by": "sentra-least-privileges TF · modules/aws-identity-center/",
+      "tf_auth": "GHA OIDC → arn:aws:iam::204074546626:role/CrossplaneIdentityCenterAdmin (role name historical; trust extended to GHA OIDC + IRSA from platform-tools EKS + AWS SSO humans)",
+      "human_auth": "aws sso login --profile {prod,staging,platform-tools,demo} → IdC → temporary IAM creds with rds-db:connect",
+      "current_state": "shipped — RdsDb{Admin,Readwrite,Readonly} PSes + inline policies + AccountAssignments live; PR #7 absorbs Crossplane-reconciler tag drift"
+    },
+    {
+      "name": "PagerDuty",
+      "role": "On-call schedule + per-service escalation policies — feeds break-glass auto-approval (Entitle workflow auto-approves for on-call under 1h) and incident alerts.",
+      "managed_by": "Split: Crossplane provider-pagerduty on platform-tools EKS (Schedules + ScheduleLayers + ScheduleOverrides only, ADR-009) + Pulumi sentra-infrastructure (pagerduty_provision/, ~80 PD Services + escalation-policy bindings, Pulumi.pagerduty-provision.yaml). NOT in sentra-least-privileges TF repo.",
+      "tf_auth": "(N/A — not TF) Crossplane uses provider-pagerduty Secret on platform-tools; Pulumi uses PD API token (.pager-duty-token).",
+      "human_auth": "PagerDuty SSO (separate; not via Okta in this stack)",
+      "current_state": "split-managed today. ADR-009 scopes Crossplane only to on-call schedule surface — PD Services / Integrations / Teams stay manual in PD UI or via Pulumi. Open item: rationalise the two paths."
+    },
+    {
+      "name": "Entitle (BeyondTrust)",
+      "role": "Request/approval brain — Slack-driven JIT bundles that push time-bound grants into Okta + Atlas + AWS IdC.",
+      "managed_by": "sentra-least-privileges TF · modules/entitle/",
+      "tf_auth": "Three creds — Entitle API PAT (ENTITLE_API_KEY, ~/sentra/beyondtrust/.entitle-pat) + Slack bot token (ENTITLE_SLACK_BOT_TOKEN) + Okta JWK for Entitle's API Services app (ENTITLE_OKTA_PRIVATE_JWK). Endpoint: api.us.entitle.io",
+      "human_auth": "Entitle SAML SSO via Okta (Entitle SSO Okta app, slide-9 territory)",
+      "current_state": "shipped — DB Access Approval + Break-glass workflows live; bundles db-rw + prod-rw enabled; PR #11 (in flight) finalises db-rw allowedDurations"
+    }
+  ],
+  "systems_off_repo": [
+    {"name": "PagerDuty (Schedules)", "where": "argocd repo + Crossplane on platform-tools EKS", "adr": "ADR-009"},
+    {"name": "PagerDuty (Services + escalation policies)", "where": "sentra-infrastructure/pagerduty_provision/ (Pulumi)", "adr": "—"},
+    {"name": "Service-pod credentials (Atlas/RDS passwords)", "where": "sentra-infrastructure (Pulumi + ESO + Reflector + IRSA)", "adr": "ADR-001 + ADR-008"}
+  ],
+  "sources": {
+    "ad": {
+      "path": "/Users/oren.sultan/blog/presentations/least-privileges-high-level/AD.md",
+      "name": "Sentra Zero-Trust Credential & Access Management Platform — AD",
+      "version": "1.1.0",
+      "ad_date": "2026-05-28",
+      "views_present": ["context", "functional", "information", "deployment", "operational"],
+      "perspectives_per_view": {
+        "context":     ["security", "regulation"],
+        "functional":  ["security", "evolution"],
+        "information": ["security", "regulation"],
+        "deployment":  ["security", "availability"],
+        "operational": ["security", "availability", "regulation"]
+      },
+      "adrs_referenced": [
+        "ADR-001 (Foundation, §Pattern C reinstated)",
+        "ADR-001-Amendment-2026-05-25 (Crossplane v2)",
+        "ADR-002 (GitOps)",
+        "ADR-006 (Observability)",
+        "ADR-007 (IaC Governance, amended)",
+        "ADR-008 (Service Auth)",
+        "ADR-009 (PagerDuty Crossplane plane)",
+        "ADR-003 (Teleport Break-Glass — superseded 2026-05-28)"
+      ],
+      "stakeholders": [
+        "Platform Engineering / DevOps lead (decision owner)",
+        "Security team (approver)",
+        "Engineering Manager (R&D, consulted)",
+        "Service owners — Application, Access, Dagster (consulted)",
+        "Data Engineering lead (consulted)",
+        "Compliance / SOC2 owner (consulted)",
+        "On-call engineers (informed)"
+      ],
+      "designed_intent_signals": [
+        "Crossplane v2 + Atlas K8s Operator on platform-tools as the access-control plane (ADR-001 Amendment 2026-05-25)",
+        "Pulumi (Python) for cloud IaC; ESO for secret delivery to service pods",
+        "GHA cron + Okta sentra-db-admins for break-glass (Pattern C reinstated; ADR-003 Teleport superseded)",
+        "Atlas Identity Federation deferred — humans via Atlas SAML, services via stored passwords for v1 (ADR-008)"
+      ]
+    },
+    "repo": {
+      "name": "sentraio/sentra-least-privileges",
+      "url": "https://github.com/sentraio/sentra-least-privileges",
+      "kind": "Native Terraform monorepo — single root module, single S3-backed state, one apply across 4 SaaS/IaaS providers. No Kubernetes, no Helm, no Crossplane provider in the modules.",
+      "providers": [
+        {"name": "hashicorp/aws ~> 5.60",        "module": "modules/identity-center/", "resources": "IdC PermissionSets (RdsDb-{Admin,Readonly,Readwrite}), inline IAM policies, AccountAssignments. Uses data sources to look up SCIM-provisioned IdC groups by display name."},
+        {"name": "mongodb/mongodbatlas ~> 2.0",  "module": "modules/mongodb/",         "resources": "Workforce OIDC IdP (federation.tf), org config, Okta-group → Atlas-role mappings (role_mappings.tf)."},
+        {"name": "okta/okta ~> 4.13",            "module": "modules/okta/",            "resources": "Three Okta apps — apps_atlas_workforce.tf (Atlas OIDC), apps_entitle_api.tf (API Services), apps_entitle_sso.tf (SAML SSO) — plus db-prod-readwrite-jit group."},
+        {"name": "entitleio/entitle ~> 3.0",     "module": "modules/entitle/",         "resources": "Workflows (DB Access Approval, Break-glass), integrations (AWS, Atlas UI, Okta, Slack), bundles (db-rw, prod-rw). Per-resource wait scripts (wait-for-entitle-resource.sh, wait-for-entitle-role.sh) replace timer-based dependencies."}
+      ],
+      "providers_explicitly_absent": [
+        "crossplane.io — no provider declared, no CR usage",
+        "kubernetes — no provider, no kube-context dependency",
+        "helm — no Helm provider, no chart application logic",
+        "pulumi — out of repo entirely; AD's Pulumi+ESO intent doesn't apply to this surface"
+      ],
+      "crossplane_mentions_in_repo": [
+        "IAM role name CrossplaneIdentityCenterAdmin — historical; still trusts GHA OIDC (CI) + IRSA from sentra-platform-tools-eks (other Crossplane workloads) + AWS SSO Admin humans",
+        "PR #7 — ignore_changes on tags to absorb residue from a prior Crossplane reconciler that used to manage these IdC PSes",
+        "charts/aws-permissionsets and charts/mongodb-atlas-access-roles — flagged legacy in README, superseded by the native TF modules above; the argocd ApplicationSet that targeted these charts is the leftover GitOps surface"
+      ],
+      "terragrunt_status": "modules/identity-center/terragrunt.hcl exists as a stub referencing a non-existent ../terragrunt/terragrunt.hcl umbrella. Today the actual apply uses the root main.tf + providers.tf — terragrunt is aspirational.",
+      "legacy": "charts/ — Crossplane Helm charts (aws-permissionsets, mongodb-atlas-access-roles). README marks them superseded; argocd ApplicationSet still points at them and is the remaining cleanup surface.",
+      "ci": {
+        "workflow": ".github/workflows/terraform.yml",
+        "trigger": "PR → fmt/init/validate/plan; push to main → apply -auto-approve",
+        "auth": "GHA OIDC → arn:aws:iam::204074546626:role/CrossplaneIdentityCenterAdmin (role name historical; trust now extended to GHA OIDC + IRSA + AWS SSO humans)"
+      },
+      "state": "s3://sentra-tfstate-975049970943/terraform.tfstate in us-east-1, native S3 locking (TF 1.10+, dropped the cross-account DynamoDB lock table in PR-history pre-#1)",
+      "recent_activity": {
+        "window": "2026-06-29 → 2026-06-30",
+        "merged_prs": 10,
+        "open_prs": 1,
+        "highlights": [
+          "PR #1  feat(okta): assign Read-only Administrator to Entitle service app",
+          "PR #2  feat(entitle): enable prod_rw bundle",
+          "PR #3  fix(entitle): adopt JIT group as entitle_resource_synced + prod_rw bundle",
+          "PR #4  feat(entitle): wire prod_rw bundle via role_synced + grant Okta SUPER_ADMIN",
+          "PR #5  feat(okta): add DevOps group to Entitle SSO assignments",
+          "PR #6  feat(entitle): harden destroy/apply — explicit deps + sync-poll, no timers",
+          "PR #7  fix(identity-center): ignore tag drift on PSes (Crossplane reconciler residue)",
+          "PR #8  feat(okta): add DevOpsFreelancers to Entitle SSO assignments",
+          "PR #9  fix(okta): point Entitle SAML app at the new BeyondTrust ACS",
+          "PR #10 fix(okta): SAML ACS is api.us.entitle.io, not app.beyondtrust.io",
+          "PR #11 (open) fix(entitle): set db-rw bundle allowedDurations (drop ignore_changes)"
+        ]
+      },
+      "what_actually_shipped_signals": [
+        "Native Terraform across 4 SaaS providers — no Crossplane / Helm / K8s anywhere in the modules",
+        "Entitle (BeyondTrust) is a first-class actor: workflows + integrations + bundles + JIT group adopted into TF state",
+        "Atlas Workforce OIDC federation built directly in mongodb/federation.tf — Atlas Identity Federation is no longer deferred for humans",
+        "AWS IdC PermissionSets owned by identity-center/permission_sets.tf; the prior Crossplane reconciler is gone (PR #7 absorbs its residue)",
+        "GHA OIDC for CI apply; same IAM role still trusts the platform-tools EKS IRSA for non-least-privileges Crossplane workloads — i.e. Crossplane lives elsewhere in the org, just not in this repo"
+      ]
+    },
+    "session": {
+      "path": "/Users/oren.sultan/sentra/sentra-db-permissions/HANDOFF-2026-05-28.md",
+      "date": "2026-05-28",
+      "topic": "Unified Helm chart design for db-permissions (the path NOT taken — superseded by sentra-least-privileges TF monorepo)",
+      "useful_as": "Shows the design churn — single Helm chart approach was iterated before the team converged on the native TF monorepo"
+    },
+    "branches": null,
+    "topic": null
+  },
+  "narrative_arc": {
+    "spine": "The AD designed an access-control plane built on Crossplane v2 + Atlas K8s Operator + Pulumi/ESO. The repo (sentra-least-privileges) shipped something materially different: a single-state Terraform monorepo that talks directly to the four SaaS / IaaS control planes (AWS IdC, Atlas, Okta, Entitle) — zero Crossplane, zero Helm, zero K8s. Walk the four sub-system responsibilities (Credential Delivery, Access Governance, DX, Platform Ops) and contrast Designed vs Shipped, with the why for each divergence.",
+    "tension": "Designed (AD.md): Crossplane plane + Atlas Operator + Pulumi+ESO. Shipped (sentra-least-privileges): native TF monorepo with no K8s in the loop. The only Crossplane residue is a historical IAM role name, tag drift on PSes (PR #7), and a legacy charts/ dir flagged superseded.",
+    "key_divergences": [
+      {"area": "Access-control plane", "designed": "Crossplane v2 on platform-tools owns Atlas roles + AWS IdC PSes", "shipped": "TF modules own them directly; charts/ is legacy", "why": "Crossplane provider-aws-sso-admin + provider-mongodbatlas couldn't express the federation IdP + role-mapping shape; native TF maps 1:1 to the upstream APIs."},
+      {"area": "Atlas human SSO", "designed": "Atlas Identity Federation deferred (ADR-008) — humans on SAML, services on stored pw", "shipped": "Atlas Workforce OIDC federation provisioned in mongodb/federation.tf + role_mappings.tf", "why": "OIDC federation became viable in Atlas; mongosh OIDC + Okta groups claim wired end-to-end."},
+      {"area": "JIT / break-glass", "designed": "GHA cron → Okta sentra-db-admins → Atlas SAML + IdC PS (Pattern C, ADR-001)", "shipped": "Entitle (BeyondTrust) workflows + bundles + JIT group adopted by TF — DB Access Approval + Break-glass workflows live", "why": "Entitle gives a per-request approval/audit trail + Slack flow that the GHA-cron pattern couldn't; the GHA cron is the fallback when Entitle is down."},
+      {"area": "IaC", "designed": "Pulumi (Python) for cloud, ESO for secret delivery", "shipped": "Native Terraform; no Pulumi / no ESO in this repo (those live in sentra-infrastructure for the service-pod credential path, which is out of scope here)", "why": "This repo only owns the human-access + role-shape surface; service-pod credentials remain Pulumi+ESO in sentra-infrastructure."}
+    ]
+  },
+  "scope": {
+    "dominant": "security",
+    "secondary": "devops/platform",
+    "label": "mixed (security ≈ devops within 20%)",
+    "evidence": [
+      {"source": "ad",   "keywords": ["least-privilege", "zero-trust", "RBAC", "SOC2 CC6.x", "IAM", "OIDC", "SAML", "audit"], "hits": 28, "weight": 1.0},
+      {"source": "ad",   "keywords": ["Crossplane", "ArgoCD", "GitOps", "ApplicationSet", "Pulumi", "Helm", "Atlas Operator"], "hits": 22, "weight": 1.0},
+      {"source": "repo", "keywords": ["Okta", "Atlas Workforce OIDC", "IdC PermissionSet", "Entitle", "BeyondTrust", "JIT", "SAML ACS", "role_mappings"], "hits": 18, "weight": 0.7},
+      {"source": "repo", "keywords": ["Terraform", "GHA OIDC", "S3 backend", "data sources", "providers.tf"], "hits": 12, "weight": 0.7},
+      {"source": "repo", "keywords": ["Crossplane provider", "kubernetes provider", "helm provider"], "hits": 0, "weight": 0.7, "note": "Explicitly absent — providers.tf has only aws/entitle/mongodbatlas/okta"}
+    ]
+  },
+  "audience": "devops-sre",
+  "audience_hint": "DevOps / SRE / Platform peers — operators of the platform, GitOps + IaC literacy, interested in on-call/break-glass workflow",
+  "talk": {
+    "minutes": 20,
+    "target_slides": 13,
+    "length_preset": "focused"
+  },
+  "about_me": {
+    "include": true,
+    "placement": "after-title",
+    "name": "Oren Sultan",
+    "title": "Senior DevOps / Platform Engineer",
+    "company": "Tikal",
+    "years": 15,
+    "specialties": ["Kubernetes", "ArgoCD", "Crossplane", "Platform Engineering", "SRE"],
+    "logo": null
+  },
+  "theme": "seriph",
+  "transition": "slide-left",
+  "color_scheme": "dark",
+  "visual_style": "diagram-first",
+  "layout_map": {
+    "title":        "cover",
+    "about_me":     "intro",
+    "problem":      "statement",
+    "stakeholders": "two-cols",
+    "drivers":      "default",
+    "context":      "image-right",
+    "functional":   "image-right",
+    "information":  "image-right",
+    "deployment":   "image-right",
+    "operational":  "image-right",
+    "perspectives": "two-cols",
+    "ad_vs_repo":   "two-cols",
+    "risks":        "default",
+    "closing":      "end"
+  },
+  "preview": {
+    "rendered": false,
+    "confirmed_by_user": false,
+    "note": "Theme set to seriph by user pattern (matches existing least-privileges-high-level deck). Run /presentation.dev after implement to see it live."
+  },
+  "image_pipeline": {
+    "providers_available": [],
+    "storage_remote": false,
+    "mode_default": "prompts-only",
+    "note": "No GEMINI/OPENAI/IMGBB keys detected. /presentation.implement --generate will write prompts only."
+  },
+  "references_to_load": {
+    "catalog": [
+      "/Users/oren.sultan/Tikal-projects/speckit-presentation-extension/references/_catalog/viewpoints.md",
+      "/Users/oren.sultan/Tikal-projects/speckit-presentation-extension/references/_catalog/perspectives.md"
+    ],
+    "source_folders": [
+      "/Users/oren.sultan/Tikal-projects/speckit-presentation-extension/references/sources/ad-md",
+      "/Users/oren.sultan/Tikal-projects/speckit-presentation-extension/references/sources/repository"
+    ],
+    "scope_file": null,
+    "audience_file": null,
+    "fallback_note": "scopes/* and audiences/* are empty in the extension references dir — specify will use inline R&W defaults from _catalog/*."
+  },
+  "output_path": "/Users/oren.sultan/blog/presentations/drafts/least-privileges-ad-vs-repo",
+  "canonical_output_rule": "~/blog/presentations/[drafts/]<slug>/ — drafts/ because the deck is unfinished; promote to ~/blog/presentations/<slug>/ when ready",
+  "next": "/presentation.specify"
+}
