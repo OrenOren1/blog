@@ -121,8 +121,8 @@ import { SITE } from "@lib/site";
             <div class="exp-dates" data-key="mot-dates">2016 –<br>2021</div>
             <div class="exp-body">
               <span class="co" data-key="mot-co">Motorola Solutions</span>
-              <span class="role" data-key="mot-role">Integration Engineer</span>
-              <p data-key="mot-body">Integration engineering for Motorola's worldwide Wi-Fi network — switching, internal routing, TCP/IP troubleshooting across enterprise WAN/WLAN deployments. Built monitoring and control dashboards on Nsight, SolarWinds, LibreNMS. Automated daily network operations in Python and shell.</p>
+              <span class="role" data-key="mot-role">Integration Engineer · Wireless NOC Team</span>
+              <p data-key="mot-body">Wireless NOC team for Motorola's worldwide Wi-Fi network — switching, internal routing, TCP/IP troubleshooting across enterprise WAN/WLAN. Built monitoring and control dashboards on Nsight, SolarWinds, LibreNMS; automated daily network ops in Python and shell.</p>
             </div>
           </div>
         </div>
@@ -151,7 +151,7 @@ import { SITE } from "@lib/site";
         </div>
 
         <div class="r-section">
-          <div class="section-head">EDUCATION</div>
+          <div class="section-head">EDUCATION &amp; CERTIFICATIONS</div>
           <div class="section-rule"></div>
           <div class="edu-row">
             <div class="edu-yr" data-key="edu1-yr">2013 – 2017</div>
@@ -166,7 +166,22 @@ import { SITE } from "@lib/site";
               <b>DevOps Experts Academy · Tikal DevOps Bootcamp · Tikal Python · Tikal TechLead (AI-driven, ongoing)</b>
             </div>
           </div>
+          <div class="edu-row">
+            <div class="edu-yr" data-key="cert1-yr">2026</div>
+            <div class="edu-body cert" data-key="cert1-body">
+              <b>Codex Deployment Practitioner</b>
+              <span>· OpenAI</span>
+            </div>
+          </div>
+          <div class="edu-row">
+            <div class="edu-yr" data-key="cert2-yr">2026</div>
+            <div class="edu-body cert" data-key="cert2-body">
+              <b>Claude Certified Developer — Foundations</b>
+              <span>· Anthropic</span>
+            </div>
+          </div>
         </div>
+
       </div>
     </article>
   </div>
@@ -552,6 +567,7 @@ import { SITE } from "@lib/site";
   .edu-body { color: var(--ink); }
   .edu-body b { display: block; font-weight: 700; font-size: 9pt; }
   .edu-body span { color: var(--ink-soft); font-size: 8pt; }
+  .edu-body.cert b, .edu-body.cert span { display: inline; }
 
   /* Edit-mode affordance */
   .sheet[data-editing="true"] [data-key] {
@@ -597,12 +613,13 @@ import { SITE } from "@lib/site";
     /* Reduced vertical padding to fit exactly one A4 page (kept horizontal 9mm) */
     .content { padding: 4mm 9mm 3mm !important; }
     .r-rail { padding: 5mm 7mm !important; }
-    .r-section { margin-top: 6px !important; }
-    .section-rule { margin-bottom: 4px !important; }
-    .projects-grid { gap: 4px 10px !important; }
-    .project { padding: 3px 6px !important; }
-    .exp-row { padding: 3px 0 !important; }
-    .edu-row { padding: 1px 0 !important; }
+    .r-section { margin-top: 4px !important; }
+    .section-rule { margin-bottom: 3px !important; }
+    .projects-grid { gap: 3px 8px !important; }
+    .project { padding: 2px 6px !important; }
+    .exp-row { padding: 2px 0 !important; }
+    .edu-row { padding: 0 !important; line-height: 1.2 !important; }
+    .exp-body, .exp-body p { line-height: 1.28 !important; }
     .client-list { gap: 0 !important; }
     @page { size: A4; margin: 0; }
   }
