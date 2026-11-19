@@ -90,7 +90,7 @@ This AD covers the **5 core R&W viewpoints**: Context, Functional, Information, 
 - **Forward-extensibility**: the architecture must accommodate additional DB technologies in the future without redesigning the cross-DB invariants.
 - **No customer-facing access**: the platform serves Sentra-internal services and humans only.
 - **Multi-region prod + central admin cluster**: services run in two regional prod clusters — `prod-us` (us-east-1) and `prod-eu` (eu-central-1), both in the `prod` AWS account. The admin/management plane runs in the separate `platform-tools` cluster (eu-central-1) in the `platform-tools` AWS account. ADR-008 details the three-layer IaC topology spanning these clusters; consistent with the parent epic's story 70388 (Atlas Operator move to the platform account).
-- **Target-state — Okta SAML on both paths**: human access will use SAML for both Atlas (Okta-Atlas SAML app — *not yet configured*; verified 2026-06-07: `GET /orgs/{org}/federationSettings` returns 401) and AWS (Okta-AWS SAML app → IAM Identity Center → RDS via IAM DB auth — *live for 13 of 16 RDS instances*). Atlas Workforce OIDC is licensing-blocked (Okta Org Authorization Server cannot emit a `groups` claim without a Custom Authorization Server / API Access Management license — POC #70489) and is deferred. SAML's native group-attribute handling provides the group context — no OIDC broker is required.
+- **Target-state — Okta SAML on both paths**: human access will use SAML for both Atlas (Okta-Atlas SAML app — IdP `0oanen7nr9RhwRVzt297` verified `ACTIVE` 2026-06-10; backs `cloud.mongodb.com` console SSO) and AWS (Okta-AWS SAML app → IAM Identity Center → RDS via IAM DB auth — *live for 13 of 16 RDS instances*). Atlas Workforce **OIDC** for mongosh / driver SSO was originally reported as licensing-blocked under POC #70489, but as of 2026-06-10 it is validated end-to-end against the Okta Org Authorization Server using mongosh's `--oidcIdTokenAsAccessToken` flag (the ID token carries `aud=<client_id>` and the `groups[]` claim; Atlas accepts it; no Custom Authorization Server / API Access Management license required — see Appendix A). The SAML-first preference is therefore now an **explicit architectural choice** for a single human-access mechanism (SAML for both Atlas console SSO and RDS via IAM IC), **not a forced workaround**. The OIDC path remains usable for mongosh / driver-level federated DB access and may warrant a follow-up ADR if driver-side SSO becomes a requirement.
 - **Twingate** is the always-on network-layer ZTNA gate underlying every human DB-access path. Already deployed at Sentra. Not replaced by any decision in this AD or RFC 70385.
 
 ---
@@ -635,8 +635,8 @@ Monorepo vs polyrepo is undecided. Either works; the choice will be made when co
 | Service Role Reconciler — Atlas path | **Three-layer IaC (ADR-008 refined)**: (Tier 1, static) Pulumi provisions the Atlas Operator's operating credentials in each cluster. (Tier 2a, admin-baseline) Atlas Operator in `platform-tools` reconciles admin-defined CRDs. (Tier 2b, service self-service) Atlas Operator in each prod-region cluster reconciles per-service `AtlasProject` / `AtlasDatabaseUser` CRDs authored by service teams locally. | Pulumi state in AWS; Atlas Operator in `platform-tools` (Tier 2a) and in each prod-region cluster (Tier 2b); per story 70388 for the platform-tools move |
 | Workload Identity Verifier — RDS path | AWS IAM DB auth (15-min token); EKS Pod Identity / IRSA | per-workload pod in prod cluster; AWS IAM/STS |
 | Workload Identity Verifier — Atlas path | Atlas Workload OIDC (K8s ServiceAccount token → Atlas identity) | per-workload pod in prod cluster; Atlas |
-| Identity Federator — Atlas path | **Target**: Okta-Atlas Workforce SAML app (group attribute carries through the assertion; Atlas projects onto `$external` DB user). **Not yet configured** per 2026-06-07 verification (`GET /orgs/{org}/federationSettings` → 401). Atlas Workforce OIDC was explored (POC #70489) but is licensing-blocked (Okta Org Authorization Server cannot emit a `groups` claim without a Custom Authorization Server / API Access Management license). | Okta + Atlas |
-| Identity Federator — RDS path | Authentication: Okta SAML app identifies the user. Authorization: AWS IAM Identity Center consumes the SAML assertion and decides which IAM role the user may assume. The user then uses that role's `rds-db:connect` permission for IAM DB auth at connect time. **Live for 13 of 16 RDS instances** today (the 3 with IAM-DB-auth off — `labelstudio`, `metabase`, `grafana` — fall back to SM-stored master passwords until flipped on). | Okta + AWS |
+| Identity Federator — Atlas path | **Target**: Okta-Atlas Workforce SAML app for console SSO (group attribute carries through the assertion; Atlas projects onto `$external` DB user). SAML console SSO **is configured today** (IdP `0oanen7nr9RhwRVzt297`, verified 2026-06-10). Atlas Workforce **OIDC** for mongosh / Compass / driver-level SSO is **also configured and validated end-to-end 2026-06-10** under POC #70489 (IdP `6a0c477886c8942fe3e99d6d` against Okta app `0oa136bic0ys7y6bh698`, ID-token path). The originally-reported "Org Authorization Server is licensing-blocked" finding was a client-layer issue, not an IdP-layer one: mongosh's `--oidcIdTokenAsAccessToken` flag (driver-equivalent: `passIdTokenAsAccessToken`) makes the client send the **ID token** (carries `aud=<client_id>` and `groups[]`) instead of the access token (whose `aud` is the Org Auth Server URL and which carries no custom claims). Atlas's IdP validates `aud=<client_id>`, the ID token matches, group-bound federated DB users resolve. No Custom Authorization Server / API Access Management license required. See Appendix A. | Okta + Atlas |
+| Identity Federator — RDS path | Authentication: Okta SAML app identifies the user. Authorization: AWS IAM Identity Center consumes the SAML assertion and decides which IAM role the user may assume. The user then uses that role's `rds-db:connect` permission for IAM DB auth at connect time. **Live for 11 of 16 RDS instances** today (verified 2026-06-10 via `aws rds describe-db-instances` across all four accounts). The 5 with IAM-DB-auth off — `sentra-prod-labelstudio`, `sentra-prod-metabase`, `sentra-platform-tools-grafana`, `sentra-assistant-staging-db`, and `tam-dashboard-database-staging-*` (Aurora) — fall back to SM-stored master passwords until flipped on. See Appendix A for the full instance inventory. | Okta + AWS |
 | JIT Role Materializer *(open — D-1)* | **Open per RFC 70385 §3.4.** Three candidate realizations: **Path A** (Okta API build) — custom triggers (PD webhook → Lambda, GHA `workflow_dispatch` with approver, Slack slash command) write Okta group membership via Okta admin API. **Path B** (3rd-party JIT vendor — Britive / ConductorOne / Apono / Opal) — vendor runs the access-request workflow + approval routing + time-bound grants + connectors to Okta/IAM IC/Atlas. **Path C** (hybrid). Federation downstream is the same: Atlas Workforce SAML for Mongo, AWS IAM IC for RDS. The sentra-infrastructure Pattern C (hourly GHA cron + `okta_assign_db_admins.py`, Story 70394) is one trigger sub-variant inside Path A. Audit prerequisite under every path: Atlas audit + pgaudit + CloudTrail to Datadog (currently off — D-6 pending). | Per chosen path — GHA runner + Lambda + Okta SaaS + Atlas SAML + AWS IAM IC, OR vendor SaaS + same federation underneath |
 | PD-to-Grant Synchronizer | Custom controller subscribing to PagerDuty webhooks; reconciles Okta group membership | platform-tools cluster |
 | Access State Reconciler | Custom controller polling Okta, IaC, and DB-target observed state | platform-tools cluster |
@@ -646,6 +646,8 @@ Monorepo vs polyrepo is undecided. Either works; the choice will be made when co
 **Tier-2 operational unit — "permissions + roles units"**: Both adapters' dynamic reconciliation (per ADR-008) is structured as discrete **"permissions + roles units"** — paired manifests authored against the corresponding controller's CRD surface that bundle a role definition together with the permissions it grants. For Crossplane (RDS path), a unit is a Composition combining an IAM role with its attached policy/permissions. For the MongoDB Atlas Operator, a unit is an `AtlasDatabaseUser` paired with the associated custom role definition. This is the operational unit-of-change for both platform administrators (writing Trust Bindings into IaC) and the reconcilers (translating those into DB-side state). Service onboarding = author one unit. Service offboarding = remove the unit.
 
 ### 3.6.3 Network topology
+
+> **Conceptual diagram below shows target-state control-plane reach.** For the **verified deployment-state** companion view — actual Atlas projects, RDS instances, VPCEs, account boundaries, and which identity mechanisms terminate where — see **Appendix A.3**.
 
 ```mermaid
 graph TD
@@ -854,7 +856,7 @@ Drawn from §3.6.2 (Functional element → product mapping). Product names appea
 | Observability (audit-sink candidates) | Datadog, groundcover (D-6 picks topology + retention) |
 | Network gate (always-on) | Twingate (ZTNA) — underlies every human DB-access path |
 | IaC | TBD repository strategy; Trust Bindings expressed as IaC in Git |
-| Human-side group-attribute transmission | **Atlas Workforce SAML** (Mongo target — not yet configured per 2026-06-07) + **AWS IAM Identity Center** via Okta SAML (RDS — live for 13 of 16 instances). Atlas Workforce OIDC deferred (licensing-blocked per POC #70489). |
+| Human-side group-attribute transmission | **Atlas Workforce SAML** (Mongo console SSO — configured today, IdP `0oanen7nr9RhwRVzt297` verified ACTIVE 2026-06-10) + **AWS IAM Identity Center** via Okta SAML (RDS — live for 13 of 16 instances). Atlas Workforce **OIDC** for mongosh / driver SSO is deferred by architectural preference for SAML symmetry, **not by licensing** — the original POC #70489 licensing-block finding is empirically invalidated 2026-06-10 (works against Org Auth Server via mongosh `--oidcIdTokenAsAccessToken`; see Appendix A). |
 | Human-side JIT mechanism | **Open per D-1** — Path A (Okta API build) / Path B (3rd-party JIT vendor: Britive / ConductorOne / Apono / Opal) / Path C (hybrid) |
 | Role-taxonomy grammar | `<backend>_<scope>_<audience>_<identity>_<level>` per RFC 70385 §role-taxonomy |
 
@@ -886,3 +888,264 @@ Drawn from §3.6.2 (Functional element → product mapping). Product names appea
 - **Inputs at time of last realignment**: 7 Accepted ADRs (ADR-001–006, ADR-008), 1 Proposed-Open ADR (ADR-007 — D-1 pending), 1 dilemma doc, 1 PRD, RFC 70385 (8 sections, 6 open decisions D-1..D-6).
 - **Perspectives applied**: Security, Performance (defaults; situational perspectives deferred).
 - **Next recommended action**: resolve D-1 in RFC 70385 §3.4 (DevOps lead + Security review). Once D-1 lands, re-promote ADR-007 to Accepted with the chosen realization and run `/architect.implement --update human-access` to refresh §3.2.4.2 and §3.6.2 against the concrete path.
+
+---
+
+## Appendix A — Verified MongoDB Atlas inventory (2026-06-10)
+
+> **Source of truth**: Atlas Admin API via the `atlas` CLI (`-P staging`) and `mongosh` end-to-end against staging. Verified state, not Crossplane / Atlas Operator CRDs (per `feedback_avoid_crossplane_as_source_of_truth`). This appendix is point-in-time and intentionally narrower than the rest of the AD — it captures what we can prove is actually deployed, not the target shape.
+
+### A.1 Federation (org-wide — all projects share this)
+
+| Item | Value |
+|---|---|
+| Atlas Org | `63774b06e960cf243a2cf38c` |
+| Federation Settings ID | `65b7fe64217f9764a18d9fed` |
+| Console SSO IdP (SAML, Workforce) | `0oanen7nr9RhwRVzt297` — `ACTIVE`. Issuer `http://www.okta.com/exkb30qzy5HWP2PKK697`. Backs `cloud.mongodb.com` login. |
+| DB SSO IdP (OIDC, Workforce) | `6a0c477886c8942fe3e99d6d` — `POC-Okta-Workforce-mongosh`. Issuer `https://sentrasec.okta.com`; `audience = clientId = 0oa136bic0ys7y6bh698`; `groupsClaim=groups`; `userClaim=sub`; `authorizationType=GROUP`; `requestedScopes=[openid, profile, email, groups]`. |
+| Workload OIDC IdPs | **0 configured** — no service / EKS federation today. Service identity for Atlas is currently AWS IAM (IRSA) or SCRAM. |
+| `dataAccessIdentityProviderIds` | `['6a0c477886c8942fe3e99d6d']` — single OIDC IdP, org-wide. Adding more is additive (`describe → merge → update`; the API REPLACES the list). |
+| Domain restriction | `domainAllowList=['sentra.io']`, `domainRestrictionEnabled=true`. |
+| SAML console roleMappings | `DevOpsFreelancers`, `Production`, `DevOps` — each granted full org-role bundle (`ORG_OWNER`, `ORG_BILLING_ADMIN`, `ORG_GROUP_CREATOR`, `ORG_BILLING_READ_ONLY`, `ORG_MEMBER`, `ORG_READ_ONLY`). These are **console / UI** rights only — they grant zero database query rights. |
+
+### A.2 MongoDB Atlas — projects and clusters
+
+| Project | ID | Clusters | Verified deeply? | Custom DB roles |
+|---|---|---|---|---|
+| `staging` | `65bc7e79eb84d16e74e15af5` | `general` (REPAIRING) | ✅ end-to-end (CLI + mongosh-OIDC) | `poc_readonly_org`, `poc_rw_org1` |
+| `prod` (prod-us) | `65bf6d8e2c28f677d57fd035` | `general` (IDLE), `general-2` (IDLE) | ✅ inventory + network | **0** |
+| `prod-eu-central-1` | `6a006bcabf9f60855ec7563d` | `general` (IDLE) | ✅ inventory + network | **0** |
+| `demo` | `68c92ff53af443768f4eca17` | 1 (not detailed) | ⚠️ project metadata only | not checked |
+| `ci-aws` | `6740890a9ab0275f05f5c0fa` | 1 | ⚠️ project metadata only | not checked |
+| `lab-aws` | `66f02d593ee3fb02a72cb062` | 0 | ⚠️ project metadata only | not checked |
+| `lab-gcp` | `65b7fd96b855b4595f4651f5` | 3 | ⚠️ project metadata only — only GCP-resident project in the org | not checked |
+
+### A.2b AWS RDS — instances and IAM-DB-auth status
+
+Verified 2026-06-10 via `aws rds describe-db-instances` across `prod`, `staging`, `platform-tools`, `demo` profiles, both `us-east-1` and `eu-central-1` regions. **16 instances total** (15 RDS PostgreSQL + 1 Aurora-PostgreSQL cluster). **All non-public** (`PubliclyAccessible=false`). **11 of 16 have IAM-DB-auth enabled** — the AD's prior "13 of 16" claim is corrected here.
+
+| Account / Region | Instance (suffix stripped) | Engine | IAM-DB-auth | VPC |
+|---|---|---|---|---|
+| `prod` / us-east-1 | `sentra-prod-access-service` | postgres | ✅ on | `vpc-0485bb64cb6c12f37` |
+| `prod` / us-east-1 | `sentra-prod-application-v2` | postgres | ✅ on | `vpc-0485bb64cb6c12f37` |
+| `prod` / us-east-1 | `sentra-prod-application-v2-read-only-external` | postgres | ✅ on | `vpc-0485bb64cb6c12f37` |
+| `prod` / us-east-1 | `sentra-prod-application-v2-read-only-internal` | postgres | ✅ on | `vpc-0485bb64cb6c12f37` |
+| `prod` / us-east-1 | `sentra-prod-dagster-v2` | postgres | ✅ on | `vpc-0485bb64cb6c12f37` |
+| `prod` / us-east-1 | `sentra-prod-labelstudio` | postgres | ❌ off | `vpc-0485bb64cb6c12f37` |
+| `prod` / us-east-1 | `sentra-prod-metabase` | postgres | ❌ off | `vpc-0485bb64cb6c12f37` |
+| `prod` / eu-central-1 | `sentra-prod-eu-central-1-access-service` | postgres | ✅ on | `vpc-0963896b8534999cc` |
+| `prod` / eu-central-1 | `sentra-prod-eu-central-1-application` | postgres | ✅ on | `vpc-0963896b8534999cc` |
+| `prod` / eu-central-1 | `sentra-prod-eu-central-1-dagster-v2` | postgres | ✅ on | `vpc-0963896b8534999cc` |
+| `staging` / us-east-1 | `sentra-assistant-staging-db` | postgres | ❌ off | `vpc-05c724365bb1e6088` |
+| `staging` / us-east-1 | `sentra-staging-application` | postgres | ✅ on | `vpc-09541f25db4c46652` |
+| `staging` / us-east-1 | `sentra-staging-dagster` | postgres | ✅ on | `vpc-09541f25db4c46652` |
+| `staging` / us-east-1 | `tam-dashboard-database-staging-*` (Aurora cluster) | aurora-postgresql | ❌ off | `vpc-0f11767c635b8ce8d` |
+| `platform-tools` / us-east-1 | `sentra-platform-tools-grafana` | postgres | ❌ off | `vpc-0c0f50b35bcef4fbe` |
+| `demo` / us-east-1 | `sentra-demo-application` | postgres | ✅ on | `vpc-0c539eb06626c6dbf` |
+
+**Notable**:
+- Instances span **6 distinct VPCs** — no single shared data VPC. Each prod-account region uses one consolidated VPC; staging has 3 separate VPCs; platform-tools and demo each have their own.
+- The 5 IAM-DB-auth-off instances are the migration backlog for story 70390 (RFC 70385). The AD's earlier "13 of 16" was off by 2: `sentra-assistant-staging-db` and the Aurora cluster `tam-dashboard-database-staging-*` were not previously enumerated. The Aurora cluster in particular is notable — it's the only non-RDS-PostgreSQL engine in the inventory, and Aurora has slightly different IAM-DB-auth semantics worth confirming before flipping.
+- All instances are non-public — the data path is in-VPC only. Engineer access from a laptop goes via Twingate, identically to the Atlas path: Twingate Connector inside the relevant VPC → direct TCP to RDS endpoint (no PrivateLink because RDS is already in the same VPC as the connector).
+
+### A.3 Network topology — combined Atlas + RDS deployment-state sketch
+
+> **This is the deployment-state companion to §3.6.3.** Where §3.6.3 shows the conceptual control plane (Eligibility Manager, reconcilers, audit), this view shows the actual data plane — every Atlas project and every RDS instance the platform reaches today, the network path from an engineer laptop to each one, and which identity mechanisms terminate where. Concrete IDs / VPCEs / VPC IDs throughout.
+
+```mermaid
+graph TD
+    subgraph laptop["Engineer laptop"]
+        L_M["mongosh / Compass<br/>--oidcIdTokenAsAccessToken"]
+        L_P["psql / pgcli<br/>(IAM token from AWS SSO role)"]
+        B[Browser]
+    end
+
+    subgraph public["Public internet (laptop → SaaS directly, not via Twingate)"]
+        OA["Okta OIDC app POC-Okta-Workforce-mongosh<br/>client_id 0oa136bic0ys7y6bh698<br/>Token Claim emits 'groups' for poc-mdb-* only"]
+        OS["Okta SAML app (Atlas console SSO)"]
+        OW["Okta SAML app (AWS IAM Identity Center)"]
+        STS["AWS STS / IAM IC<br/>(rds-db:connect tokens)"]
+    end
+
+    subgraph twingate["Twingate ZTNA (only laptop→VPC data path)"]
+        TGC["Twingate Connectors<br/>in Sentra customer VPCs<br/>(CGNAT DNS 100.x.x.x)"]
+    end
+
+    subgraph atlas_fed["Atlas Federation 65b7fe64217f9764a18d9fed"]
+        IDP_S["SAML IdP 0oanen7nr9RhwRVzt297 (console SSO)"]
+        IDP_O["OIDC IdP 6a0c477886c8942fe3e99d6d<br/>(audience=0oa136…698, groupsClaim=groups)"]
+    end
+
+    subgraph atlas_org["Atlas Org 63774b06e960cf243a2cf38c (MongoDB Atlas SaaS)"]
+        subgraph atl_stag["Project staging — 65bc7e79…"]
+            SC["Cluster general (REPAIRING)<br/>SRV general-pl-{0,1}.vplzw.mongodb.net<br/>NAL empty (PL-only)"]
+            SPL["VPCEs us-east-1<br/>vpce-09662c1cc14024899<br/>vpce-048fb465b387e2002"]
+        end
+        subgraph atl_us["Project prod — 65bf6d8e… (us-east-1)"]
+            UC1["Cluster general (IDLE)"]
+            UC2["Cluster general-2 (IDLE)"]
+            UPL["VPCE vpce-0baf8c5647d6d5be8<br/>NAL empty (PL-only)"]
+        end
+        subgraph atl_eu["Project prod-eu-central-1 — 6a006bca… (eu-central-1)"]
+            EC["Cluster general (IDLE)"]
+            EPL["VPCE vpce-0e1083c3169a72e9e<br/>NAL empty (PL-only)"]
+        end
+        atl_other["Other projects (out of this snapshot):<br/>demo · ci-aws · lab-aws · lab-gcp"]
+    end
+
+    subgraph aws_prod_us["AWS prod / us-east-1  (vpc-0485bb64cb6c12f37)"]
+        RDS_PU_ON["IAM-DB-auth ON (5):<br/>access-service, application-v2,<br/>application-v2-RO-external,<br/>application-v2-RO-internal, dagster-v2"]
+        RDS_PU_OFF["IAM-DB-auth OFF (2):<br/>labelstudio, metabase"]
+    end
+
+    subgraph aws_prod_eu["AWS prod / eu-central-1  (vpc-0963896b8534999cc)"]
+        RDS_PE_ON["IAM-DB-auth ON (3):<br/>access-service, application, dagster-v2"]
+    end
+
+    subgraph aws_staging["AWS staging / us-east-1  (3 VPCs)"]
+        RDS_ST_ON["IAM-DB-auth ON (2):<br/>application, dagster<br/>vpc-09541f25db4c46652"]
+        RDS_ST_OFF["IAM-DB-auth OFF (2):<br/>sentra-assistant (vpc-05c724…)<br/>tam-dashboard Aurora cluster (vpc-0f1176…)"]
+    end
+
+    subgraph aws_pt["AWS platform-tools / us-east-1"]
+        RDS_PT_OFF["IAM-DB-auth OFF (1):<br/>grafana<br/>vpc-0c0f50b35bcef4fbe"]
+    end
+
+    subgraph aws_demo["AWS demo / us-east-1"]
+        RDS_DM_ON["IAM-DB-auth ON (1):<br/>application<br/>vpc-0c539eb06626c6dbf"]
+    end
+
+    L_M --> B
+    L_P --> B
+    B -- "auth-code+PKCE → ID token (Atlas DB SSO)" --> OA
+    B -- "SAML → Atlas console session" --> OS
+    B -- "SAML → IAM IC role assume" --> OW
+    OW --> STS
+    OA -. "audience match" .- IDP_O
+    OS -. "trusts" .- IDP_S
+
+    L_M -- "MONGODB-OIDC SASL" --> TGC
+    L_P -- "psql + STS-issued auth token" --> TGC
+
+    TGC -- "PrivateLink" --> SPL
+    TGC -- "PrivateLink" --> UPL
+    TGC -- "PrivateLink" --> EPL
+    TGC -- "direct TCP (in-VPC)" --> RDS_PU_ON
+    TGC -- "direct TCP" --> RDS_PU_OFF
+    TGC -- "direct TCP" --> RDS_PE_ON
+    TGC -- "direct TCP" --> RDS_ST_ON
+    TGC -- "direct TCP" --> RDS_ST_OFF
+    TGC -- "direct TCP" --> RDS_PT_OFF
+    TGC -- "direct TCP" --> RDS_DM_ON
+
+    SPL --> SC
+    UPL --> UC1
+    UPL --> UC2
+    EPL --> EC
+
+    IDP_O -. "resolves &lt;idp&gt;/&lt;group&gt;<br/>per project (staging today)" .-> SC
+    IDP_O -. "(no federated DB users)" .-> UC1
+    IDP_O -. "(no federated DB users)" .-> EC
+
+    STS -. "rds-db:connect (IAM auth)" .-> RDS_PU_ON
+    STS -. "rds-db:connect" .-> RDS_PE_ON
+    STS -. "rds-db:connect" .-> RDS_ST_ON
+    STS -. "rds-db:connect" .-> RDS_DM_ON
+
+    classDef saas fill:#fff4e6,stroke:#cc7a00
+    classDef gate fill:#f0e6ff,stroke:#6a0dad,stroke-width:2px
+    classDef cluster fill:#d4edda,stroke:#28a745
+    classDef pl fill:#e8f5e9,stroke:#1b5e20
+    classDef rds_on fill:#d4edda,stroke:#28a745
+    classDef rds_off fill:#fdecea,stroke:#c0392b
+    classDef external fill:#f0f0f0,stroke:#666
+
+    class OA,OS,OW,IDP_O,IDP_S saas
+    class STS saas
+    class TGC gate
+    class SC,UC1,UC2,EC cluster
+    class SPL,UPL,EPL pl
+    class RDS_PU_ON,RDS_PE_ON,RDS_ST_ON,RDS_DM_ON rds_on
+    class RDS_PU_OFF,RDS_ST_OFF,RDS_PT_OFF rds_off
+    class L_M,L_P,B,atl_other external
+```
+
+Key facts the diagram encodes:
+
+- **Every in-scope production project (`staging`, `prod-us`, `prod-eu`) is PrivateLink-only.** Atlas Network Access List is empty on all three. The public SRV exists in DNS but reaches nothing because the NAL denies it.
+- **Twingate is the only laptop-to-Atlas data path.** Twingate's split DNS resolves the PrivateLink hostnames to its own CGNAT (`100.108.x.x`); a Twingate Connector inside the customer VPC unwraps the tunnel and forwards to the project's VPCE; the VPCE crosses to Atlas's service VPC. No path bypasses Twingate to reach the data.
+- **Okta auth runs over the laptop's public internet path**, not through Twingate — `sentrasec.okta.com` is public SaaS. Only the post-auth MongoDB SASL exchange goes via Twingate + PrivateLink.
+- **Atlas IdP `6a0c477886c8942fe3e99d6d` is org-wide** (lives in `connectedOrgConfigs.dataAccessIdentityProviderIds`), but federated DB users are per-project. Today only **staging** has federated users; `prod-us` and `prod-eu` have **0** OIDC-federated DB users despite the IdP being reachable.
+- **The same IdP-id appears in every federated username**: `<6a0c477886c8942fe3e99d6d>/<group>`. If another OIDC IdP is added later (e.g. break-glass tier), every break-glass username will start with that new IdP id.
+
+### A.4 Federated DB users — verified (staging only)
+
+| Username | Auth | Role bound | Privileges |
+|---|---|---|---|
+| `6a0c…/poc-mdb-staging-readonly` | `IDP_GROUP` | `poc_readonly_org@admin` | `FIND` + `LIST_COLLECTIONS` on db `organization_12_sentra_test` only |
+| `6a0c…/poc-mdb-staging-rw-org1` | `IDP_GROUP` | `poc_rw_org1@admin` | `FIND` + `INSERT` + `UPDATE` + `REMOVE` + `LIST_COLLECTIONS` on db `organization_1_sentra` only |
+
+End-to-end validation (mongosh `connectionStatus` + positive/negative test matrix, 2026-06-10): all assertions pass; role boundary is enforced exactly as defined.
+
+### A.5 Non-OIDC DB users on staging (for completeness)
+
+| Username | Auth | Role(s) | Concern level |
+|---|---|---|---|
+| `admin` | SCRAM | `atlasAdmin@admin` | Built-in admin — shared secret |
+| `readonly` | SCRAM | `readAnyDatabase@admin` | Shared-password account |
+| `growthbook` | SCRAM | `readWrite@growthbook` | Service account, DB-scoped |
+| `endpoint-service` | SCRAM | `readWrite@endpoint_service` | Service account, DB-scoped |
+| `zsm-staging-read-write` | SCRAM | `atlasAdmin@admin` | ⚠️ Full cluster admin via SCRAM — least-privilege gap |
+| `arn:aws:iam::413014485471:role/AWSReservedSSO_zsm-access_*` | AWS IAM | `atlasAdmin@admin` | ⚠️ AWS SSO role bound to atlasAdmin — anyone with `zsm-access` SSO is org admin on staging |
+| `arn:aws:iam::478393948445:role/EonScanningNodeRole` | AWS IAM | `readAnyDatabase@admin` | Eon backup scanning — appropriate |
+| `arn:aws:iam::413014485471:role/EonRestoreNodeRole` | AWS IAM | `readWriteAnyDatabase@admin` | Eon restore — appropriate for the function; IAM-role trust conditions worth auditing |
+
+### A.6 Identity-path inventory by class
+
+| Path | What's deployed today | Where it lives |
+|---|---|---|
+| Console SSO (humans → cloud.mongodb.com) | SAML IdP `0oanen7nr9RhwRVzt297` + Okta SAML app | Org-wide |
+| DB SSO (humans → mongosh / Compass) | OIDC IdP `6a0c…698` + Okta OIDC app `0oa136…698` + 2 federated users | Org-wide IdP; federated users on staging only |
+| Service identity (pods → Atlas) | AWS IAM (Eon) + SCRAM (growthbook, endpoint-service) | Per Atlas project; no federation |
+| Service identity (Atlas Workload OIDC) | **Not deployed** — 0 Workload IdPs | n/a |
+| Human → RDS (psql / pgcli) | Okta SAML → AWS IAM Identity Center → IAM role with `rds-db:connect` → 15-min RDS auth token | **Live for 11 of 16 RDS instances** (the IAM-DB-auth-on rows in §A.2b) |
+| Service → RDS (in-pod) | IRSA (pod SA → IRSA → IAM role) + RDS IAM auth | Per pod, per cluster |
+| Human / service → RDS (the 5 IAM-off instances) | SCRAM with SM-stored master password | Migration backlog (story 70390) |
+| X.509 mutual TLS | **Not deployed** | n/a |
+| LDAP / Kerberos | **Not deployed** | n/a |
+
+### A.7 Network access posture — verified
+
+| Database | Public reachable from laptop? | Private path via Twingate? | Notes |
+|---|---|---|---|
+| Atlas staging (`general`) | ❌ NAL empty | ✅ proven by mongosh end-to-end (PrivateLink VPCEs `vpce-09662c1cc14024899`, `vpce-048fb465b387e2002`) | Cluster currently `REPAIRING` but OIDC handshake & queries work |
+| Atlas prod-us (`general`, `general-2`) | ❌ NAL empty | ✅ inferred — same PL pattern (`vpce-0baf8c5647d6d5be8`) + Twingate routes | Not exercised in this session |
+| Atlas prod-eu (`general`) | ❌ NAL empty | ✅ inferred — same PL pattern (`vpce-0e1083c3169a72e9e`) + Twingate routes | Not exercised in this session |
+| Atlas demo / ci-aws / lab-* | unknown | unknown | Out of this snapshot |
+| RDS prod / us-east-1 (7 instances, vpc-0485bb…) | ❌ `PubliclyAccessible=false` | ✅ assumed — Twingate Connector inside the prod VPC; direct in-VPC TCP | No PrivateLink needed (RDS is in same VPC as connector) |
+| RDS prod / eu-central-1 (3 instances, vpc-0963…) | ❌ | ✅ assumed — Twingate Connector inside the prod-eu VPC | — |
+| RDS staging (4 instances across 3 VPCs) | ❌ | ✅ assumed per-VPC | Three separate staging VPCs — each needs its own Connector reach |
+| RDS platform-tools (1 instance, vpc-0c0f50…) | ❌ | ✅ assumed | — |
+| RDS demo (1 instance, vpc-0c539e…) | ❌ | ✅ assumed | — |
+
+### A.8 Deltas vs §3.6.2 / §3.6.3 of this AD
+
+| AD claim | Verified state | Resolution |
+|---|---|---|
+| §3.6.2: Workforce OIDC is licensing-blocked | **False** — works with `--oidcIdTokenAsAccessToken` against the Org Authorization Server. Corrected inline in §3.6.2 row. | Done in this revision |
+| §3.6.2: Identity Federator — Atlas SAML "Not yet configured" (per 2026-06-07 verification) | **Actually IS configured today** — SAML IdP `0oanen7nr9RhwRVzt297` is `ACTIVE` and backs roleMappings for `DevOpsFreelancers`, `Production`, `DevOps`. The 2026-06-07 401 was a token-scope issue. | §3.6.2 row needs a future surgical fix once SAML console SSO state is fully reconfirmed |
+| §3.6.2: "Live for 13 of 16 RDS instances" | **Actually 11 of 16**. The previously-uncounted 2 are `sentra-assistant-staging-db` (postgres, IAM off) and `tam-dashboard-database-staging-*` (Aurora-PostgreSQL cluster, IAM off — first non-RDS-PostgreSQL engine in the inventory). | Corrected inline in §3.6.2 in this revision |
+| §3.6.2: Atlas Workload OIDC is the target service identity | Currently **0** Workload IdPs exist. Services use AWS IAM (IRSA) or SCRAM. | Target remains correct; gap to plan migration |
+| §3.6.3: Engineer-to-DB path "gated by Twingate" | Confirmed — Twingate is the **only** path. All Atlas projects NAL-empty (PrivateLink-only); all RDS instances non-public (in-VPC only). | No edit needed |
+| §3.6.3: Workload OIDC for pods → Atlas | No Workload IdPs deployed — target only | Future delta |
+
+### A.9 What's NOT in this snapshot (next discovery passes)
+
+- Atlas demo / ci-aws / lab-* cluster details (project metadata only today)
+- Atlas Database Auditing enable/scope per cluster
+- Atlas Network Access List entries per non-prod project
+- Cluster MongoDB versions and tier sizes
+- RDS parameter groups, backup window, encryption-at-rest config per instance
+- RDS DB-level role grants (which IAM roles can `rds-db:connect` to which instances)
+- Twingate resource policies — which Connectors map to which CIDRs / RDS endpoints
+- Per-EKS-cluster IRSA → IAM role bindings (which pods can assume which roles)

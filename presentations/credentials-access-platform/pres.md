@@ -21,7 +21,7 @@ style: "hera"
 - **One shared SCRAM secret** for every workload **and** every human — across 3× RDS + 1× MongoDB (mid-split) in `prod-us`
 - **27 K8s Secrets · ages 87–291 days · no rotation in practice** — RDS Secrets Manager Lambda exists, but downstream `kubectl` roll is manual ⇒ never done
 - **16 Atlas `ORG_OWNER`s + 9 `ORG_OWNER` API keys + 18 dormant accounts ≥12 months** — verified 2026-06-07
-- **G-4 audit attribution gap** — `pasha_boss` at 03:17 unanswerable · 3 of 16 RDS still without IAM DB auth
+- **G-4 audit attribution gap** — `pasha_boss` at 03:17 unanswerable · 5 of 16 RDS still without IAM DB auth
 - **About to multiply** — `prod-eu` going live · MongoDB splitting per-tenant · more RDS incoming → debt compounds per **region × database**
 
 > Compromised on-call laptop + one stale K8s Secret = **persistent full-org write on all customer data** — and we are weeks from shipping this same model into a second region.
@@ -98,7 +98,7 @@ graph TD
 
 **DB targets behind the boundary:**
 
-- 🐘 **RDS PostgreSQL** — 16 instances · 5 AWS accounts · 13 IAM-DB-auth on / 3 off
+- 🐘 **RDS PostgreSQL** — 16 instances · 4 AWS accounts · 11 IAM-DB-auth on / 5 off
 - 🍃 **MongoDB Atlas** — Sentra org · 3 projects · 4 clusters · 23 DB users
 - 🌍 **Regions** — `prod-us` (us-east-1) · `prod-eu` (eu-central-1) · `platform-tools` (admin)
 
@@ -166,7 +166,7 @@ Verifies workload assertion at connect-time → issues short-lived DB-bound cred
 
 ### 🌉 Identity Federator
 
-Carries Okta identity into the downstream DB auth path via SAML (active) / OIDC (future)
+Carries Okta identity into the downstream DB auth path via SAML (active) / OIDC (validated POC #70489, deferred by choice)
 
 ### ⏱️ JIT Role Materializer
 
