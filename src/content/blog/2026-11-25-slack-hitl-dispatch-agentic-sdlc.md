@@ -36,8 +36,6 @@ This is the right model for a production-grade agentic system. Agents run in rep
 
 It also creates a constraint: when a human needs to initiate a mission, there's no obvious door into the cluster.
 
-<!-- image_prompt:archive index=1 b64=RGlhZ3JhbSBvZiB0aGUgYWdlbnRpYyBTRExDIGZhY3RvcnkgbG9vcCDigJQgaXNzdWVzIGZsb3cgbGVmdCB0byByaWdodCB0aHJvdWdoIHN0YWdlczogaW50ZW50IGFwcHJvdmFsLCBmYWN0b3J5LW1pc3Npb24gKGNvZGUgKyBNUiksIGZhY3RvcnktcmV2aWV3IChjbGFzc2lmeSArIHNlbGYtaGVhbCksIG1lcmdlLiBLdWJlcm5ldGVzIGNsdXN0ZXIgYm91bmRhcnkgZHJhd24gYXJvdW5kIHRoZSBhZ2VudCBwb2RzLiBIdW1hbiBvcGVyYXRvciBzaG93biBvdXRzaWRlIHRoZSBib3VuZGFyeS4gRGFyay1ibHVlIHRlY2huaWNhbCBzdHlsZSwgY3lhbiBhY2NlbnQgZm9yIHRoZSBhZ2VudCBleGVjdXRpb24gcGF0aCwgMTY6OS4 -->
-![Diagram of the agentic SDLC factory loop — issues flow left to right through stages: intent approval, factory-mission...](https://i.ibb.co/SDDtKbLy/img-1.jpg)
 
 ---
 
