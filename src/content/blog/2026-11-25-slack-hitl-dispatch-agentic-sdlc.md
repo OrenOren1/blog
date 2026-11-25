@@ -121,7 +121,7 @@ Same project + IID always hashes to the same name. The Kubernetes API server ref
 
 One `adlc-mission-runner` Helm release per cluster. The overlay enables the EventSource and ExternalSecret for the cluster that owns the inbound endpoint. Other clusters set both to false and reference the EventSource by name.
 
-**Alternative considered**: raw manifests managed by hand or kustomize. Rejected: the EventSource enable/disable pattern and the ESO configuration are per-environment values. Helm's values overlay model handles this cleanly. Kustomize patches would work but add more files for the same result.
+**Alternative considered**: raw manifests managed by hand. Rejected: the EventSource enable/disable pattern and the ESO configuration are per-environment values. Helm's values overlay model handles this cleanly with no extra files.
 
 <!-- image_prompt:archive index=2 b64=U2V2ZW4tY29tcG9uZW50IGNoYWluIGRpYWdyYW0sIGxlZnQgdG8gcmlnaHQ6ICJTbGFzaCBjb21tYW5kIiDihpIgIkhNQUMgdmVyaWZ5IiDihpIgIkV2ZW50U291cmNlIiDihpIgIlNlbnNvciAoMyBsYXllcnMpIiDihpIgIldvcmtmbG93VGVtcGxhdGUiIOKGkiAiR2F0ZSBzdGVwIiDihpIgIk1pc3Npb24gcG9kIi4gQmVsb3cgZWFjaCBjb21wb25lbnQgc2hvdyB0aGUgYWx0ZXJuYXRpdmUgY29uc2lkZXJlZCB3aXRoIGFuIFggdGhyb3VnaCBpdC4gRGFyay1ibHVlIHRlY2huaWNhbCBzdHlsZSwgY3lhbiBhY2NlbnQgZm9yIHRoZSBjaG9zZW4gcGF0aCwgMTY6OS4 -->
 ![Seven-component chain diagram, left to right: "Slash command" → "HMAC verify" → "EventSource" → "Sensor (3 layers)" →...](https://i.ibb.co/zVFFFQzY/img-2.jpg)
