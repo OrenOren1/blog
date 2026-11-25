@@ -1,7 +1,7 @@
 ---
-title: "Dispatching the AI Factory from Slack — HITL Infrastructure for an Agentic SDLC"
-meta_title: "Slack HITL for Agentic SDLC: Argo Events, Helm, and Real Infra"
-description: "How we wired a Slack slash command to dispatch Kubernetes-native AI missions, the three bugs that swallowed it silently, and the dedup guard that prevents double-runs."
+title: "The On-Switch for Your AI Factory"
+meta_title: "HITL Dispatch for Agentic SDLC: Designing Human-in-the-Loop Kubernetes Triggers"
+description: "When AI agents run on a cluster nobody SSHes into, who pulls the trigger? The infra problem, four dispatch options, and what it takes to make a chat message a credible cluster trigger."
 date: 2026-11-25T14:00:00+00:00
 image: "/images/blog/2026/slack-hitl-dispatch/cover.png"
 categories:
@@ -11,225 +11,215 @@ tags:
   - "argo-events"
   - "argo-workflows"
   - "agentic-sdlc"
-  - "slack"
   - "hitl"
   - "platform-engineering"
   - "helm"
   - "kubernetes"
   - "event-driven"
-  - "devsecops"
 draft: false
 author: "Oren Sultan"
 ---
 
 ## TL;DR
 
-We built a `/adlc run <project>#<issue>` Slack slash command that dispatches an AI mission pod on a Kubernetes cluster without anyone touching the cluster. Getting there required splitting the platform's Argo Events ownership, writing a three-layer allowlist in the Sensor, and fixing three silent bugs that swallowed every command on the cluster. This post walks through the full infrastructure stack, the HITL alternatives we considered, and the dedup guard that keeps two eager engineers from spawning two parallel missions on the same ticket.
+An agentic SDLC platform runs AI missions on a Kubernetes cluster that no developer SSHes into. When a human needs to pull the trigger — a re-run, a selective launch, an on-call response at 2am — the platform needs a credible dispatch interface. This post covers the infra problem, the four options we evaluated, and what it takes to make a chat message a production-grade cluster trigger: signing verification, layered filtering, credentialed gate steps, and a distributed dedup lock backed by the Kubernetes API server.
 
-## Why Human-in-the-Loop Dispatch at All?
+## The Infrastructure Context
 
-An agentic SDLC pipeline automates spec → code → open MR. The intent gate approved the issue. The platform owns the cluster. Nobody needs to type anything — until they do.
+The agentic SDLC platform runs `factory-mission` pods on a Kubernetes cluster. The cluster is managed by the platform team. Developers don't have direct cluster access — they don't need it. ArgoCD owns deployments, Argo Workflows owns execution, and the platform owns the trigger path.
 
-There are real cases where a human hand on the trigger is the right call:
+This is the right architecture. It keeps the blast radius contained, makes the audit trail clean, and prevents "just SSH in and run it manually" from becoming the operational default.
 
-- **Re-runs.** The first mission ran against a stale spec. A tech lead wants a fresh pass, now.
-- **Selective launch.** Not every approved issue should auto-dispatch. Some clients gate on a human review before the AI touches their codebase.
-- **On-call response.** An incident opened an issue at 2am. Someone picks it up from their phone, types one command, and the factory takes it from there.
+It also creates a problem: when a human needs to initiate something, there's no obvious door.
 
-Each of these is HITL in the original sense: a human makes the go/no-go call, the machine executes. The question is what the trigger interface looks like. We evaluated four options before settling on Slack.
+<!-- image_prompt:archive index=1 b64=QXJjaGl0ZWN0dXJlIGRpYWdyYW0gc2hvd2luZyB0aGUgYWdlbnRpYyBTRExDIGNsdXN0ZXIgYm91bmRhcnkg4oCUIEt1YmVybmV0ZXMgY2x1c3RlciBvbiB0aGUgcmlnaHQgKEFyZ29DRCwgQXJnbyBXb3JrZmxvd3MsIG1pc3Npb24gcG9kcyksIGh1bWFuIG9wZXJhdG9ycyBvbiB0aGUgbGVmdCB3aXRoIG5vIGRpcmVjdCBTU0ggcGF0aCwgYSBsYWJlbGVkICJ0cmlnZ2VyIGludGVyZmFjZSIgYXMgdGhlIG9ubHkgaW5ib3VuZCBjaGFubmVsLiBEYXJrLWJsdWUgdGVjaG5pY2FsIHN0eWxlLCBjeWFuIGFjY2VudCBmb3IgdGhlIHRyaWdnZXIgcGF0aCwgMTY6OS4 -->
+![Architecture diagram showing the agentic SDLC cluster boundary — Kubernetes cluster on the right (ArgoCD, Argo Workfl...](https://i.ibb.co/cS3W8Ynz/img-1.jpg)
 
-<!-- image_prompt:archive index=1 b64=Rm91ci1xdWFkcmFudCBjb21wYXJpc29uIGRpYWdyYW06ICJNYW51YWwgQ0xJIiAoZGV2ZWxvcGVyIG9uIGxhcHRvcCwgb25lLW9mZiwgbm8gY2x1c3RlciBhY2Nlc3MgbmVlZGVkKSwgIkNyb24gcG9sbGluZyIgKE4tbWluIGxhdGVuY3ksIEFQSSBjb3N0IGF0IHNjYWxlKSwgIkdpdExhYiBsYWJlbCB3ZWJob29rIiAobGF0ZW5jeS1mcmVlIGJ1dCBvcGVyYXRvciBtdXN0IHRvdWNoIHRoZSB0cmFja2VyKSwgIlNsYWNrIHNsYXNoIGNvbW1hbmQiIChhc3luYywgbW9iaWxlLWZyaWVuZGx5LCBhdWRpdGFibGUpLiBHcmVlbiBzdGFyIG9uIFNsYWNrLiBEYXJrLWJsdWUgb24gd2hpdGUsIGNsZWFuIHRlY2huaWNhbCBzdHlsZS4 -->
-![Four-quadrant comparison diagram: "Manual CLI" (developer on laptop, one-off, no cluster access needed), "Cron pollin...](https://i.ibb.co/x8zgQbs4/img-1.jpg)
+## When Humans Need to Pull the Trigger
 
-### Option 1 — Manual CLI
+Full automation — issue approved, platform dispatches immediately — is the goal for steady-state operation. But there are real cases where a human hand on the trigger is the right call:
 
-`factory-mission --issue <ref>` on a developer laptop. Zero infrastructure. Works fine for a team of two where everyone has cluster access and a local dev environment. Breaks down the moment you want non-engineers in the loop, want an audit trail, or want to dispatch from a phone at 2am.
+**Re-runs.** The first mission ran against a stale spec or hit a transient API error. A tech lead wants a fresh pass, now, without waiting for the next cron cycle or touching the GitLab UI.
 
-### Option 2 — Cron Polling
+**Selective launch.** Not every approved issue should auto-dispatch. Some clients gate on a human review before the AI touches their codebase. The intent gate approved the ticket; the launch is still a human decision.
 
-A `CronWorkflow` queries the GitLab API every N minutes for approved, unstarted issues and dispatches them. Simple mental model; miserable operational reality. Up to N minutes of latency. API cost grows with backlog depth. Dedup needs a separate `argo list` query — out-of-band state that drifts. We ruled this out fast.
+**On-call response.** An incident opened a ticket at 2am. Someone picks it up from their phone, issues one command, and the factory takes it from there. The alternative — spinning up a laptop, setting up local credentials, running a CLI against a remote cluster — is not acceptable on-call UX.
 
-### Option 3 — GitLab Label Webhook
+Each of these is HITL in the original sense: the human makes the go/no-go call, the platform executes. The question is what the trigger interface looks like.
 
-A human stamps `agent-dispatch` on an issue in GitLab; an Argo Events sensor picks it up and fires. Zero polling latency. The problem: it requires a GitLab session, it's not mobile-friendly, and stamping a label is one more context switch away from wherever the conversation already is. This path works well for *automated* lifecycle transitions (the companion post on the review-lane self-heal covers exactly this), but it's friction for a human operator.
+## Four Options Considered
 
-### Option 4 (Chosen) — Slack Slash Command
+Before choosing an interface, we evaluated four dispatch architectures.
 
-`/adlc run tikalk/agentic-sdlc/my-service#42` in any approved channel. Async, mobile-first, native to where the team already works. Signed with an HMAC secret so the cluster refuses forged payloads. Auditable in the channel. Chosen.
+<!-- image_prompt:archive index=2 b64=Rm91ci1xdWFkcmFudCBjb21wYXJpc29uIGRpYWdyYW06ICJNYW51YWwgQ0xJIiAoZGV2IGxhcHRvcCwgbm8gYXVkaXQgdHJhaWwsIHJlcXVpcmVzIGNsdXN0ZXIgY3JlZHMpLCAiQ3JvbiBwb2xsaW5nIiAoTi1taW4gbGF0ZW5jeSwgQVBJIGNvc3QgYXQgc2NhbGUpLCAiVHJhY2tlciBsYWJlbCB3ZWJob29rIiAoemVybyBsYXRlbmN5LCByZXF1aXJlcyB0cmFja2VyIHNlc3Npb24sIG5vdCBtb2JpbGUtZnJpZW5kbHkpLCAiQ2hhdCBzbGFzaCBjb21tYW5kIiAoYXN5bmMsIG1vYmlsZS1maXJzdCwgYXVkaXRhYmxlLCBjaG9zZW4pLiBHcmVlbiBjaGVja21hcmsgb24gdGhlIGZvdXJ0aC4gQ2xlYW4gdGVjaG5pY2FsIGRpYWdyYW0sIG1vbm9jaHJvbWUgd2l0aCBncmVlbiBhY2NlbnQgb24gY2hvc2VuIHBhdGgu -->
+![Four-quadrant comparison diagram: "Manual CLI" (dev laptop, no audit trail, requires cluster creds), "Cron polling" (...](https://i.ibb.co/6RFhHfcb/img-2.jpg)
+
+**Manual CLI — `factory-mission --issue <ref>` on a developer laptop.** Zero infrastructure. Works for a team of two where everyone has cluster access and a local dev environment. Breaks the moment non-engineers are in the loop, audit trails matter, or someone needs to dispatch from a phone.
+
+**Cron polling — a CronWorkflow queries the API every N minutes.** Simple mental model, miserable operational reality. Up to N minutes of latency. API cost grows with backlog depth. Dedup needs a separate `argo list` query — out-of-band state that drifts. Ruled out fast.
+
+**Tracker label webhook — a human stamps `agent-dispatch` on the issue; a Sensor fires.** Zero polling latency, and the trigger is explicit and auditable in the tracker. The problem: it requires a tracker session, it's one more context switch away from wherever the conversation is, and it's not mobile-friendly. This path works well for *automated* lifecycle transitions (the companion post on the review-lane self-heal covers exactly this), but it adds friction for a human operator.
+
+**Chat slash command — `/adlc run <project>#<issue>` in an approved channel.** Async, mobile-first, native to where the team already works. Signed with an HMAC secret so the cluster refuses forged payloads. Auditable in the channel. The team operates in Slack; we chose Slack. The pattern generalizes to any chat platform that supports slash commands and signed webhooks.
 
 ---
 
 ## The Infrastructure Stack
 
-This is not a single component. It's a chain of seven, each with its own ownership and failure mode.
+A chat slash command reaching a Kubernetes pod is not a single component. It's a chain of seven, each with its own ownership and failure mode.
 
-<!-- image_prompt:archive index=1 role=cover id=slack-hitl-dispatch-cover b64=V2lkZSBhcmNoaXRlY3R1cmUgZGlhZ3JhbSBzaG93aW5nIHRoZSBmdWxsIGNoYWluOiBTbGFjayBBUEkgKmV4dGVybmFsKiDihpIgQVdTIFNlY3JldHMgTWFuYWdlciDihpIgRVNPIOKGkiBLdWJlcm5ldGVzIFNlY3JldCDihpIgU2xhY2sgRXZlbnRTb3VyY2UgKEFyZ28gRXZlbnRzKSDihpIgU2Vuc29yIChrOHMgZmlsdGVyKSDihpIgV29ya2Zsb3dUZW1wbGF0ZSBkaXNwYXRjaCAoZ2F0ZSArIG1pc3Npb24gcG9kKS4gTGFiZWxlZCBib3hlcywgQXJHb0NEIGRlcGxveW1lbnQgbGF5ZXIsIGRhcmsgYmx1ZSBiYWNrZ3JvdW5kLCBjeWFuIGFjY2VudCBsaW5lcywgMTY6OS4= -->
+### 1. The Slash Command Registration
 
-### 1. Slack API — The Slash Command
+The command is registered in the platform's chat app manifest at `adlc-argo-wf/slack/adlc-app.manifest.yaml`. It sends a signed POST to the platform's inbound endpoint. Signing is HMAC-SHA256 over the raw request body plus a timestamp — standard for Slack, implementable for any equivalent platform.
 
-A Slack slash command is registered in the Slack app manifest at `adlc-argo-wf/slack/adlc-app.manifest.yaml`. The command sends a signed POST to the platform's inbound endpoint. The signing mechanism is HMAC-SHA256 over the raw request body plus a timestamp. Argo Events verifies this only when `signingSecret` is set in the EventSource — a missing signing key means the EventSource accepts forged payloads. The chart fails template rendering if the key is omitted. This is not optional.
+The chart fails template rendering if the signing secret is omitted. This is enforced, not documented. If your EventSource renders without a signing key, the first thing that connects to your endpoint controls your cluster.
 
-### 2. AWS Secrets Manager + ESO
+### 2. Credentials — Secrets Manager + ESO
 
-The bot token and the signing secret belong to a **dedicated ADLC Slack bot** — a purpose-built agent registered in the platform's Slack workspace with its own designated dispatch channel. They live in AWS SM and are pulled by ESO into one Kubernetes Secret every hour:
+The bot token and signing secret live in AWS Secrets Manager, pulled by ESO into one Kubernetes Secret every hour:
 
 ```yaml
 slackExternalSecret:
   targetSecretName: argo-workflow-slack-bot-token
-  secretPath: dev/adlc-agent          # dedicated bot, not a shared service
+  secretPath: dev/adlc-agent
   secretProperty: SLACK_BOT_TOKEN
   extraData:
     - secretKey: signing-secret
       secretProperty: SLACK_SIGNING_SECRET
 ```
 
-No credential baked into the chart. The bot is scoped to its own channel — commands from any other channel are dropped at the Sensor's `channelIds` filter before they reach the regex or the cluster. The secret rotates independently of the chart release.
+No credential baked into the chart. The bot is scoped to its designated dispatch channel — commands from any other channel are dropped at the Sensor before they reach the regex or the cluster.
 
-### 3. Slack EventSource — The Inbound Receiver
+### 3. Argo EventSource — Inbound Receiver
 
-The `adlc-mission-runner` Helm chart owns this resource (ADR-316-amendment-2). The platform's `argo-events` chart installs only the controller and the EventBus. This split matters: a second definition of the same EventSource from a different chart would create an ArgoCD ownership conflict and a double-webhook on the GitLab project side.
+The `adlc-mission-runner` Helm chart owns the EventSource (ADR-316-amendment-2). The platform's `argo-events` chart installs only the controller and the EventBus. This split matters: a second definition of the same EventSource from a different chart creates an ArgoCD ownership conflict and double-webhook delivery.
 
-```yaml
-# charts/adlc-mission-runner/templates/slack-eventsource.yaml
-spec:
-  slack:
-    adlc-command:
-      webhook:
-        endpoint: /slack/adlc
-        method: POST
-        port: "12001"
-      token:
-        name: argo-workflow-slack-bot-token
-        key: bot-token
-      signingSecret:
-        name: argo-workflow-slack-bot-token
-        key: signing-secret
-```
-
-The EventSource is `enabled: false` by default. Exactly one chart release per cluster enables it. Other releases reference it by name in their Sensor dependencies. Without this discipline, two clusters fighting over the same Slack app endpoint corrupt each other's event streams.
+The EventSource is `enabled: false` by default. Exactly one chart release per cluster enables it. This is not a convention — it's enforced in the values schema.
 
 ### 4. The Sensor — Three-Layer Allowlist
 
-The Sensor's `kind: slack` collector is the gatekeeper. By the time an event reaches a workflow, it has cleared three filters:
+By the time an event reaches a workflow, it has cleared three filters:
 
-**Layer 1 — Channel allowlist.** `channelIds: [C123, ...]` — events from any other channel are dropped before the regex even runs.
+**Layer 1 — Channel allowlist.** `channelIds: [C123, ...]` — events from any other channel are dropped before the regex runs.
 
-**Layer 2 — Command regex.** The `REF_RE` anchored regex simultaneously filters the text and extracts the normalized `issue_ref`:
+**Layer 2 — Command regex.** An anchored regex simultaneously filters the text and extracts the normalized `issue_ref`:
 
 ```
 ^[[:space:]]*run[[:space:]]+(https://gitlab.tikalk.dev/)?(g/a|g/b)(#|/-/issues/|/-/work_items/)([0-9]+)[[:space:]]*$
 ```
 
-Group 2 is the project path. Group 4 is the issue IID. Free text — a question, an accidental command, a typo — matches nothing and dispatches nothing.
+Group 2 is the project path. Group 4 is the issue IID. Free text — a question, a typo, an accidental trigger — matches nothing and dispatches nothing.
 
-**Layer 3 — Label allowlist.** The issue must carry `agent-can-execute`. The Sensor reads this from the GitLab API in the gate step, not at event-filter time, to avoid stale label checks on cached events.
-
-<!-- image_prompt:archive index=2 b64=VGhyZWUtbGF5ZXIgZnVubmVsIGRpYWdyYW06ICJDaGFubmVsIGZpbHRlciIgYXQgdG9wIChTbGFjayBjaGFubmVsSWRzKSwgIlJlZ2V4IGFsbG93bGlzdCIgaW4gbWlkZGxlIChhbmNob3JlZCBSRUZfUkUpLCAiTGFiZWwgZ2F0ZSIgYXQgYm90dG9tIChhZ2VudC1jYW4tZXhlY3V0ZSkuIEV2ZW50cyB0aGF0IGNsZWFyIGFsbCB0aHJlZSByZWFjaCB0aGUgV29ya2Zsb3dUZW1wbGF0ZS4gRXZlbnRzIHJlamVjdGVkIGF0IGVhY2ggbGF5ZXIgd2l0aCBhIHNtYWxsIFguIE1vbm9jaHJvbWUsIGNsZWFuIHRlY2huaWNhbCBzdHlsZS4 -->
-![Three-layer funnel diagram: "Channel filter" at top (Slack channelIds), "Regex allowlist" in middle (anchored REF_RE)...](https://i.ibb.co/bjN822fj/img-2.jpg)
+**Layer 3 — Label gate.** The issue must carry `agent-can-execute`. This is checked by the gate step inside the WorkflowTemplate, not at Sensor filter time, to avoid stale checks on cached events.
 
 ### 5. WorkflowTemplate — Gate Step + Mission
 
-The WorkflowTemplate dispatch carries two parameters extracted from the regex: `issue_ref` (normalized `path#iid`) and `run_id` (the Slack `trigger_id`). It runs two sequential steps:
+The WorkflowTemplate dispatch carries two parameters: `issue_ref` (normalized `path#iid`) and `run_id`. It runs two sequential steps:
 
-**Gate step** (Itai Or's work): checks the issue's current label state against the platform's allowlist, stamps `executing`, and writes `pass` or `fail` to an output file. The `when` condition on the mission step reads that file. This is where three bugs lived before the Slack path ever ran on a real cluster:
+**Gate step** (Itai Or): checks the issue's current label state, stamps `executing`, writes `pass` or `fail`. The `when` condition on the mission step reads that file.
 
-1. `git_secret_name` declared in the gate template but never passed by the trigger. Argo rejected every Slack-path Workflow at submit with an unresolved parameter error — no pod, no log, nothing visible.
-2. `outputs.result` wired to a file path instead of stdout. `outputs.result` IS the script's stdout in Argo. The gate always returned empty, `when` never saw `pass`, the mission never ran.
-3. No `tolerations` on the gate pod. The runner nodes are tainted. The pod stayed Pending indefinitely — again, silently.
+**Mission step**: runs the full `factory-mission` workflow against the dispatched issue.
 
-Three bugs, each one enough to silently kill every command. All three found and fixed by Itai in `cbcda99`.
+Three bugs lived in this step before the dispatch path ever ran on a real cluster (see below).
 
-**Mission step**: runs the full `factory-mission` workflow against the dispatched issue, same as a GitLab-triggered run.
+### 6. Deterministic Workflow Name — Dedup Guard
 
-### 6. Deterministic Workflow Name — The Dedup Guard
-
-`generateName` meant two concurrent `/adlc run` commands on the same issue spawned two pods. ADR-316-amendment adds a deterministic name for Slack triggers:
+`generateName` meant two concurrent commands on the same issue spawned two pods. The fix is a deterministic name for chat-triggered runs:
 
 ```
 metadata.name: adlc-mission-<workspace>-slack-<sha1(issue_ref)[:10]>
 ```
 
-Same project + IID always hashes to the same name. The Kubernetes API server refuses a second `create` with `AlreadyExists`. The Sensor logs it and creates no pod. Race-free, no extra component, no new RBAC. The API server IS the distributed lock.
+Same project + IID always hashes to the same name. The Kubernetes API server refuses a second `create` with `AlreadyExists`. The Sensor logs it and starts no pod. Race-free, no extra component, no new RBAC. The API server IS the distributed lock.
 
-GitLab collectors keep `generateName` — a GitLab redelivery of the same event is not the same semantics as a concurrent human command.
+GitLab collectors keep `generateName` — a redelivery of the same event is not the same semantics as a concurrent human command.
 
 ### 7. Deployment — Helm + ArgoCD
 
-One `adlc-mission-runner` Helm release per cluster. The overlay enables `slackEventSource.enabled: true` and `slackExternalSecret.enabled: true` for the cluster that owns the inbound endpoint. Other clusters set both to false and reference the EventSource by name in their Sensor values. This keeps exactly one webhook registration alive, prevents duplicate event delivery, and makes the ownership explicit in git.
+One `adlc-mission-runner` Helm release per cluster. The overlay enables the EventSource and ExternalSecret for the cluster that owns the inbound endpoint. Other clusters set both to false and reference the EventSource by name. Exactly one webhook registration is alive at any time.
 
 ---
 
-## What Three Months of Real Cluster Runs Taught Us
+## Three Silent Bugs That Killed Every Command
 
-**Signing verification is not optional, but easy to miss.** Argo Events silently skips HMAC verification when `signingSecret` is absent. We made the chart fail on a missing `signingSecretKey`. If your EventSource renders without it, the first thing that connects to your endpoint controls your cluster.
+The gate step had three independent bugs before it ran. Each was sufficient to silently kill every dispatch:
 
-**Toleration gaps kill pods silently.** A pod stuck in Pending is invisible in the Sensor logs. The fix is mechanical — copy `runnerDefaults.tolerations` to every step — but the failure mode looks exactly like a network issue, which costs hours.
+**1. Unresolved parameter at submit.** `git_secret_name` was declared in the gate template but never passed by the trigger. Argo rejected every Slack-path Workflow at submit with an unresolved parameter error — no pod, no log, nothing visible in the channel.
 
-**Outputs in Argo are stdout, not files.** This is documented, but it burns everyone once. `outputs.result` is the script's captured stdout. A script that writes to `/tmp/gate/result` and prints nothing returns an empty result. Add a `cat /tmp/gate/result` at the end, or use an output parameter backed by the file.
+**2. `outputs.result` wired to a file path instead of stdout.** `outputs.result` IS the script's stdout in Argo. The gate always returned empty, `when` never saw `pass`, the mission never ran. The fix: `cat /tmp/gate/result` at the end of the script, or use an output parameter backed by the file.
 
-**Re-run policy is still open.** A completed Workflow object holds the name. The next `/adlc run` on the same issue is refused until the object is deleted or expires. No `ttlStrategy` is set today. This is a known gap: without it, re-triggering a finished mission requires manual `argo delete`, which defeats the purpose of the Slack interface.
+**3. No tolerations on the gate pod.** The runner nodes are tainted. The pod stayed Pending indefinitely — again, silently. The fix is mechanical: copy `runnerDefaults.tolerations` to every step template.
 
----
-
-## The Bigger Picture
-
-The platform has two HITL trigger paths now:
-
-- **GitLab label webhook**: used by the review-lane self-heal sensor. A lifecycle label stamped by the agent itself is the trigger. Zero human involvement — the platform responds to its own state machine.
-- **Slack slash command**: used for operator-driven dispatch. A human makes the call, the platform executes.
-
-Both follow the same event-driven pattern — EventSource → Sensor filter → WorkflowTemplate dispatch — but they serve different actors in the loop. Neither is a workaround. They're two distinct points on the HITL spectrum: one automated, one intentionally human-gated.
-
-The infrastructure described here is what it takes to make a Slack message a credible cluster trigger: signing verification, allowlisted channels, regex-validated payloads, credentialed gate steps, and a distributed lock backed by the Kubernetes API server. Skip any one of these and you either have a system that doesn't run, or one that runs too freely.
+Three bugs, each enough to swallow every command. All three found and fixed by Itai Or in `cbcda99`.
 
 ---
 
-*Originally published at [orensultan.com](https://orensultan.com/posts/slack-hitl-dispatch-agentic-sdlc/).*
+## What's Still Open
+
+**Re-run policy.** A completed Workflow object holds the name. The next command on the same issue is refused by `AlreadyExists` until the object is deleted or expires. No `ttlStrategy` is set today. Without it, re-triggering a finished mission requires manual `argo delete`, which defeats the purpose of a one-command interface. This is the most visible gap in the current design.
+
+**Dispatch feedback.** The Sensor logs `AlreadyExists` but sends no reply to the channel. A duplicate command is silently ignored from the operator's perspective. A `response_url` reply ("already running — see #run-id") would close this gap.
+
+---
+
+## The HITL Spectrum
+
+The platform now has two trigger paths:
+
+- **Tracker label webhook**: used by the review-lane self-heal sensor. A lifecycle label stamped by the agent itself is the trigger. Zero human involvement — the platform responds to its own state machine.
+- **Chat slash command**: used for operator-driven dispatch. A human makes the call, the platform executes.
+
+Both follow the same event-driven pattern — EventSource → Sensor filter → WorkflowTemplate dispatch — but they serve different actors. Neither is a workaround. They're two distinct points on the HITL spectrum: one automated, one intentionally human-gated.
+
+The infrastructure described here is what it takes to make a chat message a credible cluster trigger: signing verification, allowlisted channels, regex-validated payloads, credentialed gate steps, and a distributed lock backed by the Kubernetes API server. Skip any one of these and you either have a system that doesn't run, or one that runs too freely.
+
+---
+
+*Originally published at [orensultan.com](https://orensultan.com/posts/the-on-switch-for-your-ai-factory/).*
 
 *Found this useful? Follow me on [LinkedIn](https://www.linkedin.com/in/orensultan/) or [Medium](https://medium.com/@orensultan) for more on platform engineering, cloud-native infrastructure, and agentic AI/DevOps.*
 
 <!-- SOCIAL SNIPPETS -->
 
 **LinkedIn** (~1400 chars):
-We wired a Slack slash command to dispatch AI missions on Kubernetes. The command looks like this: `/adlc run my-org/my-service#42`. What happens next is seven infrastructure components working in sequence — and three bugs that swallowed every command silently until Itai found them.
+Your AI agents run on a Kubernetes cluster nobody SSHes into. Good architecture. One problem: when a human needs to pull the trigger — a re-run, a selective launch, an on-call response at 2am — there's no obvious door.
 
-The stack:
-→ Slack API → AWS Secrets Manager + ESO → Argo Events Slack EventSource → 3-layer Sensor allowlist → WorkflowTemplate gate step → mission pod → deterministic Workflow name as a distributed lock
+We built one. Here's what it took:
 
-The three silent killers on the cluster:
-1. `git_secret_name` declared but never passed → Argo refused submit with no visible error
-2. `outputs.result` wired to a file path instead of stdout → gate always returned empty, mission never ran
-3. No tolerations on the gate pod → Pending indefinitely, nothing in the logs
+→ Signing verification on the inbound webhook (the cluster refuses unsigned payloads — this is not optional)
+→ 3-layer Sensor allowlist: channel → regex → label gate
+→ Deterministic Workflow names for dedup: `sha1(issue_ref)[:10]` as the name, Kubernetes API server as the distributed lock
+→ Gate step + mission step: human approval checked at runtime, not at filter time
 
-And the dedup guard: `generateName` on a Slack trigger means two engineers typing the same command = two parallel missions. Fixed with `sha1(issue_ref)[:10]` as the Workflow name. The Kubernetes API server refuses the second create. No external lock, no extra RBAC.
+And three silent bugs that killed every command before we found them — each one enough to swallow a dispatch with no log, no pod, nothing visible.
 
-Full post on the infra, the HITL alternatives we ruled out, and what's still open:
+Full post on the infra, the four dispatch options we considered, and what's still open:
 
 [link]
 
-#AgenticAI #PlatformEngineering #Kubernetes #ArgoWorkflows #Slack #HITL #DevOps #CloudNative
+#AgenticAI #PlatformEngineering #Kubernetes #ArgoWorkflows #HITL #DevOps #CloudNative
 
 ---
 
 **X / Twitter** (280 chars):
-Wired a Slack slash command to dispatch AI missions on k8s. 7 infra components, 3 silent bugs, 1 dedup guard backed by the k8s API server.
+AI agents on k8s, cluster nobody SSHes into. When a human needs to pull the trigger, what's the interface?
 
-What it took to make a Slack message a credible cluster trigger: [link]
+4 options, 7 infra components, 3 silent bugs, 1 dedup guard backed by the k8s API server.
 
-#AgenticSDLC #Kubernetes #ArgoEvents
+[link] #AgenticSDLC #Kubernetes
 
 ---
 
 **Facebook** (~500 chars):
-Interesting engineering challenge this week: how do you make a Slack slash command a credible trigger for a Kubernetes-native AI mission? Not just "receive a webhook" — the full stack: secrets, event filtering, gate steps, and a distributed lock that prevents duplicate runs.
+Interesting infra problem: how do you give humans a trigger for an AI factory running on a Kubernetes cluster with no direct access?
 
-Wrote it up with the full architecture, the HITL alternatives we considered, and the three bugs that made every command fail silently until they were found and fixed:
+The answer involves event-driven dispatch, layered allowlists, and a distributed lock backed by the Kubernetes API server. Plus three bugs that killed every command silently until they were found. Full write-up:
 
 [link]
 
 ---
 
 **Instagram** (~180 chars):
-Slack slash command → AI mission on Kubernetes. The full infra story: 7 components, 3 silent bugs, 1 clever dedup guard. Link in bio. #DevOps #AgenticAI #Kubernetes #PlatformEngineering #ArgoEvents #Slack #HITL #CloudNative
+AI factory on Kubernetes, no SSH door. Built the on-switch: event-driven HITL dispatch with a 3-layer filter and k8s as the distributed lock. Full infra story — link in bio. #DevOps #AgenticAI #Kubernetes #PlatformEngineering #HITL #CloudNative
 
 <!-- /SOCIAL SNIPPETS -->
