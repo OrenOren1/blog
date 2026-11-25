@@ -146,6 +146,9 @@ A stalled MR in `factory-stage:validation` is the SDLC equivalent of a rogue wor
 
 The pattern I described in this post — event-driven label-based triggers, deterministic idempotency keys, Kubernetes-native dispatch — is the same pattern that powers infrastructure self-healing. It's portable. The question is whether you apply it only to your servers, or all the way up to your code review loop.
 
+<!-- image_prompt:archive index=1 b64=U3BsaXQtbGF5ZXIgaWxsdXN0cmF0aW9uIOKAlCBib3R0b20gbGF5ZXIgc2hvd3MgYSBLdWJlcm5ldGVzIEdQVSBjbHVzdGVyIHdpdGggZXZlbnQtZHJpdmVuIHNlbGYtaGVhbGluZyAoZHJhaW4gbm9kZSwgcmVzdGFydCBwb2QgYXJyb3dzKSwgdG9wIGxheWVyIHNob3dzIGEgR2l0TGFiIG1lcmdlIHJlcXVlc3Qgd2l0aCBhbiBBcmdvIHdvcmtmbG93IGRpc3BhdGNoaW5nIGEgc2VsZi1oZWFsIHBvZC4gQm90aCBsYXllcnMgc2hhcmUgdGhlIHNhbWUgZXZlbnQtZHJpdmVuIHBhdHRlcm4sIHZpc3VhbGl6ZWQgYXMgbWF0Y2hpbmcgZmxvdyBhcnJvd3MgY29ubmVjdGluZyB0aGVtLiBDbGVhbiB0ZWNobmljYWwgZGlhZ3JhbSwgZGFyayBibHVlIGJhY2tncm91bmQsIGN5YW4gYWNjZW50IGxpbmVzLCAxNjo5Lg -->
+![Split-layer illustration — bottom layer shows a Kubernetes GPU cluster with event-driven self-healing (drain node, re...](https://i.ibb.co/zWZmrLVM/img-1.jpg)
+
 ## The Takeaway
 
 Make your state transitions explicit and label-stamped. When the agent itself stamps the lifecycle label as part of its normal completion flow, you get a durable, unambiguous webhook trigger with zero extra tooling. Free-text parsing breaks in the hands of real humans. Polling trades simplicity for latency and API cost.
