@@ -138,7 +138,7 @@ This is explicitly deferred. The right order is: get the single-MR path solid, t
 
 ## Infrastructure Self-Healing Meets SDLC Self-Healing
 
-Platforms like NeoX can drain a faulty GPU replica and restart it. Policy-as-code detects rogue inference workloads and quarantines them before they starve the queue. That's the infrastructure layer doing its job.
+Modern inference infrastructure can drain a faulty GPU replica and restart it. Policy-as-code detects rogue workloads and quarantines them before they starve the queue. That's the infrastructure layer doing its job.
 
 But when the AI agent running on that GPU opens a Merge Request and a human reviewer says "not able to merge" — that's not an infrastructure failure. It's a code-review failure, and no amount of GPU self-healing touches it. The SDLC layer is a blind spot.
 
