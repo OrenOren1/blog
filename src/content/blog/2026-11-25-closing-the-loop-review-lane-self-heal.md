@@ -136,6 +136,16 @@ Multi-repo issues. When a single issue spawns MRs in two repositories — which 
 
 This is explicitly deferred. The right order is: get the single-MR path solid, then tackle cross-repo coordination (per-MR lease keys, cross-repo token access, aggregated completion signals) as a follow-on ADR. Naming it here so the design scope is clear.
 
+## Infrastructure Self-Healing Meets SDLC Self-Healing
+
+Platforms like NeoX can drain a faulty GPU replica and restart it. Policy-as-code detects rogue inference workloads and quarantines them before they starve the queue. That's the infrastructure layer doing its job.
+
+But when the AI agent running on that GPU opens a Merge Request and a human reviewer says "not able to merge" — that's not an infrastructure failure. It's a code-review failure, and no amount of GPU self-healing touches it. The SDLC layer is a blind spot.
+
+A stalled MR in `factory-stage:validation` is the SDLC equivalent of a rogue workload: it holds a slot in the pipeline, blocks downstream work, and silently degrades throughput until someone manually intervenes. The difference is that most teams automate the compute layer and leave the code pipeline entirely manual.
+
+The pattern I described in this post — event-driven label-based triggers, deterministic idempotency keys, Kubernetes-native dispatch — is the same pattern that powers infrastructure self-healing. It's portable. The question is whether you apply it only to your servers, or all the way up to your code review loop.
+
 ## The Takeaway
 
 Make your state transitions explicit and label-stamped. When the agent itself stamps the lifecycle label as part of its normal completion flow, you get a durable, unambiguous webhook trigger with zero extra tooling. Free-text parsing breaks in the hands of real humans. Polling trades simplicity for latency and API cost.
