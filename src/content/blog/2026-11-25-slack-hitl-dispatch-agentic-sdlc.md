@@ -154,20 +154,6 @@ Before choosing an interface, we evaluated four architectures.
 
 ---
 
-## Three Silent Bugs That Killed Every Command
-
-The gate step had three independent bugs before it ran. Each was sufficient to silently kill every dispatch:
-
-**1. Unresolved parameter at submit.** `git_secret_name` was declared in the gate template but never passed by the trigger. Argo rejected every Slack-path Workflow at submit with an unresolved parameter error — no pod, no log, nothing visible in the channel.
-
-**2. `outputs.result` wired to a file path instead of stdout.** `outputs.result` IS the script's stdout in Argo. The gate always returned empty, `when` never saw `pass`, the mission never ran. The fix: `cat /tmp/gate/result` at the end of the script, or use an output parameter backed by the file.
-
-**3. No tolerations on the gate pod.** The runner nodes are tainted. The pod stayed Pending indefinitely — again, silently. The fix is mechanical: copy `runnerDefaults.tolerations` to every step template.
-
-Three bugs, each enough to swallow every command. All three found and fixed by Itai Or in `cbcda99`.
-
----
-
 ## What's Still Open
 
 **Re-run policy.** A completed Workflow object holds the name. The next command on the same issue is refused by `AlreadyExists` until the object is deleted or expires. No `ttlStrategy` is set today. Without it, re-triggering a finished mission requires manual `argo delete`, which defeats the purpose of a one-command interface.
@@ -186,6 +172,24 @@ The platform now has two trigger paths:
 Both follow the same event-driven pattern — EventSource → Sensor filter → WorkflowTemplate dispatch — but they serve different actors. Neither is a workaround. They're two distinct points on the HITL spectrum: one automated, one intentionally human-gated.
 
 The infrastructure described here is what it takes to make a chat message a credible cluster trigger: signing verification, allowlisted channels, regex-validated payloads, credentialed gate steps, and a distributed lock backed by the Kubernetes API server. Skip any one of these and you either have a system that doesn't run, or one that runs too freely.
+
+---
+
+## Why This Pattern — And Not Another
+
+The core tension in an agentic SDLC is this: you built the automation to remove humans from the loop, but every serious deployment has cases where the human hand on the trigger is exactly right. Re-runs. Selective launches. Clients who gate on a human review before the AI touches their codebase. On-call engineers picking up an incident issue at 2am from their phone.
+
+The question isn't whether to support human dispatch. It's what interface you build for it and what happens under the hood.
+
+**Why Slack over alternatives.** Four options surfaced during design: manual CLI (zero infra, zero audit trail, breaks on mobile and for non-engineers), cron polling (N-minute latency, API cost at scale, out-of-band dedup state), GitLab label webhook (zero latency but requires a tracker session — friction for a human), and Slack slash command. Slack won because it's already where ops conversations happen. The trigger lands where the team already works, it's mobile-native, and the channel history is the audit log with no extra tooling.
+
+**Why Argo Events over a custom webhook service.** A bespoke webhook proxy would have to maintain its own auth, its own retry logic, its own delivery guarantees. Argo Events already owns those surfaces and ties directly to the WorkflowTemplate dispatch layer. The EventSource is one more resource in the same GitOps tree. Fewer moving parts, same operational model.
+
+**Why the Kubernetes API server as the dedup lock.** The options were: a Redis-backed mutex, a Workflow `synchronization.mutex`, an external Lease/ConfigMap pre-step, or a deterministic Workflow name. The first three all require an extra service, an extra hop, or a race window between pre-step and Workflow create. The API server's create semantics — `AlreadyExists` is atomic, strongly consistent, and already in every cluster — give exactly the guarantee needed. Same issue, same hash, same name: second create refused before a pod starts. No RBAC additions, no extra component.
+
+**What stays open.** The dedup guard is permanent, not time-bounded. A re-run on the same issue requires manual cleanup today — `ttlStrategy` or gate-step ownership of idempotency is the next layer. And the refusal is currently silent to the channel: a `response_url` reply would close the feedback loop. Both are known gaps; the guard ships now because it's strictly better than `generateName`.
+
+The broader point: every component in this stack was chosen because it solved a specific failure mode without adding a new service or a new failure mode. Signed webhooks over raw tokens. ESO rotation over baked secrets. Sensor filter over polling. Deterministic name over external lock. That discipline — stay inside the existing mechanics, solve one problem at a time — is what makes the whole chain debuggable when something goes wrong at 2am.
 
 ---
 
