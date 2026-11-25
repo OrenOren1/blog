@@ -1,5 +1,5 @@
 ---
-title: "The On-Switch for Your AI Factory"
+title: "The Confirm Switch for Your AI Factory"
 meta_title: "HITL Dispatch for Agentic SDLC: Designing Human-in-the-Loop Kubernetes Triggers"
 description: "When AI agents run on a cluster nobody SSHes into, who pulls the trigger? The infra problem, four dispatch options, and what it takes to make a chat message a credible cluster trigger."
 date: 2026-11-25T14:00:00+00:00
